@@ -4,7 +4,6 @@ import "github.com/hsfzxjy/imbed/schema"
 
 type anyReader struct{ value any }
 
-// Bool implements Reader.
 func (r anyReader) Bool() (bool, error) {
 	switch v := r.value.(type) {
 	case bool:
@@ -12,11 +11,10 @@ func (r anyReader) Bool() (bool, error) {
 	case nil:
 		return false, schema.ErrRequired
 	default:
-		return false, wrongType(v)
+		return false, wrongType(v, "bool")
 	}
 }
 
-// Float64 implements Reader.
 func (r anyReader) Float64() (float64, error) {
 	switch v := r.value.(type) {
 	case float64:
@@ -24,11 +22,10 @@ func (r anyReader) Float64() (float64, error) {
 	case nil:
 		return 0, schema.ErrRequired
 	default:
-		return 0, wrongType(v)
+		return 0, wrongType(v, "float64")
 	}
 }
 
-// Int64 implements Reader.
 func (r anyReader) Int64() (int64, error) {
 	switch v := r.value.(type) {
 	case int64:
@@ -36,11 +33,10 @@ func (r anyReader) Int64() (int64, error) {
 	case nil:
 		return 0, schema.ErrRequired
 	default:
-		return 0, wrongType(v)
+		return 0, wrongType(v, "int64")
 	}
 }
 
-// String implements Reader.
 func (r anyReader) String() (string, error) {
 	switch v := r.value.(type) {
 	case string:
@@ -48,11 +44,10 @@ func (r anyReader) String() (string, error) {
 	case nil:
 		return "", schema.ErrRequired
 	default:
-		return "", wrongType(v)
+		return "", wrongType(v, "string")
 	}
 }
 
-// IterElem implements Reader.
 func (r anyReader) IterElem(f func(i int, elem Reader) error) error {
 	switch v := r.value.(type) {
 	case []any:
@@ -60,11 +55,10 @@ func (r anyReader) IterElem(f func(i int, elem Reader) error) error {
 	case nil:
 		return nil
 	default:
-		return wrongType(v)
+		return wrongType(v, "[]any")
 	}
 }
 
-// IterField implements Reader.
 func (r anyReader) IterField(f func(name string, field Reader) error) error {
 	switch v := r.value.(type) {
 	case map[string]any:
@@ -74,17 +68,15 @@ func (r anyReader) IterField(f func(name string, field Reader) error) error {
 	}
 }
 
-// IterKV implements Reader.
 func (r anyReader) IterKV(f func(key string, value Reader) error) error {
 	switch v := r.value.(type) {
 	case map[string]any:
 		return NewMapReader(v).IterKV(f)
 	default:
-		return wrongType(v)
+		return wrongType(v, "map[string]any")
 	}
 }
 
-// ListSize implements Reader.
 func (r anyReader) ListSize() (int, error) {
 	switch v := r.value.(type) {
 	case []any:
@@ -92,11 +84,10 @@ func (r anyReader) ListSize() (int, error) {
 	case nil:
 		return 0, schema.ErrRequired
 	default:
-		return 0, wrongType(v)
+		return 0, wrongType(v, "[]any")
 	}
 }
 
-// MapSize implements Reader.
 func (r anyReader) MapSize() (int, error) {
 	switch v := r.value.(type) {
 	case map[string]any:
@@ -104,10 +95,10 @@ func (r anyReader) MapSize() (int, error) {
 	case nil:
 		return 0, schema.ErrRequired
 	default:
-		return 0, wrongType(v)
+		return 0, wrongType(v, "map[string]any")
 	}
 }
 
-var _ Reader = anyReader{}
+func _() { var _ Reader = anyReader{} }
 
 func Any(value any) Reader { return anyReader{value} }

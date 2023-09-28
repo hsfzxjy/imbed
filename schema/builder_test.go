@@ -30,7 +30,7 @@ func ExampleNew() {
 	err := sch.DecodeValue(schemareader.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
-		"m":     map[string]any{"a": (1)},
+		"m":     map[string]any{"a": int64(1)},
 		"float": float64(3.14),
 		"str":   "test",
 	}), &x)
