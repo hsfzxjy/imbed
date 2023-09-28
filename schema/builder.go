@@ -2,9 +2,9 @@ package schema
 
 type builder[T any] interface {
 	buildSchema() schema[T]
-	builderUntyped
+	genericBuilder
 }
 
-type builderUntyped interface {
-	buildSchemaUntyped() genericSchema
+type genericBuilder interface {
+	buildGenericSchema() genericSchema
 }

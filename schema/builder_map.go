@@ -14,7 +14,7 @@ func (b mapBuilder[V]) buildSchema() schema[map[string]V] {
 	return &_Map[V]{b.defFunc, b.valueBuilder.buildSchema()}
 }
 
-func (b mapBuilder[V]) buildSchemaUntyped() genericSchema { return b.buildSchema() }
+func (b mapBuilder[V]) buildGenericSchema() genericSchema { return b.buildSchema() }
 
 func Map[V any](valueBuilder builder[V]) mapBuilder[V] {
 	return mapBuilder[V]{valueBuilder: valueBuilder}

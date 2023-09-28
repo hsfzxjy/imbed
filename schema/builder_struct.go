@@ -9,7 +9,7 @@ import (
 type fieldBuilder struct {
 	name       string
 	ptr        unsafe.Pointer
-	subBuilder builderUntyped
+	subBuilder genericBuilder
 }
 
 func F[T any](name string, ptr *T, subBuilder builder[T]) *fieldBuilder {
@@ -54,14 +54,14 @@ func (s *structBuilder[S]) buildSchema() schema[S] {
 		field := &_StructField{
 			name:       f.name,
 			offset:     uintptr(f.ptr) - uintptr(s.basePtr),
-			elemSchema: f.subBuilder.buildSchemaUntyped(),
+			elemSchema: f.subBuilder.buildGenericSchema(),
 		}
 		fields[i] = field
 		m[f.name] = field
 	}
 	return &_Struct[S]{s.name, fields, m}
 }
-func (s *structBuilder[T]) buildSchemaUntyped() genericSchema { return s.buildSchema() }
+func (s *structBuilder[T]) buildGenericSchema() genericSchema { return s.buildSchema() }
 
 func (s *structBuilder[T]) Build() Schema[T] {
 	return New(s)
