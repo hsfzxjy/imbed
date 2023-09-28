@@ -4,7 +4,7 @@ import "crypto/sha256"
 
 type sig [4]byte
 
-func sigFor(schema schema) sig {
+func sigFor(schema genericSchema) sig {
 	hasher := sha256.New()
 	err := schema.writeTypeInfo(hasher)
 	if err != nil {

@@ -47,7 +47,7 @@ func (s *structBuilder[T]) DebugName(name string) *structBuilder[T] {
 	return s
 }
 
-func (s *structBuilder[S]) buildSchema() schemaTyped[S] {
+func (s *structBuilder[S]) buildSchema() schema[S] {
 	fields := make([]*_StructField, len(s.fieldBuilders))
 	m := make(map[string]*_StructField, len(fields))
 	for i, f := range s.fieldBuilders {
@@ -61,7 +61,7 @@ func (s *structBuilder[S]) buildSchema() schemaTyped[S] {
 	}
 	return &_Struct[S]{s.name, fields, m}
 }
-func (s *structBuilder[T]) buildSchemaUntyped() schema { return s.buildSchema() }
+func (s *structBuilder[T]) buildSchemaUntyped() genericSchema { return s.buildSchema() }
 
 func (s *structBuilder[T]) Build() Schema[T] {
 	return New(s)

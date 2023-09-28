@@ -10,11 +10,11 @@ func (b mapBuilder[V]) Default(defFunc func() map[string]V) mapBuilder[V] {
 	return b
 }
 
-func (b mapBuilder[V]) buildSchema() schemaTyped[map[string]V] {
+func (b mapBuilder[V]) buildSchema() schema[map[string]V] {
 	return &_Map[V]{b.defFunc, b.valueBuilder.buildSchema()}
 }
 
-func (b mapBuilder[V]) buildSchemaUntyped() schema { return b.buildSchema() }
+func (b mapBuilder[V]) buildSchemaUntyped() genericSchema { return b.buildSchema() }
 
 func Map[V any](valueBuilder builder[V]) mapBuilder[V] {
 	return mapBuilder[V]{valueBuilder: valueBuilder}

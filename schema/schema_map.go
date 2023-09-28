@@ -9,7 +9,7 @@ import (
 
 type _Map[V any] struct {
 	def         func() map[string]V
-	valueSchema schemaTyped[V]
+	valueSchema schema[V]
 }
 
 func (s *_Map[V]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
@@ -94,6 +94,6 @@ func (s *_Map[V]) writeTypeInfo(w io.Writer) error {
 	return s.valueSchema.writeTypeInfo(w)
 }
 
-func (s *_Map[V]) _schemaTyped_stub(map[string]V) {}
+func (s *_Map[V]) _schema_stub(map[string]V) {}
 
-func _() { var _ schemaTyped[map[string]int] = &_Map[int]{} }
+func _() { var _ schema[map[string]int] = &_Map[int]{} }

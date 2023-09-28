@@ -94,9 +94,9 @@ func (s *_Struct[T]) writeTypeInfo(w io.Writer) error {
 	return nil
 }
 
-func (s *_Struct[T]) _schemaTyped_stub(T) {}
+func (s *_Struct[T]) _schema_stub(T) {}
 
 func _() {
 	type X struct{}
-	var _ schemaTyped[X] = &_Struct[X]{}
+	var _ schema[X] = &_Struct[X]{}
 }

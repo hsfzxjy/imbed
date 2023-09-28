@@ -11,7 +11,7 @@ import (
 type _StructField struct {
 	name       string
 	offset     uintptr
-	elemSchema schema
+	elemSchema genericSchema
 }
 
 func (*_StructField) _fieldSchema_stub() {}

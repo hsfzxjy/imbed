@@ -11,8 +11,8 @@ func (b atomBuilder[T]) Default(value T) atomBuilder[T] {
 	return b
 }
 
-func (b atomBuilder[T]) buildSchema() schemaTyped[T] { return &_Atom[T]{b.def, b.vtable} }
-func (b atomBuilder[T]) buildSchemaUntyped() schema  { return b.buildSchema() }
+func (b atomBuilder[T]) buildSchema() schema[T] { return &_Atom[T]{b.def, b.vtable} }
+func (b atomBuilder[T]) buildSchemaUntyped() genericSchema  { return b.buildSchema() }
 
 func Int() atomBuilder[int64] {
 	return atomBuilder[int64]{vtable: _VTableInt}

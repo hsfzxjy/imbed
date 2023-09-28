@@ -61,7 +61,7 @@ func (s *_Atom[T]) writeTypeInfo(w io.Writer) error {
 	return err
 }
 
-func (s *_Atom[T]) _schemaTyped_stub(T) {}
+func (s *_Atom[T]) _schema_stub(T) {}
 
 type _Int = _Atom[int64]
 
@@ -108,8 +108,8 @@ var _VTableFloat = &_AtomVTable[float64]{
 func new_Float(def optional[float64]) *_Float { return &_Float{def, _VTableFloat} }
 
 func _() {
-	var _ schemaTyped[int64] = &_Int{}
-	var _ schemaTyped[bool] = &_Bool{}
-	var _ schemaTyped[string] = &_String{}
-	var _ schemaTyped[float64] = &_Float{}
+	var _ schema[int64] = &_Int{}
+	var _ schema[bool] = &_Bool{}
+	var _ schema[string] = &_String{}
+	var _ schema[float64] = &_Float{}
 }

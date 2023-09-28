@@ -9,7 +9,7 @@ import (
 
 type _List[E any] struct {
 	def        func() []E
-	elemSchema schemaTyped[E]
+	elemSchema schema[E]
 }
 
 func (s *_List[E]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
@@ -81,6 +81,6 @@ func (s *_List[E]) writeTypeInfo(w io.Writer) error {
 	return s.elemSchema.writeTypeInfo(w)
 }
 
-func (s *_List[E]) _schemaTyped_stub([]E) {}
+func (s *_List[E]) _schema_stub([]E) {}
 
-func _() { var _ schemaTyped[[]int] = &_List[int]{} }
+func _() { var _ schema[[]int] = &_List[int]{} }
