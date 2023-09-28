@@ -22,7 +22,7 @@ func (n *node) Apply(cache *assetCache, a asset.Asset, ret *[]asset.Asset) error
 		if cached != nil {
 			a = cached
 		} else {
-			u, err := n.transform.Apply(a)
+			u, err := n.transform.Apply(cache.app, a)
 			if err != nil {
 				return err
 			}

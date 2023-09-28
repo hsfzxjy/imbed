@@ -1,6 +1,7 @@
 package asset
 
 import (
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 )
 
@@ -12,5 +13,5 @@ type Transform interface {
 }
 
 type Applier interface {
-	Apply(asset Asset) (Update, error)
+	Apply(app core.App, asset Asset) (Update, error)
 }

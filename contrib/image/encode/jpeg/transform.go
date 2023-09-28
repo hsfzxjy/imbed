@@ -7,6 +7,7 @@ import (
 
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/content"
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 )
@@ -15,7 +16,7 @@ type applier struct {
 	Quality int
 }
 
-func (x applier) Apply(a asset.Asset) (asset.Update, error) {
+func (x applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	ic := content.NewImage(a.Content())
 	c := content.New(func(w io.Writer) error {
 		return jpeg.Encode(w, ic.Image(), &jpeg.Options{

@@ -2,6 +2,7 @@ package transform
 
 import (
 	"github.com/hsfzxjy/imbed/asset"
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -22,11 +23,11 @@ func _() { var _ Transform = &mergedTransform{} }
 
 func (m *mergedTransform) Name() string { return "mergedTransform" }
 
-func (m *mergedTransform) Apply(a asset.Asset) (asset.Update, error) {
+func (m *mergedTransform) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	var updates []asset.Update
 	var tmpAsset = a
 	for _, t := range m.transforms {
-		u, err := t.Apply(tmpAsset)
+		u, err := t.Apply(app, tmpAsset)
 		if err != nil {
 			return nil, err
 		}
