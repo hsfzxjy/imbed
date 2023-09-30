@@ -93,7 +93,7 @@ func (f *Formatter[T]) Exec(out io.Writer, data []T) error {
 	proxy := make(map[string]string, len(f.allFields))
 	var tabw *tabwriter.Writer
 	if f.kind == kTable {
-		tabw = tabwriter.NewWriter(out, 0, 0, 1, ' ', 0)
+		tabw = tabwriter.NewWriter(out, 10, 4, 1, ' ', 0)
 		out = tabw
 		for name, field := range f.fieldMap {
 			proxy[name] = field.Header
