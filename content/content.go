@@ -2,157 +2,94 @@ package content
 
 import (
 	"bytes"
+	"errors"
 	_ "image/jpeg"
 	_ "image/png"
-	"os"
+	"sync/atomic"
 
-	"image"
-	"io"
 	"sync"
 
 	ref "github.com/hsfzxjy/imbed/core/ref"
-	"github.com/hsfzxjy/imbed/util"
 )
-
-type Loader func(io.Writer) error
-
-func FromFile(filepath string) Loader {
-	return func(w io.Writer) error {
-		f, err := os.Open(filepath)
-		if err != nil {
-			return err
-		}
-		defer f.Close()
-		return util.UnwrapErr(io.Copy(w, f))
-	}
-}
-
-type Content interface {
-	GetHash() ref.Murmur3Hash
-	BytesReader() *bytes.Reader
-}
-
-type ImageContent interface {
-	Content
-	Image() image.Image
-}
 
 type content struct {
 	loader Loader
+	sizer  Sizer
 	buf    []byte
 	hash   ref.Murmur3Hash
-	once   sync.Once
+
+	computed      atomic.Bool
+	computedBuf   []byte
+	computedHash  ref.Murmur3Hash
+	computedError error
+
+	once sync.Once
 }
 
-func New(loader Loader) Content {
-	return &content{loader: loader}
-}
-
-func NewBytes(bytes []byte) Content {
-	return &content{buf: bytes}
-}
-
-func (c *content) GetHash() ref.Murmur3Hash {
+func (c *content) GetHash() (ref.Murmur3Hash, error) {
+	if !c.hash.IsZero() {
+		return c.hash, nil
+	}
 	c.load()
-	return c.hash
+	return c.computedHash, c.computedError
+}
+
+func (c *content) Size() (Size, error) {
+	switch {
+	case c.computed.Load():
+		return Size(len(c.computedBuf)), c.computedError
+	case c.buf != nil:
+		return Size(len(c.buf)), nil
+	case c.sizer != nil:
+		return c.sizer.Size()
+	}
+	c.load()
+	return Size(len(c.computedBuf)), nil
+}
+
+func (c *content) BytesReader() (*bytes.Reader, error) {
+	switch {
+	case c.buf != nil:
+		return bytes.NewReader(c.buf), nil
+	}
+	c.load()
+	if c.computedError != nil {
+		return nil, c.computedError
+	}
+	return bytes.NewReader(c.computedBuf), nil
 }
 
 func (c *content) load() {
-	if c.loader != nil {
-		c.once.Do(func() {
-			var buf bytes.Buffer
-			util.Check(c.loader(&buf))
-			c.buf = buf.Bytes()
+	c.once.Do(func() {
+		var (
+			buffer bytes.Buffer
+			buf    []byte
+			hash   ref.Murmur3Hash
+			err    error
+		)
+		defer func() {
+			c.computedError = err
+			c.computed.Store(true)
+		}()
+		if c.loader == nil {
+			c.computedBuf = c.buf
+			return
+		}
+		err = c.loader.Load(&buffer)
+		if err != nil {
+			return
+		}
+		buf = buffer.Bytes()
+		hash, err = ref.Murmur3HashFromReader(bytes.NewReader(buf))
+		if err != nil {
+			return
+		}
 
-			c.hash = util.Unwrap(ref.Murmur3HashFromReader(bytes.NewReader(c.buf)))
-
-			c.loader = nil
-		})
-	}
-}
-
-func (c *content) BytesReader() *bytes.Reader {
-	c.load()
-	return bytes.NewReader(c.buf)
-}
-
-func (c *content) GetFID(basename string) ref.FID {
-	c.load()
-	return ref.FIDFromParts(basename, c.hash)
-}
-
-func BuildFID(content Content, basename string) ref.FID {
-	return ref.FIDFromParts(basename, content.GetHash())
-}
-
-type contentWithKnownHash struct {
-	loader Loader
-	buf    []byte
-	hash   ref.Murmur3Hash
-	once   sync.Once
-}
-
-func NewWithKnownHash(loader Loader, hash ref.Murmur3Hash) Content {
-	return &contentWithKnownHash{
-		loader: loader,
-		hash:   hash,
-	}
-}
-
-func (c *contentWithKnownHash) GetHash() ref.Murmur3Hash { return c.hash }
-func (c *contentWithKnownHash) load() {
-	if c.loader != nil {
-		c.once.Do(func() {
-			var buf bytes.Buffer
-			util.Check(c.loader(&buf))
-			c.buf = buf.Bytes()
-
-			hash := util.Unwrap(ref.Murmur3HashFromReader(bytes.NewReader(c.buf)))
-
-			if hash != c.hash {
-				panic("corrupted file: not match with known hash")
-			}
-
-			c.loader = nil
-		})
-	}
-}
-func (c *contentWithKnownHash) BytesReader() *bytes.Reader {
-	c.load()
-	return bytes.NewReader(c.buf)
-}
-
-type imageContent struct {
-	Content
-	imageCache image.Image
-	once       sync.Once
-}
-
-func NewImage(content Content) ImageContent {
-	if ic, ok := content.(ImageContent); ok {
-		return ic
-	}
-	return &imageContent{Content: content}
-}
-
-func NewImageWith(image image.Image) ImageContent {
-	ic := &imageContent{imageCache: image}
-	ic.once.Do(func() {})
-	return ic
-}
-
-func (i *imageContent) Image() image.Image {
-	i.once.Do(func() {
-		im, _, err := image.Decode(i.BytesReader())
-		util.Check(err)
-		i.imageCache = im
+		if !c.hash.IsZero() && hash != c.hash {
+			err = errors.New("hash from loaded file differs from given one")
+			return
+		}
+		c.computedBuf = buf
+		c.computedHash = hash
 	})
-	return i.imageCache
-}
-
-func (i *imageContent) BytesReader() *bytes.Reader {
-	if i.Content != nil {
-		return i.Content.BytesReader()
-	}
-	panic("pure image must be encoded")
 }

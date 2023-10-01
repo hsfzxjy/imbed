@@ -106,7 +106,11 @@ func (c *assetCache) Lookup(a asset.Asset, transform Transform) (asset.Asset, er
 	if err != nil {
 		return nil, err
 	}
-	it, err := assetq.ByDependency(a.Content().GetHash(), transSeqHash).RunR(c.ctx)
+	hash, err := a.Content().GetHash()
+	if err != nil {
+		return nil, err
+	}
+	it, err := assetq.ByDependency(hash, transSeqHash).RunR(c.ctx)
 	if err != nil {
 		return nil, err
 	}

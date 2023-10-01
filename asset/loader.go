@@ -11,7 +11,7 @@ import (
 func LoadFile(filepath string) *asset {
 	a := new(asset)
 	a.basename = path.Base(filepath)
-	a.content = content.New(content.FromFile(filepath))
+	a.content = content.New(content.WithFilePath(filepath))
 	return a
 }
 
@@ -21,7 +21,7 @@ func FromDBModel(app core.App, model *db.AssetModel) *asset {
 	filepath := app.FilePath(model.FID.Humanize())
 	a.primaryInfo = primaryInfo{
 		basename: model.FID.Basename(),
-		content:  content.New(content.FromFile(filepath)),
+		content:  content.New(content.WithFilePath(filepath)),
 	}
 	return a
 }

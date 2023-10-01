@@ -18,9 +18,17 @@ type applier struct {
 }
 
 func (t applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
-	filename := content.BuildFID(a.Content(), a.BaseName()).Humanize()
+	fid, err := content.BuildFID(a.Content(), a.BaseName())
+	if err != nil {
+		return nil, err
+	}
+	filename := fid.Humanize()
 	filepath := path.Join(t.Path, filename)
-	err := util.WriteFile(filepath, a.Content().BytesReader())
+	r, err := a.Content().BytesReader()
+	if err != nil {
+		return nil, err
+	}
+	err = util.WriteFile(filepath, r)
 	if err != nil {
 		return nil, err
 	}

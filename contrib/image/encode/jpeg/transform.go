@@ -17,12 +17,16 @@ type applier struct {
 }
 
 func (x applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
-	ic := content.NewImage(a.Content())
-	c := content.New(func(w io.Writer) error {
-		return jpeg.Encode(w, ic.Image(), &jpeg.Options{
+	ic := content.AsImage(a.Content())
+	c := content.New(content.WithLoadFunc(func(w io.Writer) error {
+		im, err := ic.Image()
+		if err != nil {
+			return err
+		}
+		return jpeg.Encode(w, im, &jpeg.Options{
 			Quality: x.Quality,
 		})
-	})
+	}))
 	return asset.MergeUpdates(
 		asset.UpdateContent(c),
 		asset.UpdateFileExtension(".jpg"),

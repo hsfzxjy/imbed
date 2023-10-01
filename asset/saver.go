@@ -89,9 +89,14 @@ func (a *asset) save(ctx db.Context) error {
 		}
 	}
 
+	fid, err := content.BuildFID(a.content, a.basename)
+	if err != nil {
+		return err
+	}
+
 	model, err := db.AssetTemplate{
 		Origin:   originModel,
-		FID:      content.BuildFID(a.content, a.basename),
+		FID:      fid,
 		Url:      a.url,
 		ExtData:  a.ext,
 		TransSeq: transSeq,
@@ -117,7 +122,11 @@ func (a *asset) saveFile(app core.App) error {
 			return err
 		}
 	}
+	r, err := a.content.BytesReader()
+	if err != nil {
+		return err
+	}
 	return util.WriteFile(
 		app.FilePath(a.model.FID.Humanize()),
-		a.content.BytesReader())
+		r)
 }
