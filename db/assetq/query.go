@@ -3,87 +3,93 @@ package assetq
 import (
 	"bytes"
 
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
 	"github.com/hsfzxjy/imbed/db/internal/helper"
-	"github.com/hsfzxjy/imbed/db/internal/iterator"
+	dbq "github.com/hsfzxjy/imbed/db/query"
 	"github.com/hsfzxjy/imbed/util"
+	"github.com/hsfzxjy/imbed/util/iter"
 )
 
-type Iterator = iterator.It[asset.AssetModel]
-type Query = internal.Runnable[*Iterator]
+type Iterator = core.Iterator[*asset.AssetModel]
+type Query = internal.Runnable[Iterator]
 
-func simpleQuery(getIndex func(internal.H) helper.BucketNode) Query {
-	return iterator.New[asset.AssetModel](func(h internal.H) (*iterator.Builder[asset.AssetModel], error) {
-		index := getIndex(h)
-		cursor, err := index.Cursor()
+func simpleQuery(indexName []byte, needle dbq.Needle) Query {
+	return internal.R(func(h internal.H) (Iterator, error) {
+		index := h.Bucket(indexName)
+		cursor, err := index.Cursor(needle.Bytes())
 		if err != nil {
 			return nil, err
 		}
-		return &iterator.Builder[asset.AssetModel]{
-			Cursor: cursor,
-			SeekTo: nil,
-			GetObject: func(k []byte, v []byte) *asset.AssetModel {
-				return util.IgnoreErr(asset.New(h, k))
-			},
-		}, nil
-	})
-
-}
-
-func ByFID(fid ref.FID) Query {
-	return simpleQuery(func(h internal.H) helper.BucketNode {
-		return h.Bucket(bucketnames.INDEX_FID).Bucket(ref.AsRaw(fid))
-	})
-}
-
-func ByFHash(fhash ref.Murmur3Hash) Query {
-	return simpleQuery(func(h internal.H) helper.BucketNode {
-		return h.Bucket(bucketnames.INDEX_FHASH).Bucket(ref.AsRaw(fhash))
+		it := iter.Map(cursor, func(kv util.KV) (*helper.Cursor, bool) {
+			if !needle.Match(kv.K) {
+				return nil, false
+			}
+			cursor, err := index.Bucket(kv.K).Cursor(nil)
+			if err != nil {
+				return nil, false
+			}
+			return cursor, true
+		})
+		it2 := iter.FlatMap(it, func(kv util.KV) (*asset.AssetModel, bool) {
+			a, err := asset.New(h, kv.K)
+			if err != nil {
+				return nil, false
+			}
+			return a, true
+		})
+		return it2, nil
 	})
 }
 
-func ByUrl(url string) Query {
-	return simpleQuery(func(h internal.H) helper.BucketNode {
-		return h.Bucket(bucketnames.INDEX_URL).Bucket([]byte(url))
-	})
+func ByFID(needle dbq.Needle) Query {
+	return simpleQuery(bucketnames.INDEX_FID, needle)
+}
+
+func ByFHash(needle dbq.Needle) Query {
+	return simpleQuery(bucketnames.INDEX_FHASH, needle)
+}
+
+func ByUrl(needle dbq.Needle) Query {
+	return simpleQuery(bucketnames.INDEX_URL, needle)
 }
 
 func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
-	return iterator.New[asset.AssetModel](func(h internal.H) (*iterator.Builder[asset.AssetModel], error) {
-		cursor, err := h.Bucket(bucketnames.INDEX_TRANSSEQ).Cursor()
+	return internal.R(func(h internal.H) (Iterator, error) {
+		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
+		cursor, err := h.Bucket(bucketnames.INDEX_TRANSSEQ).
+			Cursor(pairBytes)
 		if err != nil {
 			return nil, err
 		}
-		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
-		return &iterator.Builder[asset.AssetModel]{
-			Cursor: cursor,
-			SeekTo: pairBytes,
-			GetObject: func(k []byte, v []byte) *asset.AssetModel {
-				if !bytes.Equal(k, pairBytes) {
-					return nil
-				}
-				return util.IgnoreErr(asset.New(h, v))
-			},
-		}, nil
+		return iter.Map(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+			if !bytes.Equal(kv.K, pairBytes) {
+				return nil, false
+			}
+			asset, err := asset.New(h, kv.V)
+			if err != nil {
+				return nil, false
+			}
+			return asset, true
+		}), nil
 	})
 }
 
 func All() Query {
-	return iterator.New[asset.AssetModel](func(h internal.H) (*iterator.Builder[asset.AssetModel], error) {
-		cursor, err := h.Bucket(bucketnames.FILES).Cursor()
+	return internal.R(func(h internal.H) (Iterator, error) {
+		cursor, err := h.Bucket(bucketnames.FILES).Cursor(nil)
 		if err != nil {
 			return nil, err
 		}
-		return &iterator.Builder[asset.AssetModel]{
-			Cursor: cursor,
-			SeekTo: nil,
-			GetObject: func(k, v []byte) *asset.AssetModel {
-				a, _ := asset.NewFromKV(k, v)
-				return a
-			},
-		}, nil
+		return iter.Map(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+			a, err := asset.NewFromKV(kv.K, kv.V)
+			if err != nil {
+				return nil, false
+			}
+			return a, true
+		}), nil
 	})
 }

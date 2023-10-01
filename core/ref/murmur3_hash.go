@@ -26,6 +26,14 @@ func (h Murmur3Hash) Humanize() string {
 	return hex.EncodeToString(h.Bytes())
 }
 
+func (h Murmur3Hash) FmtHumanize() string {
+	return hex.EncodeToString(h.Bytes())[:7]
+}
+
+func (h Murmur3Hash) FmtString() string {
+	return hex.EncodeToString(h.Bytes())
+}
+
 const MURMUR3_HASH_LEN = 128 / 8
 const MURMUR3_HASH_HUMANIZE_LEN = 2 * MURMUR3_HASH_LEN
 

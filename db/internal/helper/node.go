@@ -3,6 +3,7 @@ package helper
 import (
 	"bytes"
 
+	"github.com/hsfzxjy/imbed/util"
 	"go.etcd.io/bbolt"
 )
 
@@ -138,14 +139,25 @@ INVALID:
 	return BucketNode{_NonLeafNode{&n.helper.invalid}}
 }
 
-func (n BucketNode) Cursor() (*bbolt.Cursor, error) {
+func (n BucketNode) Cursor(seekTo []byte) (*Cursor, error) {
 	if n.IsBad() {
 		return nil, n.helper.err
 	}
 	if n.IsEmpty() {
 		return nil, bbolt.ErrBucketNotFound
 	}
-	return n.bucket.Cursor(), nil
+	cursor := n.bucket.Cursor()
+	var k, v []byte
+	if seekTo != nil {
+		k, v = cursor.Seek(seekTo)
+	} else {
+		k, v = cursor.First()
+	}
+	return &Cursor{
+		n:       n,
+		cursor:  cursor,
+		current: util.KV{K: k, V: v},
+	}, nil
 }
 
 func (n BucketNode) BucketOrCreateNextSeq(nameFn func(uint64) []byte) BucketNode {

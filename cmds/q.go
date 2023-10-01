@@ -9,6 +9,7 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
+	dbq "github.com/hsfzxjy/imbed/db/query"
 	"github.com/hsfzxjy/imbed/formatter"
 	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/util/iter"
@@ -34,6 +35,7 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 	p := parser.New(flagSet.Args())
 
 	var query assetq.Query
+	var usePrefix bool
 
 	p.Space()
 	if p.EOF() {
@@ -44,15 +46,25 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 			return p.Expect("query key")
 		}
 		p.Space()
-		ok = p.Byte('=')
-		if !ok {
-			return p.Expect("'='")
+		if p.Term("^=") {
+			usePrefix = true
+		} else if p.Byte('=') {
+		} else {
+			if !ok {
+				return p.Expect("'='")
+			}
 		}
 		p.Space()
 		expr := p.Rest()
 		switch key {
 		case "url":
-			query = assetq.ByUrl(expr)
+			query = assetq.ByUrl(dbq.StringNeedle(expr, usePrefix))
+		case "fhash":
+			needle, err := dbq.BytesNeedle(expr, usePrefix)
+			if err != nil {
+				return err
+			}
+			query = assetq.ByFHash(needle)
 		default:
 			return fmt.Errorf("unknown query '%s=%s'", key, expr)
 		}
@@ -68,8 +80,8 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 			New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw).
 			ExecIter(
 				os.Stdout,
-				iter.Map(it, func(m *db.AssetModel) asset.Asset {
-					return asset.FromDBModel(app, m)
+				iter.Map(it, func(m *db.AssetModel) (asset.Asset, bool) {
+					return asset.FromDBModel(app, m), true
 				}))
 	})
 }

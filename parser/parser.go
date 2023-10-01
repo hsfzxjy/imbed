@@ -49,6 +49,17 @@ func (p *Parser) Byte(b byte) (ok bool) {
 	return
 }
 
+func (p *Parser) Term(term string) (ok bool) {
+	if p == nil {
+		return
+	}
+	if s := p.current(); s != "" && strings.HasPrefix(s, term) {
+		p.advance(len(term))
+		ok = true
+	}
+	return
+}
+
 func (p *Parser) AnyByte(charset string) (matched byte, ok bool) {
 	if p == nil {
 		return

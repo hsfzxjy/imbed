@@ -39,6 +39,14 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
+		Name:   "FHash",
+		Header: "FHASH",
+		Show:   true,
+		Getter: func(a Asset) any {
+			return a.(*asset).model.FID.Hash()
+		},
+	},
+	{
 		Name:   "Size",
 		Header: "SIZE",
 		Show:   true,
