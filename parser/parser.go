@@ -207,6 +207,21 @@ func (p *Parser) Bool() (value, ok bool) {
 	return
 }
 
+func (p *Parser) Rest() string {
+	var b strings.Builder
+	i, j := p.i, p.j
+	buf := p.buf
+	for ; i < len(buf); i++ {
+		b.WriteString(buf[i][j:])
+		j = 0
+		if i < len(buf)-1 {
+			b.WriteByte(' ')
+		}
+	}
+	p.i, p.j = i, j
+	return b.String()
+}
+
 func (p *Parser) EOF() bool {
 	return p == nil || p.i == len(p.buf)
 }
@@ -216,6 +231,10 @@ func (p *Parser) Error(err error) error {
 		return e
 	}
 	return &parserError{p, err}
+}
+
+func (p *Parser) Expect(expected string) error {
+	return p.Error(fmt.Errorf("expect %s", expected))
 }
 
 type parserError struct {

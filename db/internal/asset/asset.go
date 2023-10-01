@@ -30,6 +30,15 @@ func New(h internal.H, oid []byte) (*AssetModel, error) {
 	return NewFromLeaf(h.Bucket(bucketnames.FILES).Leaf(oid))
 }
 
+func NewFromKV(k, v []byte) (*AssetModel, error) {
+	a, err := decodeAsset(v)
+	if err != nil {
+		return nil, err
+	}
+	a.OID = ref.FromRaw[ref.OID](k)
+	return a, nil
+}
+
 func (template AssetTemplate) Create() internal.Runnable[*AssetModel] {
 	return internal.R[*AssetModel](func(h internal.H) (*AssetModel, error) {
 		return template.doCreate(h)

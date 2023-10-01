@@ -25,9 +25,15 @@ func (h sha256hash) fromBytes(p []byte) (sha256hash, []byte) {
 	return h, p[sha256.Size:]
 }
 func (h sha256hash) FmtHumanize() string {
+	if h.IsZero() {
+		return "<none>"
+	}
 	return hex.EncodeToString(AsRaw(h))[:7]
 }
 func (h sha256hash) FmtString() string {
+	if h.IsZero() {
+		return "<none>"
+	}
 	return hex.EncodeToString(AsRaw(h))
 }
 

@@ -37,7 +37,7 @@ func ParseAndRun(cmdArgs []string, specs Commands) error {
 
 		var workDir string
 		global := pflag.NewFlagSet("Global Options", pflag.ContinueOnError)
-		global.StringVar(&workDir, "workdir", "", "Specify the working directory")
+		global.StringVarP(&workDir, "work-dir", "d", "", "Specify the working directory")
 
 		flagSet := pflag.NewFlagSet(spec.Name, pflag.ContinueOnError)
 		flagSet.AddFlagSet(global)

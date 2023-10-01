@@ -1,8 +1,6 @@
 package parser
 
 import (
-	"fmt"
-
 	"github.com/hsfzxjy/imbed/schema"
 	schemareader "github.com/hsfzxjy/imbed/schema/reader"
 )
@@ -14,10 +12,6 @@ type Reader struct {
 
 func NewReader(input []string) Reader {
 	return Reader{Parser: New(input)}
-}
-
-func (p Reader) Expect(expected string) error {
-	return fmt.Errorf("expect %s", expected)
 }
 
 func (p Reader) Bool() (bool, error) {

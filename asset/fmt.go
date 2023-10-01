@@ -10,7 +10,17 @@ var FmtFields = []*formatter.Field[Asset]{
 		Name:   "Oid",
 		Header: "OID",
 		Show:   true,
-		Getter: func(a Asset) any { return a.(*asset).model.OID },
+		Getter: func(a Asset) any {
+			return a.(*asset).model.OID
+		},
+	},
+	{
+		Name:   "OriginId",
+		Header: "ORIGIN",
+		Show:   true,
+		Getter: func(a Asset) any {
+			return a.(*asset).model.OriginOID
+		},
 	},
 	{
 		Name:   "Name",

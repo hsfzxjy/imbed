@@ -36,3 +36,9 @@ const (
 	BuildRedeploy
 	BuildAll
 )
+
+type Iterator[T any] interface {
+	Current() T
+	Next()
+	Exhausted() bool
+}

@@ -16,7 +16,8 @@ func main() {
 	contrib.Register(transform.DefaultRegistry())
 	commands := app.Commands{}.
 		Register(cmds.InitCommand{}.Spec()).
-		Register(cmds.AddCommand{}.Spec())
+		Register(cmds.AddCommand{}.Spec()).
+		Register(cmds.QCommand{}.Spec())
 	err := app.ParseAndRun(os.Args, commands)
 	if err != nil {
 		switch {

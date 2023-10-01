@@ -54,15 +54,19 @@ func (it *It[T]) Current() *T {
 	return it.current
 }
 
-func (it *It[T]) Next() *T {
+func (it *It[T]) Next() {
 	if it == nil || it.current == nil {
-		return nil
+		return
 	}
 	it.current = nil
 	k, v := it.cursor.Next()
 	if k == nil {
-		return nil
+		return
 	}
 	it.current = it.getObject(k, v)
-	return it.current
+	return
+}
+
+func (it *It[T]) Exhausted() bool {
+	return it.current == nil
 }

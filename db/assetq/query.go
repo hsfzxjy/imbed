@@ -70,3 +70,20 @@ func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
 		}, nil
 	})
 }
+
+func All() Query {
+	return iterator.New[asset.AssetModel](func(h internal.H) (*iterator.Builder[asset.AssetModel], error) {
+		cursor, err := h.Bucket(bucketnames.FILES).Cursor()
+		if err != nil {
+			return nil, err
+		}
+		return &iterator.Builder[asset.AssetModel]{
+			Cursor: cursor,
+			SeekTo: nil,
+			GetObject: func(k, v []byte) *asset.AssetModel {
+				a, _ := asset.NewFromKV(k, v)
+				return a
+			},
+		}, nil
+	})
+}

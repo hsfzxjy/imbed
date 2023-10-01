@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/transform/internal/parser"
+	"github.com/hsfzxjy/imbed/parser"
 )
 
 type Registry struct {
