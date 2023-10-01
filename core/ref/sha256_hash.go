@@ -3,6 +3,7 @@ package ref
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/hex"
 	"sync"
 
 	"github.com/tinylib/msgp/msgp"
@@ -22,6 +23,9 @@ func (h sha256hash) fromBytes(p []byte) (sha256hash, []byte) {
 	}
 	h.raw = string(p[:sha256.Size])
 	return h, p[sha256.Size:]
+}
+func (h sha256hash) FmtHumanize() string {
+	return hex.EncodeToString(AsRaw(h))[:7]
 }
 
 func Sha256HashSum(p []byte) Sha256Hash {
