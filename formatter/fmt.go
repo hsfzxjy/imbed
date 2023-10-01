@@ -1,12 +1,11 @@
 package formatter
 
 import (
-	"encoding/json"
-	"fmt"
 	"io"
 	"strings"
-	"text/tabwriter"
 	"text/template"
+
+	"github.com/hsfzxjy/imbed/core"
 )
 
 type Stringer interface {
@@ -39,10 +38,7 @@ const (
 
 type Formatter[T any] struct {
 	humanized bool
-	kind      kind
-	tmpl      *template.Template
-	allFields []string
-	fieldMap  map[string]*Field[T]
+	builder   EncoderBuilder[T]
 }
 
 func New[T any](fields []*Field[T], tmpl string, humanized bool) *Formatter[T] {
@@ -57,99 +53,67 @@ func New[T any](fields []*Field[T], tmpl string, humanized bool) *Formatter[T] {
 		allFields = append(allFields, field.Name)
 		fieldMap[field.Name] = field
 	}
-	f.allFields = allFields
-	f.fieldMap = fieldMap
-	f.humanized = humanized
 
+	var kind kind
 	if tmpl == "json" {
-		f.kind = kJson
+		kind = kJson
 	} else if tmpl == "table" {
-		f.kind = kTable
+		kind = kTable
 		tmpl = ""
 	} else {
 		trimmed := strings.TrimPrefix(tmpl, "table ")
 		if len(trimmed) < len(tmpl) {
-			f.kind = kTable
+			kind = kTable
 			tmpl = trimmed
 		}
-		f.kind = kCustom
+		kind = kCustom
 	}
 
-	if f.kind == kTable && tmpl == "" {
+	if kind == kTable && tmpl == "" {
 		tmpl = strings.Join(defaultFields, "\t")
 	}
 	if len(tmpl) == 0 || tmpl[len(tmpl)-1] != '\n' {
 		tmpl = tmpl + "\n"
 	}
-	f.tmpl = template.Must(template.New("").Parse(tmpl))
+	switch kind {
+	case kCustom, kTable:
+		f.builder = &tableEncoderBuilder[T]{
+			tmpl:        template.Must(template.New("").Parse(tmpl)),
+			fieldMap:    fieldMap,
+			humanized:   humanized,
+			printHeader: kind == kTable,
+		}
+	case kJson:
+		f.builder = &jsonEncoderBuilder[T]{
+			allFields: allFields,
+			fieldMap:  fieldMap,
+			humanize:  humanized,
+		}
+	}
 
 	return f
 }
 
+func (f *Formatter[T]) ExecIter(out io.Writer, it core.Iterator[T]) error {
+	encoder := f.builder.build(out)
+	for !it.Exhausted() {
+		item := it.Current()
+		err := encoder.encodeItem(item)
+		if err != nil {
+			return err
+		}
+		it.Next()
+	}
+	return encoder.finalize()
+}
+
 func (f *Formatter[T]) Exec(out io.Writer, data []T) error {
-	if f.kind == kJson {
-		return f.execJson(out, data)
-	}
-	proxy := make(map[string]string, len(f.allFields))
-	var tabw *tabwriter.Writer
-	if f.kind == kTable {
-		tabw = tabwriter.NewWriter(out, 10, 4, 1, ' ', 0)
-		out = tabw
-		for name, field := range f.fieldMap {
-			proxy[name] = field.Header
-		}
-		err := f.tmpl.Execute(out, proxy)
-		if err != nil {
-			return err
-		}
-	}
+	encoder := f.builder.build(out)
 	for _, item := range data {
-		for name, field := range f.fieldMap {
-			proxy[name] = f.asString(field.Getter(item))
-		}
-		err := f.tmpl.Execute(out, proxy)
+		err := encoder.encodeItem(item)
 		if err != nil {
 			return err
 		}
 	}
-	if tabw != nil {
-		err := tabw.Flush()
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (f *Formatter[T]) execJson(out io.Writer, data []T) error {
-	dict := make(map[string]string, len(f.allFields))
-	encoder := json.NewEncoder(out)
-	for _, item := range data {
-		for _, name := range f.allFields {
-			field := f.fieldMap[name]
-			dict[name] = f.asString(field.Getter(item))
-		}
-		err := encoder.Encode(dict)
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (f *Formatter[T]) asString(value any) string {
-	if f.humanized {
-		switch v := value.(type) {
-		case Humanizer:
-			return v.FmtHumanize()
-		}
-	}
-	switch v := value.(type) {
-	case Stringer:
-		return v.FmtString()
-	case string:
-		return v
-	default:
-		return fmt.Sprintf("%v", v)
-	}
+	return encoder.finalize()
 }
