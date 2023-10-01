@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 
@@ -8,6 +9,7 @@ import (
 	"github.com/hsfzxjy/imbed/cmds"
 	"github.com/hsfzxjy/imbed/contrib"
 	"github.com/hsfzxjy/imbed/transform"
+	"github.com/spf13/pflag"
 )
 
 func main() {
@@ -17,6 +19,12 @@ func main() {
 		Register(cmds.AddCommand{}.Spec())
 	err := app.ParseAndRun(os.Args, commands)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "fatal: %s\n", err)
+		switch {
+		case errors.Is(err, pflag.ErrHelp):
+
+		default:
+			fmt.Fprintf(os.Stderr, "fatal: %s\n", err)
+		}
+		os.Exit(2)
 	}
 }

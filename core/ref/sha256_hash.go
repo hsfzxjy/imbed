@@ -27,6 +27,9 @@ func (h sha256hash) fromBytes(p []byte) (sha256hash, []byte) {
 func (h sha256hash) FmtHumanize() string {
 	return hex.EncodeToString(AsRaw(h))[:7]
 }
+func (h sha256hash) FmtString() string {
+	return hex.EncodeToString(AsRaw(h))
+}
 
 func Sha256HashSum(p []byte) Sha256Hash {
 	s := sha256.Sum256(p)

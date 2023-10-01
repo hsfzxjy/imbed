@@ -34,18 +34,19 @@ func ParseAndRun(cmdArgs []string, specs Commands) error {
 		if spec.Name != cmd {
 			continue
 		}
-		flagSet := spec.FlagSet
 
 		var workDir string
-		global := pflag.NewFlagSet("Global Options", pflag.ExitOnError)
-		global.StringVar(&workDir, "workdir", "", "work dir")
+		global := pflag.NewFlagSet("Global Options", pflag.ContinueOnError)
+		global.StringVar(&workDir, "workdir", "", "Specify the working directory")
 
-		flagSet.Init(spec.Name, pflag.PanicOnError)
+		flagSet := pflag.NewFlagSet(spec.Name, pflag.ContinueOnError)
 		flagSet.AddFlagSet(global)
+		flagSet.AddFlagSet(spec.FlagSet)
 
 		if err = flagSet.Parse(cmdArgs[2:]); err != nil {
 			return err
 		}
+		spec.FlagSet = flagSet
 
 		if workDir, err = sanitizeWorkDir(workDir); err != nil {
 			return err
