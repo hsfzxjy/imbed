@@ -17,8 +17,17 @@ func SaveAll(ctx db.Context, app core.App, assets []Asset) error {
 		}
 	}
 
+	var revertSaveFile bool
+
 	for _, a := range assets {
-		if err := a.saveFile(app); err != nil {
+		revert, err := a.saveFile(app)
+		defer func() {
+			if revertSaveFile {
+				revert.Call()
+			}
+		}()
+		if err != nil {
+			revertSaveFile = true
 			return err
 		}
 	}
@@ -110,23 +119,26 @@ func (a *asset) save(ctx db.Context) error {
 	return nil
 }
 
-func (a *asset) saveFile(app core.App) error {
+func (a *asset) saveFile(app core.App) (revert util.RevertFunc, err error) {
 	a.mu.RLock()
 	defer a.mu.RUnlock()
 	if a.model == nil {
-		return fmt.Errorf("model not saved")
+		return nil, fmt.Errorf("model not saved")
 	}
 	if a.origin != nil {
-		err := a.origin.saveFile(app)
+		revert, err = a.origin.saveFile(app)
 		if err != nil {
-			return err
+			return revert, err
 		}
 	}
 	r, err := a.content.BytesReader()
 	if err != nil {
-		return err
+		return revert, err
 	}
-	return util.WriteFile(
+	revert2, err := util.SafeWriteFile(
+		r,
 		app.FilePath(a.model.FID.Humanize()),
-		r)
+	)
+	revert = revert.Then(revert2)
+	return revert, err
 }

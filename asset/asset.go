@@ -6,6 +6,7 @@ import (
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/db"
+	"github.com/hsfzxjy/imbed/util"
 )
 
 type primaryInfo struct {
@@ -48,5 +49,5 @@ type Asset interface {
 	Content() content.Content
 	BaseName() string
 	save(ctx db.Context) error
-	saveFile(app core.App) error
+	saveFile(app core.App) (util.RevertFunc, error)
 }
