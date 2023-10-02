@@ -38,7 +38,5 @@ const (
 )
 
 type Iterator[T any] interface {
-	Current() T
-	Next()
-	Exhausted() bool
+	Next() (T, bool)
 }

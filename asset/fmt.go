@@ -35,7 +35,11 @@ var FmtFields = []*formatter.Field[Asset]{
 		Header: "URL",
 		Show:   true,
 		Getter: func(a Asset) any {
-			return a.(*asset).model.Url
+			url := a.(*asset).model.Url
+			if url == "" {
+				return "<none>"
+			}
+			return url
 		},
 	},
 	{

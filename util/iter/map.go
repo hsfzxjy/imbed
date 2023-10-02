@@ -2,102 +2,84 @@ package iter
 
 import "github.com/hsfzxjy/imbed/core"
 
+type mapFunc[T, U any] func(T) (U, bool)
+
 type mappedIt[T, U any, It core.Iterator[T]] struct {
-	iterator   It
-	current    U
-	mapFunc    func(T) (U, bool)
-	exhaustive bool
+	iterator It
+	mapFunc  mapFunc[T, U]
+	stopped  bool
 }
 
-func (m *mappedIt[T, U, It]) Current() U {
-	if m.exhaustive {
-		var u U
-		return u
+func (m *mappedIt[T, U, It]) Next() (result U, ok bool) {
+	var t T
+	var u U
+	if m.stopped {
+		return u, false
 	}
-	return m.current
-}
-
-func (m *mappedIt[T, U, It]) Exhausted() bool {
-	return m.exhaustive
-}
-
-func (m *mappedIt[T, U, It]) Next() {
-	if m.exhaustive {
-		return
+	t, ok = m.iterator.Next()
+	if !ok {
+		return u, ok
 	}
-	m.iterator.Next()
-	m.setCurrent()
-}
-
-func (m *mappedIt[T, U, It]) setCurrent() {
-	if m.iterator.Exhausted() {
-		m.exhaustive = true
-	} else {
-		current, ok := m.mapFunc(m.iterator.Current())
-		if !ok {
-			m.exhaustive = true
-		} else {
-			m.exhaustive = false
-			m.current = current
-		}
+	u, ok = m.mapFunc(t)
+	if !ok {
+		m.stopped = true
+		return u, ok
 	}
+	return u, true
 }
 
-func Map[T, U any, It core.Iterator[T]](it It, mapFunc func(T) (U, bool)) *mappedIt[T, U, It] {
+func Map[T, U any, It core.Iterator[T]](it It, mapFunc mapFunc[T, U]) *mappedIt[T, U, It] {
 	m := &mappedIt[T, U, It]{iterator: it, mapFunc: mapFunc}
-	m.setCurrent()
 	return m
 }
 
 type flatMappedIt[T, U any, It1 core.Iterator[T], It2 core.Iterator[It1]] struct {
-	it2           It2
-	currentU      U
-	mapFunc       func(T) (U, bool)
-	it2Exhaustive bool
+	it2      It2
+	it1      It1
+	mapFunc  mapFunc[T, U]
+	it1Ready bool
+	stopped  bool
 }
 
-func (m *flatMappedIt[T, U, It1, It2]) setCurrent() {
-	if m.it2Exhaustive {
-		return
+func (m *flatMappedIt[T, U, It1, It2]) Next() (U, bool) {
+	var u U
+	var t T
+	if m.stopped {
+		return u, false
 	}
-	if m.it2.Exhausted() {
-		m.it2Exhaustive = true
-		return
-	}
-	it1 := m.it2.Current()
-	for it1.Exhausted() {
-		m.it2.Next()
-		if m.it2.Exhausted() {
-			m.it2Exhaustive = true
-			return
+
+	if !m.it1Ready {
+		var ok bool
+		var it1 It1
+		it1, ok = m.it2.Next()
+		if !ok {
+			m.stopped = true
+			return u, false
 		}
-		it1 = m.it2.Current()
+		m.it1Ready = true
+		m.it1 = it1
 	}
-	current, ok := m.mapFunc(it1.Current())
-	if !ok {
-		m.it2Exhaustive = true
-		return
+
+	for {
+		var ok bool
+		t, ok = m.it1.Next()
+		if ok {
+			u, ok = m.mapFunc(t)
+			if !ok {
+				m.stopped = true
+			}
+			return u, ok
+		}
+		m.it1, ok = m.it2.Next()
+		if !ok {
+			m.stopped = true
+			return u, false
+		}
 	}
-	m.currentU = current
+
 }
 
-func (m *flatMappedIt[T, U, It1, It2]) Current() U {
-	return m.currentU
-}
-func (m *flatMappedIt[T, U, It1, It2]) Exhausted() bool {
-	return m.it2Exhaustive
-}
-func (m *flatMappedIt[T, U, It1, It2]) Next() {
-	if m.it2Exhaustive {
-		return
-	}
-	it1 := m.it2.Current()
-	it1.Next()
-	m.setCurrent()
-}
-
-func FlatMap[T, U any, It1 core.Iterator[T], It2 core.Iterator[It1]](it It2, mapFunc func(T) (U, bool)) *flatMappedIt[T, U, It1, It2] {
-	m := &flatMappedIt[T, U, It1, It2]{it2: it, mapFunc: mapFunc}
-	m.setCurrent()
+func FlatMap[T, U any, It1 core.Iterator[T], It2 core.Iterator[It1]](it2 It2, mapFunc func(T) (U, bool)) *flatMappedIt[T, U, It1, It2] {
+	m := &flatMappedIt[T, U, It1, It2]{it2: it2, mapFunc: mapFunc}
 	return m
 }

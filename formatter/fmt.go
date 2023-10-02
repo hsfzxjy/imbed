@@ -96,13 +96,12 @@ func New[T any](fields []*Field[T], tmpl string, humanized bool) *Formatter[T] {
 
 func (f *Formatter[T]) ExecIter(out io.Writer, it core.Iterator[T]) error {
 	encoder := f.builder.build(out)
-	for !it.Exhausted() {
-		item := it.Current()
+
+	for item, ok := it.Next(); ok; item, ok = it.Next() {
 		err := encoder.encodeItem(item)
 		if err != nil {
 			return err
 		}
-		it.Next()
 	}
 	return encoder.finalize()
 }
