@@ -99,6 +99,8 @@ func (r anyReader) MapSize() (int, error) {
 	}
 }
 
+func (r anyReader) Error(e error) error { return e }
+
 func _() { var _ Reader = anyReader{} }
 
 func Any(value any) Reader { return anyReader{value} }

@@ -3,8 +3,11 @@ package app
 import (
 	"errors"
 	"fmt"
+	"net/url"
 	"path"
 	"sync"
+
+	"golang.org/x/net/http/httpproxy"
 
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
@@ -22,6 +25,9 @@ type App struct {
 
 	dbs    db.Service
 	dbOnce sync.Once
+
+	proxyConfig *httpproxy.Config
+	proxyOnce   sync.Once
 }
 
 func ParseAndRun(cmdArgs []string, specs Commands) error {
@@ -124,4 +130,11 @@ func (s *App) DB() db.Service {
 		s.dbs = dbs
 	})
 	return s.dbs
+}
+
+func (s *App) ProxyFunc() func(reqURL *url.URL) (*url.URL, error) {
+	s.proxyOnce.Do(func() {
+		s.proxyConfig = httpproxy.FromEnvironment()
+	})
+	return s.proxyConfig.ProxyFunc()
 }

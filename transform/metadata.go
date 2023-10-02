@@ -32,7 +32,7 @@ func (m *metadata[C, P]) parse(cs core.ConfigProvider, paramsR schema.Reader) (T
 	var paramsInstance P
 	err = m.paramsSchema.DecodeValue(paramsR, &paramsInstance)
 	if err != nil {
-		return nil, err
+		return nil, paramsR.Error(err)
 	}
 	applier, err := paramsInstance.BuildTransform(&cfgInstance)
 	if err != nil {

@@ -26,4 +26,5 @@ type Reader interface {
 	_AtomReader
 	_MapReader
 	_ListReader
+	Error(err error) error
 }

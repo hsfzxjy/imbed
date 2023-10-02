@@ -76,4 +76,8 @@ func (p Reader) IterField(f func(name string, r schema.Reader) error) error {
 	return nil
 }
 
+func (p Reader) Error(e error) error {
+	return p.Parser.Error(e)
+}
+
 func _() { var _ schema.Reader = Reader{} }

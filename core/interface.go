@@ -1,6 +1,8 @@
 package core
 
 import (
+	"net/url"
+
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 )
@@ -19,6 +21,7 @@ type App interface {
 	BuildMode() BuildMode
 
 	Config() ConfigProvider
+	ProxyFunc() func(reqURL *url.URL) (*url.URL, error)
 }
 
 type Mode int

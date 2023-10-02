@@ -47,4 +47,9 @@ func (Void) String() (string, error) {
 	panic("unimplemented")
 }
 
+// Error implements Reader.
+func (Void) Error(e error) error {
+	return e
+}
+
 var _ Reader = Void{}

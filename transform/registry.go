@@ -33,7 +33,7 @@ func (r Registry) Parse(cp core.ConfigProvider, input []string) (*Graph, error) 
 		}
 		t, err := m.parse(cp, reader)
 		if err != nil {
-			return nil, reader.Error(err)
+			return nil, err
 		}
 		transforms = append(transforms, t)
 		reader.Space()
