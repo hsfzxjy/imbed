@@ -28,7 +28,7 @@ func (h sha256hash) FmtHumanize() string {
 	if h.IsZero() {
 		return "<none>"
 	}
-	return hex.EncodeToString(AsRaw(h))[:7]
+	return hex.EncodeToString(AsRaw(h))[:HUMANIZED_WIDTH]
 }
 func (h sha256hash) FmtString() string {
 	if h.IsZero() {

@@ -6,6 +6,8 @@ import (
 	"unsafe"
 )
 
+const HUMANIZED_WIDTH = 12
+
 type Ref interface {
 	comparable
 	getInternalString() string

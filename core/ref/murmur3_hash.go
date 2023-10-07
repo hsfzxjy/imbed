@@ -27,7 +27,7 @@ func (h Murmur3Hash) Humanize() string {
 }
 
 func (h Murmur3Hash) FmtHumanize() string {
-	return hex.EncodeToString(h.Bytes())[:7]
+	return hex.EncodeToString(h.Bytes())[:HUMANIZED_WIDTH]
 }
 
 func (h Murmur3Hash) FmtString() string {
