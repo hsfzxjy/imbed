@@ -71,7 +71,9 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 	}
 
 	return app.DB().RunR(func(ctx db.Context) error {
-		it, err := query.RunR(ctx)
+		it, err := query.
+			TransformR(assetq.SortByNewest).
+			RunR(ctx)
 		if err != nil {
 			return err
 		}

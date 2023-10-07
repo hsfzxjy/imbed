@@ -40,6 +40,7 @@ func Open(app core.App) (Service, error) {
 			h.BucketOrCreate(bucketnames.INDEX_URL)
 			h.BucketOrCreate(bucketnames.INDEX_CONFIG_HASHES)
 			h.BucketOrCreate(bucketnames.INDEX_TRANSSEQ)
+			h.BucketOrCreate(bucketnames.INDEX_TIME)
 			h.BucketOrCreate(bucketnames.CONFIGS)
 			return h.Err()
 		})

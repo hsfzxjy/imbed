@@ -97,8 +97,8 @@ func New[T any](fields []*Field[T], tmpl string, humanized bool) *Formatter[T] {
 func (f *Formatter[T]) ExecIter(out io.Writer, it core.Iterator[T]) error {
 	encoder := f.builder.build(out)
 
-	for item, ok := it.Next(); ok; item, ok = it.Next() {
-		err := encoder.encodeItem(item)
+	for it.HasNext() {
+		err := encoder.encodeItem(it.Next())
 		if err != nil {
 			return err
 		}

@@ -43,3 +43,27 @@ func (r Runnable[T]) RunRW(ctx Context) (result T, err error) {
 	})
 	return
 }
+
+func (r Runnable[T]) Pipe(transformer func(Runnable[T]) Runnable[T]) Runnable[T] {
+	return transformer(r)
+}
+
+func (r Runnable[T]) TransformR(f func(T) T) Runnable[T] {
+	return R(func(h H) (T, error) {
+		t, err := r.RunR(h)
+		if err != nil {
+			return t, err
+		}
+		return f(t), nil
+	})
+}
+
+func (r Runnable[T]) TransformRW(f func(T) T) Runnable[T] {
+	return R(func(h H) (T, error) {
+		t, err := r.RunRW(h)
+		if err != nil {
+			return t, err
+		}
+		return f(t), nil
+	})
+}

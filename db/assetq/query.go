@@ -93,3 +93,9 @@ func All() Query {
 		}), nil
 	})
 }
+
+func SortByNewest(it Iterator) Iterator {
+	return iter.Sorted(it, func(a1, a2 *asset.AssetModel) int {
+		return a1.Created.CompareDesc(a2.Created)
+	})
+}

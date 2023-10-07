@@ -7,7 +7,7 @@ import (
 
 var FmtFields = []*formatter.Field[Asset]{
 	{
-		Name:   "Oid",
+		Name:   "oid",
 		Header: "OID",
 		Show:   true,
 		Getter: func(a Asset) any {
@@ -15,7 +15,7 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
-		Name:   "OriginId",
+		Name:   "originId",
 		Header: "ORIGIN",
 		Show:   true,
 		Getter: func(a Asset) any {
@@ -23,7 +23,7 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
-		Name:   "Name",
+		Name:   "name",
 		Header: "NAME",
 		Show:   true,
 		Getter: func(a Asset) any {
@@ -31,7 +31,7 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
-		Name:   "Url",
+		Name:   "url",
 		Header: "URL",
 		Show:   true,
 		Getter: func(a Asset) any {
@@ -43,7 +43,7 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
-		Name:   "FHash",
+		Name:   "fhash",
 		Header: "FHASH",
 		Show:   true,
 		Getter: func(a Asset) any {
@@ -51,7 +51,15 @@ var FmtFields = []*formatter.Field[Asset]{
 		},
 	},
 	{
-		Name:   "Size",
+		Name:   "created",
+		Header: "CREATED",
+		Show:   true,
+		Getter: func(a Asset) any {
+			return a.(*asset).model.Created
+		},
+	},
+	{
+		Name:   "size",
 		Header: "SIZE",
 		Show:   true,
 		Getter: func(a Asset) any {

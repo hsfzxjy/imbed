@@ -25,6 +25,11 @@ func encodeAsset(w *msgp.Writer, a *AssetModel) error {
 		}
 	}
 
+	err = w.WriteBytes(ref.AsRaw(a.Created))
+	if err != nil {
+		return err
+	}
+
 	err = w.WriteBytes(a.TransSeqRaw)
 	if err != nil {
 		return err
@@ -66,6 +71,12 @@ func decodeAsset(b []byte) (*AssetModel, error) {
 	}
 
 	bs, err := r.ReadBytes(nil)
+	if err != nil {
+		return nil, err
+	}
+	model.Created = ref.FromRaw[ref.Time](bs)
+
+	bs, err = r.ReadBytes(nil)
 	if err != nil {
 		return nil, err
 	}

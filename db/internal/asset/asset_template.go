@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"time"
+
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
@@ -23,6 +25,7 @@ type AssetTemplate struct {
 func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 	model := &AssetModel{
 		OriginOID:   t.getOriginOID(),
+		Created:     ref.NewTime(time.Now()),
 		TransSeqRaw: t.TransSeq.Raw,
 		FID:         t.FID,
 		Url:         t.Url,
@@ -50,6 +53,10 @@ func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 				UpdateLeaf(ref.AsRaw(oid), []byte{1})
 		}
 	}
+
+	h.Bucket(bucketnames.INDEX_TIME).
+		BucketOrCreate(ref.AsRaw(model.Created)).
+		UpdateLeaf(ref.AsRaw(oid), []byte{1})
 
 	if !model.FID.IsZero() {
 		h.Bucket(bucketnames.INDEX_FID).

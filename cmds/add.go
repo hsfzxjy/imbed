@@ -9,6 +9,7 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/formatter"
 	"github.com/hsfzxjy/imbed/transform"
+	"github.com/hsfzxjy/imbed/util/iter"
 )
 
 type AddCommand struct {
@@ -46,7 +47,7 @@ func (c AddCommand) Run(app *app.App, command app.CommandSpec) error {
 		return err
 	}
 	fmter := formatter.New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw)
-	err = fmter.Exec(os.Stdout, assets)
+	err = fmter.ExecIter(os.Stdout, iter.Slice(assets...))
 	if err != nil {
 		return err
 	}

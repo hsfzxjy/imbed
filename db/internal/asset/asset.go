@@ -11,6 +11,7 @@ type AssetModel struct {
 	OID       ref.OID
 	OriginOID ref.OID
 
+	Created     ref.Time
 	TransSeqRaw []byte
 	FID         ref.FID
 	Url         string
