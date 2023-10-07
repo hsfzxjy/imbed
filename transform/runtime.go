@@ -114,9 +114,9 @@ func (c *assetCache) Lookup(a asset.Asset, transform Transform) (asset.Asset, er
 	if err != nil {
 		return nil, err
 	}
-	model, ok := it.Next()
-	if !ok {
+	if !it.HasNext() {
 		return nil, nil
 	}
+	model := it.Next()
 	return asset.FromDBModel(c.app, model), nil
 }

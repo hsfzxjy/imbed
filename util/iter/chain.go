@@ -6,16 +6,21 @@ type chainedIt[T any] struct {
 	its []core.Iterator[T]
 }
 
-func (c *chainedIt[T]) Next() (t T, ok bool) {
+func (c *chainedIt[T]) HasNext() bool {
 	for len(c.its) > 0 {
-		it := c.its[0]
-		t, ok = it.Next()
-		if ok {
-			return t, true
+		if c.its[0].HasNext() {
+			return true
 		}
 		c.its = c.its[1:]
 	}
-	return t, false
+	return false
+}
+
+func (c *chainedIt[T]) Next() (t T) {
+	if !c.HasNext() {
+		return
+	}
+	return c.its[0].Next()
 }
 
 func Chain[T any](its ...core.Iterator[T]) *chainedIt[T] {

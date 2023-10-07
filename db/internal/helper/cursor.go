@@ -6,10 +6,9 @@ import (
 )
 
 type Cursor struct {
-	first        util.KV
-	cursor       *bbolt.Cursor
-	stopped      bool
-	firstEmitted bool
+	current util.KV
+	cursor  *bbolt.Cursor
+	stopped bool
 }
 
 func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
@@ -23,25 +22,26 @@ func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
 		return nil
 	}
 	return &Cursor{
-		first:        util.KV{K: k, V: v},
-		cursor:       cursor,
-		stopped:      false,
-		firstEmitted: false,
+		current: util.KV{K: k, V: v},
+		cursor:  cursor,
+		stopped: false,
 	}
 }
 
-func (c *Cursor) Next() (util.KV, bool) {
-	if c == nil || c.stopped {
-		return util.KV{}, false
+func (c *Cursor) HasNext() bool {
+	return c != nil && !c.stopped
+}
+
+func (c *Cursor) Next() (result util.KV) {
+	if !c.HasNext() {
+		return
 	}
-	if !c.firstEmitted {
-		c.firstEmitted = true
-		return c.first, true
-	}
+	result = c.current
 	k, v := c.cursor.Next()
 	if k == nil {
 		c.stopped = true
-		return util.KV{}, false
+	} else {
+		c.current = util.KV{K: k, V: v}
 	}
-	return util.KV{K: k, V: v}, true
+	return result
 }

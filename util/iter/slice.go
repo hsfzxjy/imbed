@@ -6,13 +6,15 @@ type sliceIt[T any] struct {
 	slice []T
 }
 
-func (i *sliceIt[T]) Next() (t T, ok bool) {
-	if len(i.slice) > 0 {
+func (i *sliceIt[T]) HasNext() bool { return len(i.slice) > 0 }
+
+func (i *sliceIt[T]) Next() (t T) {
+	if i.HasNext() {
 		result := i.slice[0]
 		i.slice = i.slice[1:]
-		return result, true
+		return result
 	}
-	return t, false
+	return t
 }
 
 func (i *sliceIt[T]) Chain(its ...core.Iterator[T]) *chainedIt[T] {
