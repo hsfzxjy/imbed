@@ -3,7 +3,7 @@ package content
 import (
 	"strconv"
 
-	"github.com/hsfzxjy/imbed/util"
+	"github.com/docker/go-units"
 )
 
 type Size int64
@@ -12,7 +12,7 @@ func (s Size) FmtHumanize() string {
 	if s < 0 {
 		return "<unknown>"
 	}
-	return util.HumanizeBytes(uint64(s))
+	return units.HumanSize(float64(s))
 }
 
 func (s Size) FmtString() string {
