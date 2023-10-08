@@ -38,6 +38,10 @@ func (w schemaErrorWrapper) Error() string {
 	return b.String()
 }
 
+func (w schemaErrorWrapper) Unwrap() error {
+	return w.e.err
+}
+
 func (e *schemaError) Unwrap() error { return e.err }
 func (e *schemaError) AppendPath(part string) *schemaError {
 	if e == nil {

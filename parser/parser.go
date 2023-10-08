@@ -238,8 +238,9 @@ func (p *Parser) EOF() bool {
 }
 
 func (p *Parser) Error(err error) error {
-	if e, ok := err.(*parserError); ok {
-		return e
+	var perr *parserError
+	if errors.As(err, &perr) {
+		return err
 	}
 	return &parserError{p, err}
 }
