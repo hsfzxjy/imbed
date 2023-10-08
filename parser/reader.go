@@ -42,7 +42,7 @@ func (p Reader) Int64() (int64, error) {
 }
 
 func (p Reader) String() (string, error) {
-	v, ok := p.Parser.String()
+	v, ok := p.Parser.String(",:=")
 	var err error
 	if !ok {
 		err = p.Expect(`string literal`)
@@ -53,6 +53,7 @@ func (p Reader) String() (string, error) {
 func (p Reader) IterField(f func(name string, r schema.Reader) error) error {
 	const FIELD_SEP = ':'
 	const KV_SEP = '='
+	const BOUNDARY = ','
 	for {
 		p.Parser.Space()
 		field_name, ok := p.Parser.Ident()
@@ -69,7 +70,9 @@ func (p Reader) IterField(f func(name string, r schema.Reader) error) error {
 			return err
 		}
 		p.Parser.Space()
-		if ok = p.Parser.Byte(FIELD_SEP); !ok {
+		p.Parser.Byte(FIELD_SEP)
+		p.Parser.Space()
+		if p.EOF() || p.PeekByte() == BOUNDARY {
 			break
 		}
 	}

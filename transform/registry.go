@@ -23,6 +23,7 @@ func (r Registry) Parse(cp core.ConfigProvider, input []string) (*Graph, error) 
 	reader := parser.NewReader(input)
 	var transforms []Transform
 	for !reader.EOF() {
+		reader.Space()
 		name, ok := reader.Ident()
 		if !ok {
 			return nil, reader.Expect("transform name")

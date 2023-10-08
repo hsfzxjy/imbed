@@ -1,41 +1,43 @@
 package parser
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 type Parser struct {
-	buf  []string
-	i, j int
+	buf string
+	i   int
 }
 
 func New(input []string) *Parser {
-	return &Parser{input, 0, 0}
+	buf := strings.Join(input, " ")
+	return &Parser{buf, 0}
 }
 func NewString(input string) *Parser {
-	return &Parser{[]string{input}, 0, 0}
+	return &Parser{input, 0}
 }
 
 func (p *Parser) advance(off int) {
-	p.j += off
-	for p.i < len(p.buf) {
-		s := p.buf[p.i]
-		if p.j >= len(s) {
-			p.j = 0
-			p.i++
-		} else {
-			return
-		}
-	}
+	p.i = min(p.i+off, len(p.buf))
 }
 
 func (p *Parser) current() string {
 	if p.i >= len(p.buf) {
 		return ""
 	}
-	return p.buf[p.i][p.j:]
+	return p.buf[p.i:]
+}
+
+func (p *Parser) PeekByte() byte {
+	if p.EOF() {
+		return 0
+	}
+	return p.buf[p.i]
 }
 
 func (p *Parser) Byte(b byte) (ok bool) {
@@ -69,7 +71,6 @@ func (p *Parser) AnyByte(charset string) (matched byte, ok bool) {
 			p.advance(1)
 			matched, ok = b, true
 		}
-
 	}
 	return
 }
@@ -79,21 +80,19 @@ func (p *Parser) Space() {
 		return
 	}
 	buf := p.buf
-	i, j := p.i, p.j
+	i := p.i
 LOOP:
 	for i < len(buf) {
-		s := buf[i]
-		for j < len(s) {
-			switch s[j] {
-			case ' ', '\t':
-				j++
-			default:
-				break LOOP
-			}
+		r, size := utf8.DecodeRuneInString(buf[i:])
+		switch {
+		case r == utf8.RuneError:
+			break LOOP
+		case !unicode.IsSpace(r):
+			break LOOP
 		}
-		i++
+		i += size
 	}
-	p.i, p.j = i, j
+	p.i = i
 }
 
 func (p *Parser) Int64() (value int64, ok bool) {
@@ -151,10 +150,10 @@ func (p *Parser) Ident() (value string, ok bool) {
 		return
 	}
 	s := p.current()
-	var end int
+	var off int
 LOOP:
-	for end = 0; end < len(s); end++ {
-		switch b := s[end]; {
+	for off = 0; off < len(s); off++ {
+		switch b := s[off]; {
 		case b == '_' || b == '.':
 		case 'a' <= b && b <= 'z':
 		case 'A' <= b && b <= 'Z':
@@ -164,42 +163,101 @@ LOOP:
 		}
 	}
 
-	if end == 0 {
+	if off == 0 {
 		return
 	}
 
-	value, ok = s[:end], true
-	p.advance(end)
+	value, ok = s[:off], true
+	p.advance(off)
 	return
 }
 
-func (p *Parser) String() (value string, ok bool) {
+// String matches unquoted string, quoted string and bracket string at
+// the beginning.
+// Unquoted string stops when encountering white spaces or any rune
+// in stopRunes.
+func (p *Parser) String(stopRunes string) (value string, ok bool) {
 	if p == nil {
 		return
 	}
 	s := p.current()
-	var end int
-LOOP:
-	for end = 0; end < len(s); end++ {
-		switch s[end] {
-		case '_', '.', '-':
-			continue LOOP
-		}
-		switch b := s[end]; {
-		case 'a' <= b && b <= 'z':
-		case 'A' <= b && b <= 'Z':
-		case '0' <= b && b <= '9':
-		default:
-			break LOOP
-		}
-	}
-
-	if end == 0 {
+	if len(s) == 0 {
 		return
 	}
+	switch s[0] {
+	case '[':
+		p.advance(1)
+		return p.quotedString(']')
+	case '"':
+		p.advance(1)
+		return p.quotedString('"')
+	case '\'':
+		p.advance(1)
+		return p.quotedString('\'')
+	default:
+		return p.unquotedString(stopRunes)
+	}
+}
 
-	value, ok = s[:end], true
-	p.advance(end)
+func (p *Parser) quotedString(closing rune) (value string, ok bool) {
+	s := p.current()
+	var (
+		off      int
+		escaping bool
+		closed   bool
+		b        strings.Builder
+	)
+LOOP:
+	for off < len(s) {
+		r, size := utf8.DecodeRuneInString(s[off:])
+		if escaping {
+			b.WriteRune(r)
+			off += size
+		} else {
+			switch r {
+			case '\\':
+				escaping = true
+			case closing:
+				off += size
+				closed = true
+				break LOOP
+			default:
+				b.WriteRune(r)
+				off += size
+			}
+		}
+	}
+	if !closed {
+		return
+	}
+	value, ok = b.String(), true
+	p.advance(off)
+	return
+}
+
+func (p *Parser) unquotedString(stopRunes string) (value string, ok bool) {
+	s := p.current()
+	var off int
+LOOP:
+	for off < len(s) {
+		r, size := utf8.DecodeRuneInString(s[off:])
+		switch {
+		case r == utf8.RuneError:
+			break LOOP
+		case unicode.IsSpace(r):
+			break LOOP
+		case strings.ContainsRune(stopRunes, r):
+			break LOOP
+		default:
+			off += size
+		}
+	}
+
+	if off == 0 {
+		return
+	}
+	value, ok = s[:off], true
+	p.advance(off)
 	return
 }
 
@@ -219,18 +277,9 @@ func (p *Parser) Bool() (value, ok bool) {
 }
 
 func (p *Parser) Rest() string {
-	var b strings.Builder
-	i, j := p.i, p.j
-	buf := p.buf
-	for ; i < len(buf); i++ {
-		b.WriteString(buf[i][j:])
-		j = 0
-		if i < len(buf)-1 {
-			b.WriteByte(' ')
-		}
-	}
-	p.i, p.j = i, j
-	return b.String()
+	result := p.current()
+	p.i = len(p.buf)
+	return result
 }
 
 func (p *Parser) EOF() bool {
@@ -259,15 +308,7 @@ func (e *parserError) Error() string {
 	if p == nil {
 		return e.error.Error()
 	}
-	text := strings.Join(p.buf, " ")
-	var pos int
-	for k := 0; k < p.i; k++ {
-		pos += len(p.buf[k]) + 1
-	}
-	if p.j > 0 {
-		pos += p.j + 1
-	}
-	return fmt.Sprintf("%s\n\t%s\n\t% *s", e.error.Error(), text, pos, "^")
+	return fmt.Sprintf("%s\n\t%s\n\t% *s", e.error.Error(), p.buf, p.i+1, "^")
 }
 
 func (e *parserError) Unwrap() error { return e.error }
