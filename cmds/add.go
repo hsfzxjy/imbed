@@ -1,15 +1,15 @@
 package cmds
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/formatter"
+	"github.com/hsfzxjy/imbed/lang"
+	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/transform"
-	"github.com/hsfzxjy/imbed/util/iter"
 )
 
 type AddCommand struct {
@@ -28,26 +28,13 @@ func (AddCommand) Spec() app.CommandSpec {
 }
 
 func (c AddCommand) Run(app *app.App, command app.CommandSpec) error {
-	flagSet := command.FlagSet
-	if flagSet.NArg() < 1 {
-		return fmt.Errorf("no arguments")
-	}
-	initialAsset := asset.LoadFile(flagSet.Arg(0))
-	graph, err := transform.DefaultRegistry().
-		Parse(app.Config(), flagSet.Args()[1:])
-	if err != nil {
-		return err
-	}
-	assets, err := graph.Compute(app, initialAsset)
-	if err != nil {
-		return err
-	}
-	err = asset.SaveAll(app.DB(), app, assets)
+	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
+	assets, err := langCtx.ParseRun_AddBody()
 	if err != nil {
 		return err
 	}
 	fmter := formatter.New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw)
-	err = fmter.ExecIter(os.Stdout, iter.Slice(assets...))
+	err = fmter.Exec(os.Stdout, assets)
 	if err != nil {
 		return err
 	}
