@@ -10,7 +10,6 @@ import (
 	"golang.org/x/net/http/httpproxy"
 
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/schema"
 	schemareader "github.com/hsfzxjy/imbed/schema/reader"
@@ -111,15 +110,9 @@ func (s *App) ProvideWorkspaceConfig(key string) (schema.Reader, error) {
 	return schemareader.Any(cfg), nil
 }
 
-func (s *App) ProvideStockConfig(ref.Sha256Hash) ([]byte, error) {
-	panic("TODO")
-}
-
 func (s *App) BuildMode() core.BuildMode {
 	panic("TODO")
 }
-
-func (s *App) Config() core.ConfigProvider { return s }
 
 func (s *App) DB() db.Service {
 	s.dbOnce.Do(func() {

@@ -46,7 +46,7 @@ func (m *metadata[C, P]) decodeMsg(cs core.ConfigProvider, paramsR *msgp.Reader)
 	if err != nil {
 		return nil, err
 	}
-	cfgEncoded, err := cs.ProvideStockConfig(cfgHash)
+	cfgEncoded, err := cs.ProvideStockConfig(core.StringFull(ref.AsRawString(cfgHash)))
 	if err != nil {
 		return nil, err
 	}

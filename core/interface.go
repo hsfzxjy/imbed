@@ -3,13 +3,12 @@ package core
 import (
 	"net/url"
 
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 )
 
 type ConfigProvider interface {
 	ProvideWorkspaceConfig(key string) (schema.Reader, error)
-	ProvideStockConfig(ref.Sha256Hash) ([]byte, error)
+	ProvideStockConfig(Needle) ([]byte, error)
 }
 
 type App interface {
@@ -20,7 +19,7 @@ type App interface {
 	Mode() Mode
 	BuildMode() BuildMode
 
-	Config() ConfigProvider
+	ProvideWorkspaceConfig(key string) (schema.Reader, error)
 	ProxyFunc() func(reqURL *url.URL) (*url.URL, error)
 }
 
