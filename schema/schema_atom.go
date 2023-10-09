@@ -13,6 +13,7 @@ type _AtomVTable[T any] struct {
 	decodeMsgFunc   func(r *msgp.Reader) (T, error)
 	decodeValueFunc func(r Reader) (T, error)
 	encodeMsgFunc   func(w *msgp.Writer, value T) error
+	visitFunc       func(v Visitor, value T) error
 }
 
 type _Atom[T any] struct {
@@ -48,6 +49,10 @@ func (s *_Atom[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
 	return newError(s.encodeMsgFunc(w, (*(*T)(source))))
 }
 
+func (s *_Atom[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
+	return newError(s.visitFunc(v, (*(*T)(source))))
+}
+
 func (s *_Atom[T]) setDefault(target unsafe.Pointer) *schemaError {
 	if !s.def.IsValid {
 		return newError(ErrRequired)
@@ -70,6 +75,7 @@ var _VTableInt = &_AtomVTable[int64]{
 	decodeMsgFunc:   (*msgp.Reader).ReadInt64,
 	decodeValueFunc: (Reader).Int64,
 	encodeMsgFunc:   (*msgp.Writer).WriteInt64,
+	visitFunc:       Visitor.VisitInt64,
 }
 
 func new_Int(def optional[int64]) *_Int { return &_Int{def, _VTableInt} }
@@ -81,6 +87,7 @@ var _VTableString = &_AtomVTable[string]{
 	decodeMsgFunc:   (*msgp.Reader).ReadString,
 	decodeValueFunc: (Reader).String,
 	encodeMsgFunc:   (*msgp.Writer).WriteString,
+	visitFunc:       Visitor.VisitString,
 }
 
 func new_String(def optional[string]) *_String { return &_String{def, _VTableString} }
@@ -92,6 +99,7 @@ var _VTableBool = &_AtomVTable[bool]{
 	decodeMsgFunc:   (*msgp.Reader).ReadBool,
 	decodeValueFunc: (Reader).Bool,
 	encodeMsgFunc:   (*msgp.Writer).WriteBool,
+	visitFunc:       Visitor.VisitBool,
 }
 
 func new_Bool(def optional[bool]) *_Bool { return &_Bool{def, _VTableBool} }
@@ -103,6 +111,7 @@ var _VTableFloat = &_AtomVTable[float64]{
 	decodeMsgFunc:   (*msgp.Reader).ReadFloat64,
 	decodeValueFunc: (Reader).Float64,
 	encodeMsgFunc:   (*msgp.Writer).WriteFloat64,
+	visitFunc:       Visitor.VisitFloat64,
 }
 
 func new_Float(def optional[float64]) *_Float { return &_Float{def, _VTableFloat} }

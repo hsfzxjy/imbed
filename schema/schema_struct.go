@@ -74,6 +74,31 @@ func (s *_Struct[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaErr
 	return nil
 }
 
+func (s *_Struct[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
+	sv, ev, err := v.VisitStruct(len(s.fields))
+	if err != nil {
+		return newError(err).AppendPath(s.name)
+	}
+	if err := sv.VisitStructBegin(len(s.fields)); err != nil {
+		return newError(err).AppendPath(s.name)
+	}
+	for _, f := range s.fields {
+		if err := sv.VisitStructFieldBegin(f.name); err != nil {
+			return newError(err).AppendPath(f.name).AppendPath(s.name)
+		}
+		if err := f.elemSchema.visit(ev, source); err != nil {
+			return err.AppendPath(s.name)
+		}
+		if err := sv.VisitStructFieldEnd(f.name); err != nil {
+			return newError(err).AppendPath(f.name).AppendPath(s.name)
+		}
+	}
+	if err := sv.VisitStructEnd(len(s.fields)); err != nil {
+		return newError(err).AppendPath(s.name)
+	}
+	return nil
+}
+
 func (s *_Struct[T]) setDefault(target unsafe.Pointer) *schemaError {
 	for _, f := range s.fields {
 		err := f.setDefault(target)

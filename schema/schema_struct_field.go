@@ -35,6 +35,12 @@ func (s *_StructField) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaE
 		AppendPath(s.name)
 }
 
+func (s *_StructField) visit(v Visitor, source unsafe.Pointer) *schemaError {
+	return s.elemSchema.
+		visit(v, unsafe.Add(source, s.offset)).
+		AppendPath(s.name)
+}
+
 func (s *_StructField) setDefault(target unsafe.Pointer) *schemaError {
 	return s.elemSchema.
 		setDefault(unsafe.Add(target, s.offset)).

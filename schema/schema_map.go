@@ -78,6 +78,37 @@ func (s *_Map[V]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError 
 	return nil
 }
 
+func (s *_Map[V]) visit(v Visitor, source unsafe.Pointer) *schemaError {
+	value := *(*map[string]V)(source)
+	mv, ev, err := v.VisitMap(len(value))
+	if err != nil {
+		return newError(err)
+	}
+	if err := mv.VisitMapBegin(len(value)); err != nil {
+		return newError(err)
+	}
+	for k, v := range value {
+		err := mv.VisitMapItemBegin(k)
+		if err != nil {
+			return newError(err).AppendPath(k)
+		}
+		{
+			err := s.valueSchema.visit(ev, unsafe.Pointer(&v))
+			if err != nil {
+				return err.AppendPath(k)
+			}
+		}
+		err = mv.VisitMapItemEnd(k)
+		if err != nil {
+			return newError(err).AppendPath(k)
+		}
+	}
+	if err := mv.VisitMapEnd(len(value)); err != nil {
+		return newError(err)
+	}
+	return nil
+}
+
 func (s *_Map[V]) setDefault(target unsafe.Pointer) *schemaError {
 	if s.def == nil {
 		return newError(ErrRequired)

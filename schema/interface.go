@@ -23,6 +23,7 @@ type genericSchema interface {
 	decodeValue(r Reader, target unsafe.Pointer) *schemaError
 	decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError
 	encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
+	visit(v Visitor, source unsafe.Pointer) *schemaError
 	setDefault(target unsafe.Pointer) *schemaError
 	writeTypeInfo(w io.Writer) error
 }

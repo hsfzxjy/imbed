@@ -65,6 +65,32 @@ func (s *_List[E]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
 	return nil
 }
 
+func (s *_List[E]) visit(v Visitor, source unsafe.Pointer) *schemaError {
+	value := *(*[]E)(source)
+	lv, ev, err := v.VisitList(len(value))
+	if err != nil {
+		return newError(err)
+	}
+	if err := lv.VisitListBegin(len(value)); err != nil {
+		return newError(err)
+	}
+	for i := 0; i < len(value); i++ {
+		if err := lv.VisitListItemBegin(i); err != nil {
+			return newError(err).AppendIndex(i)
+		}
+		if err := s.elemSchema.visit(ev, unsafe.Pointer(&value[i])); err != nil {
+			return err.AppendIndex(i)
+		}
+		if err := lv.VisitListItemEnd(i); err != nil {
+			return newError(err).AppendIndex(i)
+		}
+	}
+	if err := lv.VisitListEnd(len(value)); err != nil {
+		return newError(err)
+	}
+	return nil
+}
+
 func (s *_List[E]) setDefault(target unsafe.Pointer) *schemaError {
 	if s.def == nil {
 		return newError(ErrRequired)
