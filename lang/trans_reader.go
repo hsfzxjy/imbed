@@ -1,20 +1,17 @@
-package parser
+package lang
 
 import (
+	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/schema"
 	schemareader "github.com/hsfzxjy/imbed/schema/reader"
 )
 
-type Reader struct {
-	*Parser
+type transReader struct {
+	*parser.Parser
 	schemareader.Void
 }
 
-func NewReader(input []string) Reader {
-	return Reader{Parser: New(input)}
-}
-
-func (p Reader) Bool() (bool, error) {
+func (p transReader) Bool() (bool, error) {
 	v, ok := p.Parser.Bool()
 	var err error
 	if !ok {
@@ -23,7 +20,7 @@ func (p Reader) Bool() (bool, error) {
 	return v, err
 }
 
-func (p Reader) Float64() (float64, error) {
+func (p transReader) Float64() (float64, error) {
 	v, ok := p.Parser.Float64()
 	var err error
 	if !ok {
@@ -32,7 +29,7 @@ func (p Reader) Float64() (float64, error) {
 	return v, err
 }
 
-func (p Reader) Int64() (int64, error) {
+func (p transReader) Int64() (int64, error) {
 	v, ok := p.Parser.Int64()
 	var err error
 	if !ok {
@@ -41,7 +38,7 @@ func (p Reader) Int64() (int64, error) {
 	return v, err
 }
 
-func (p Reader) String() (string, error) {
+func (p transReader) String() (string, error) {
 	v, ok := p.Parser.String(",:=")
 	var err error
 	if !ok {
@@ -50,7 +47,7 @@ func (p Reader) String() (string, error) {
 	return v, err
 }
 
-func (p Reader) IterField(f func(name string, r schema.Reader) error) error {
+func (p transReader) IterField(f func(name string, r schema.Reader) error) error {
 	const FIELD_SEP = ':'
 	const KV_SEP = '='
 	const BOUNDARY = ','
@@ -79,8 +76,8 @@ func (p Reader) IterField(f func(name string, r schema.Reader) error) error {
 	return nil
 }
 
-func (p Reader) Error(e error) error {
+func (p transReader) Error(e error) error {
 	return p.Parser.Error(e)
 }
 
-func _() { var _ schema.Reader = Reader{} }
+func _() { var _ schema.Reader = transReader{} }
