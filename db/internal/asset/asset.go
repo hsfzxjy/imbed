@@ -18,6 +18,10 @@ type AssetModel struct {
 	ExtData     []byte
 }
 
+func (a *AssetModel) CompareCreated(other *AssetModel) int {
+	return a.Created.Compare(other.Created)
+}
+
 func NewFromLeaf(n helper.LeafNode) (*AssetModel, error) {
 	a, err := decodeAsset(n.Data())
 	if err != nil {
