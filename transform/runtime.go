@@ -35,11 +35,16 @@ func (n *node) Apply(cache *assetCache, a asset.Asset, ret *[]asset.Asset) error
 	if len(n.Children) == 0 {
 		*ret = append(*ret, a)
 	} else {
-		for _, c := range n.Children {
-			err := c.Apply(cache, a, ret)
-			if err != nil {
-				return err
-			}
+		return n.ApplyChildren(cache, a, ret)
+	}
+	return nil
+}
+
+func (n *node) ApplyChildren(cache *assetCache, a asset.Asset, ret *[]asset.Asset) error {
+	for _, c := range n.Children {
+		err := c.Apply(cache, a, ret)
+		if err != nil {
+			return err
 		}
 	}
 	return nil
@@ -84,12 +89,10 @@ func BuildGraph(transforms []Transform) *Graph {
 	return &Graph{root}
 }
 
-func (g *Graph) Compute(app db.App, initial asset.Asset) ([]asset.Asset, error) {
+func (g *Graph) Compute(h db.Context, app db.App, initial asset.Asset) ([]asset.Asset, error) {
 	var results []asset.Asset
-	err := app.DB().RunR(func(ctx db.Context) error {
-		cache := &assetCache{ctx, app}
-		return g.root.Apply(cache, initial, &results)
-	})
+	cache := &assetCache{h, app}
+	err := g.root.ApplyChildren(cache, initial, &results)
 	if err != nil {
 		return nil, err
 	}
