@@ -9,7 +9,6 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
 	"github.com/hsfzxjy/imbed/db/internal/helper"
-	dbq "github.com/hsfzxjy/imbed/db/query"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
@@ -17,7 +16,7 @@ import (
 type Iterator = core.Iterator[*asset.AssetModel]
 type Query = internal.Runnable[Iterator]
 
-func simpleQuery(indexName []byte, needle dbq.Needle) Query {
+func simpleQuery(indexName []byte, needle core.Needle) Query {
 	return func(h internal.H) (Iterator, error) {
 		index := h.Bucket(indexName)
 		cursor, err := index.Cursor(needle.Bytes())
@@ -45,19 +44,19 @@ func simpleQuery(indexName []byte, needle dbq.Needle) Query {
 	}
 }
 
-func ByFID(needle dbq.Needle) Query {
+func ByFID(needle core.Needle) Query {
 	return simpleQuery(bucketnames.INDEX_FID, needle)
 }
 
-func ByFHash(needle dbq.Needle) Query {
+func ByFHash(needle core.Needle) Query {
 	return simpleQuery(bucketnames.INDEX_FHASH, needle)
 }
 
-func ByUrl(needle dbq.Needle) Query {
+func ByUrl(needle core.Needle) Query {
 	return simpleQuery(bucketnames.INDEX_URL, needle)
 }
 
-func ByOid(needle dbq.Needle) Query {
+func ByOid(needle core.Needle) Query {
 	return func(h internal.H) (Iterator, error) {
 		cursor, err := h.Bucket(bucketnames.FILES).Cursor(needle.Bytes())
 		if err != nil {

@@ -1,4 +1,4 @@
-package dbq
+package core
 
 import (
 	"bytes"
