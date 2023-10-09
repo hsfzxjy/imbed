@@ -12,7 +12,7 @@ type Params[C any] interface {
 }
 
 type genericMetadata interface {
-	parse(cp core.ConfigProvider, paramsR schema.Reader) (Transform, error)
+	Parse(cp core.ConfigProvider, paramsR schema.Reader) (Transform, error)
 	decodeMsg(cp core.ConfigProvider, paramsR *msgp.Reader) (Transform, error)
 }
 

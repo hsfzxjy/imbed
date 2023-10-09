@@ -49,7 +49,7 @@ type Graph struct {
 	root *node
 }
 
-func buildGraph(transforms []Transform) *Graph {
+func BuildGraph(transforms []Transform) *Graph {
 	var parent, root *node
 	root = &node{}
 	parent = root
@@ -118,5 +118,5 @@ func (c *assetCache) Lookup(a asset.Asset, transform Transform) (asset.Asset, er
 		return nil, nil
 	}
 	model := it.Next()
-	return asset.FromDBModel(c.app, model), nil
+	return asset.FromDBModel(c.app, model)(nil)
 }

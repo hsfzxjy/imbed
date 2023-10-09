@@ -19,7 +19,7 @@ type metadata[C any, P Params[C]] struct {
 	kind Kind
 }
 
-func (m *metadata[C, P]) parse(cs core.ConfigProvider, paramsR schema.Reader) (Transform, error) {
+func (m *metadata[C, P]) Parse(cs core.ConfigProvider, paramsR schema.Reader) (Transform, error) {
 	cfgR, err := cs.ProvideWorkspaceConfig(m.name)
 	if err != nil {
 		return nil, err
