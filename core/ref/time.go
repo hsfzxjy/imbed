@@ -47,7 +47,7 @@ func (t Time) fromBytes(b []byte) (Time, []byte) {
 }
 
 func (t Time) FmtHumanize() string {
-	return units.HumanDuration(time.Now().Sub(t.time))
+	return units.HumanDuration(time.Now().Sub(t.time)) + " ago"
 }
 
 func (t Time) Compare(other Time) int {
@@ -59,7 +59,7 @@ func (t Time) CompareDesc(other Time) int {
 }
 
 func (t Time) FmtString() string {
-	return t.time.Format(time.RFC3339) + " ago"
+	return t.time.Format(time.RFC3339)
 }
 
 func NewTime(t time.Time) Time {
