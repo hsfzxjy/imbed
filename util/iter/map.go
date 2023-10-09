@@ -43,7 +43,7 @@ func (m *mappedIt[T, U, It]) next() {
 	m.result = u
 }
 
-func Map[T, U any, It core.Iterator[T]](it It, mapFunc mapFunc[T, U]) *mappedIt[T, U, It] {
+func FilterMap[T, U any, It core.Iterator[T]](it It, mapFunc mapFunc[T, U]) *mappedIt[T, U, It] {
 	m := &mappedIt[T, U, It]{iterator: it, mapFunc: mapFunc, first: true}
 	return m
 }
@@ -105,7 +105,7 @@ func (m *flatMappedIt[T, U, It1, It2]) Next() (result U) {
 	return result
 }
 
-func FlatMap[T, U any, It1 core.Iterator[T], It2 core.Iterator[It1]](it2 It2, mapFunc func(T) (U, bool)) *flatMappedIt[T, U, It1, It2] {
+func FlatFilterMap[T, U any, It1 core.Iterator[T], It2 core.Iterator[It1]](it2 It2, mapFunc func(T) (U, bool)) *flatMappedIt[T, U, It1, It2] {
 	m := &flatMappedIt[T, U, It1, It2]{it2: it2, mapFunc: mapFunc, first: true}
 	return m
 }

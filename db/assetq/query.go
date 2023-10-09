@@ -24,7 +24,7 @@ func simpleQuery(indexName []byte, needle dbq.Needle) Query {
 		if err != nil {
 			return nil, err
 		}
-		it := iter.Map(cursor, func(kv util.KV) (*helper.Cursor, bool) {
+		it := iter.FilterMap(cursor, func(kv util.KV) (*helper.Cursor, bool) {
 			if !needle.Match(kv.K) {
 				return nil, false
 			}
@@ -34,7 +34,7 @@ func simpleQuery(indexName []byte, needle dbq.Needle) Query {
 			}
 			return cursor, true
 		})
-		it2 := iter.FlatMap(it, func(kv util.KV) (*asset.AssetModel, bool) {
+		it2 := iter.FlatFilterMap(it, func(kv util.KV) (*asset.AssetModel, bool) {
 			a, err := asset.New(h, kv.K)
 			if err != nil {
 				return nil, false
@@ -65,7 +65,7 @@ func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
 		if err != nil {
 			return nil, err
 		}
-		return iter.Map(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
 			if !bytes.Equal(kv.K, pairBytes) {
 				return nil, false
 			}
@@ -84,7 +84,7 @@ func All() Query {
 		if err != nil {
 			return nil, err
 		}
-		return iter.Map(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
 			a, err := asset.NewFromKV(kv.K, kv.V)
 			if err != nil {
 				return nil, false

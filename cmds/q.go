@@ -77,13 +77,15 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 		if err != nil {
 			return err
 		}
+		sortedIt := iter.Sorted(it, (*db.AssetModel).CompareCreated, true)
 
 		return formatter.
 			New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw).
 			ExecIter(
 				os.Stdout,
-				iter.Map(it, func(m *db.AssetModel) (asset.Asset, bool) {
-					return asset.FromDBModel(app, m), true
+				iter.FilterMap(sortedIt, func(m *db.AssetModel) (asset.StockAsset, bool) {
+					a, _ := asset.FromDBModel(app, m)(ctx)
+					return a, true
 				}))
 	})
 }
