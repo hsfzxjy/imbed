@@ -10,10 +10,13 @@ import (
 	"github.com/hsfzxjy/imbed/util"
 )
 
-func SaveAll(ctx db.Context, app core.App, assets []Asset) error {
+func SaveAll(ctx db.Context, app core.App, assets []Asset) ([]StockAsset, error) {
+	var result = make([]StockAsset, 0, len(assets))
 	for _, a := range assets {
-		if err := a.save(ctx); err != nil {
-			return err
+		if sa, err := a.save(ctx); err != nil {
+			return nil, err
+		} else {
+			result = append(result, sa)
 		}
 	}
 
@@ -28,10 +31,10 @@ func SaveAll(ctx db.Context, app core.App, assets []Asset) error {
 		}()
 		if err != nil {
 			revertSaveFile = true
-			return err
+			return nil, err
 		}
 	}
-	return nil
+	return result, nil
 }
 
 func (a *asset) saveConfigs(ctx db.Context) ([]ref.Sha256Hash, error) {
@@ -66,18 +69,18 @@ func (a *asset) saveConfigs(ctx db.Context) ([]ref.Sha256Hash, error) {
 	return ret, nil
 }
 
-func (a *asset) save(ctx db.Context) error {
+func (a *asset) save(ctx db.Context) (StockAsset, error) {
 	var err error
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if a.model != nil {
-		return nil
+		return a, nil
 	}
 	var originModel *db.AssetModel
 	if a.origin != nil {
-		err = a.origin.save(ctx)
+		_, err = a.origin.save(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		originModel = a.origin.model
 	}
@@ -86,21 +89,21 @@ func (a *asset) save(ctx db.Context) error {
 	if a.transform != nil {
 		transSeq.ConfigHashes, err = a.saveConfigs(ctx)
 		if err != nil {
-			return err
+			return nil, err
 		}
 		transSeq.Raw, err = a.transform.GetRawEncoded()
 		if err != nil {
-			return err
+			return nil, err
 		}
 		transSeq.Hash, err = a.transform.GetSha256Hash()
 		if err != nil {
-			return err
+			return nil, err
 		}
 	}
 
 	fid, err := content.BuildFID(a.content, a.basename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	model, err := db.AssetTemplate{
@@ -112,11 +115,11 @@ func (a *asset) save(ctx db.Context) error {
 	}.Create().RunRW(ctx)
 
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	a.model = model
-	return nil
+	return a, nil
 }
 
 func (a *asset) saveFile(app core.App) (revert util.RevertFunc, err error) {

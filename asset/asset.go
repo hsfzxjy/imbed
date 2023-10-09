@@ -56,7 +56,7 @@ func (a *asset) BaseName() string {
 type Asset interface {
 	Content() content.Content
 	BaseName() string
-	save(ctx db.Context) error
+	save(ctx db.Context) (StockAsset, error)
 	saveFile(app core.App) (util.RevertFunc, error)
 }
 
