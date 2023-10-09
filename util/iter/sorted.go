@@ -41,10 +41,32 @@ func (i *sortedIt[T, It]) Next() (result T) {
 	return i.sliceIt.Next()
 }
 
-func SortedKeyFunc[T any, It core.Iterator[T], K cmp.Ordered](it It, keyFunc func(T) K) *sortedIt[T, It] {
-	return &sortedIt[T, It]{it: it, cmpFunc: func(a, b T) int { return cmp.Compare(keyFunc(a), keyFunc(b)) }}
+func SortedKeyFunc[T any, It core.Iterator[T], K cmp.Ordered](
+	it It,
+	keyFunc func(T) K,
+	reversed bool,
+) *sortedIt[T, It] {
+	return &sortedIt[T, It]{
+		it: it, cmpFunc: func(a, b T) int {
+			r := cmp.Compare(keyFunc(a), keyFunc(b))
+			if reversed {
+				return -r
+			} else {
+				return r
+			}
+		}}
 }
 
-func Sorted[T any, It core.Iterator[T]](it It, cmpFunc cmpFunc[T]) *sortedIt[T, It] {
+func Sorted[T any, It core.Iterator[T]](
+	it It,
+	cmpFunc cmpFunc[T],
+	reversed bool,
+) *sortedIt[T, It] {
+	if reversed {
+		oldCmpFunc := cmpFunc
+		cmpFunc = func(a, b T) int {
+			return -oldCmpFunc(a, b)
+		}
+	}
 	return &sortedIt[T, It]{it: it, cmpFunc: cmpFunc}
 }
