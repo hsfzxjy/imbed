@@ -8,7 +8,6 @@ import (
 type Cursor struct {
 	current util.KV
 	cursor  *bbolt.Cursor
-	stopped bool
 }
 
 func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
@@ -24,12 +23,11 @@ func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
 	return &Cursor{
 		current: util.KV{K: k, V: v},
 		cursor:  cursor,
-		stopped: false,
 	}
 }
 
 func (c *Cursor) HasNext() bool {
-	return c != nil && !c.stopped
+	return c != nil && c.current.K != nil
 }
 
 func (c *Cursor) Next() (result util.KV) {
@@ -37,11 +35,6 @@ func (c *Cursor) Next() (result util.KV) {
 		return
 	}
 	result = c.current
-	k, v := c.cursor.Next()
-	if k == nil {
-		c.stopped = true
-	} else {
-		c.current = util.KV{K: k, V: v}
-	}
+	c.current.K, c.current.V = c.cursor.Next()
 	return result
 }
