@@ -57,6 +57,25 @@ func ByUrl(needle dbq.Needle) Query {
 	return simpleQuery(bucketnames.INDEX_URL, needle)
 }
 
+func ByOid(needle dbq.Needle) Query {
+	return func(h internal.H) (Iterator, error) {
+		cursor, err := h.Bucket(bucketnames.FILES).Cursor(needle.Bytes())
+		if err != nil {
+			return nil, err
+		}
+		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+			if !needle.Match(kv.K) {
+				return nil, false
+			}
+			a, err := asset.NewFromKV(kv.K, kv.V)
+			if err != nil {
+				return nil, false
+			}
+			return a, true
+		}), nil
+	}
+}
+
 func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
 	return func(h internal.H) (Iterator, error) {
 		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
