@@ -92,6 +92,7 @@ func (m *flatMappedIt[T, U, It1, It2]) next(init bool) {
 		m.stopped = true
 		return
 	}
+	m.it1 = it1
 	m.result = u
 }
 
