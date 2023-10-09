@@ -19,7 +19,7 @@ type Builder[T any] struct {
 }
 
 func New[T any](constructor func(h internal.H) (*Builder[T], error)) internal.Runnable[*It[T]] {
-	return internal.R[*It[T]](func(h internal.H) (*It[T], error) {
+	return func(h internal.H) (*It[T], error) {
 		b, err := constructor(h)
 		if err != nil {
 			return nil, err
@@ -44,7 +44,7 @@ func New[T any](constructor func(h internal.H) (*Builder[T], error)) internal.Ru
 			it.current = getObject(k, v)
 		}
 		return it, nil
-	})
+	}
 }
 
 func (it *It[T]) Current() *T {

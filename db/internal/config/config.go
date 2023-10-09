@@ -18,11 +18,11 @@ type ConfigModel struct {
 }
 
 func (template ConfigModel) Create() internal.Runnable[*ConfigModel] {
-	return internal.R[*ConfigModel](func(h internal.H) (*ConfigModel, error) {
+	return func(h internal.H) (*ConfigModel, error) {
 		ret := &ConfigModel{}
 		*ret = template
 		h.Bucket(bucketnames.CONFIGS).
 			UpdateLeaf(ref.AsRaw(ret.Hash), ret.Raw)
 		return ret, nil
-	})
+	}
 }

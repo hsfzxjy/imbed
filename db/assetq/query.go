@@ -18,7 +18,7 @@ type Iterator = core.Iterator[*asset.AssetModel]
 type Query = internal.Runnable[Iterator]
 
 func simpleQuery(indexName []byte, needle dbq.Needle) Query {
-	return internal.R(func(h internal.H) (Iterator, error) {
+	return func(h internal.H) (Iterator, error) {
 		index := h.Bucket(indexName)
 		cursor, err := index.Cursor(needle.Bytes())
 		if err != nil {
@@ -42,7 +42,7 @@ func simpleQuery(indexName []byte, needle dbq.Needle) Query {
 			return a, true
 		})
 		return it2, nil
-	})
+	}
 }
 
 func ByFID(needle dbq.Needle) Query {
@@ -58,7 +58,7 @@ func ByUrl(needle dbq.Needle) Query {
 }
 
 func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
-	return internal.R(func(h internal.H) (Iterator, error) {
+	return func(h internal.H) (Iterator, error) {
 		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
 		cursor, err := h.Bucket(bucketnames.INDEX_TRANSSEQ).
 			Cursor(pairBytes)
@@ -75,11 +75,11 @@ func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
 			}
 			return asset, true
 		}), nil
-	})
+	}
 }
 
 func All() Query {
-	return internal.R(func(h internal.H) (Iterator, error) {
+	return func(h internal.H) (Iterator, error) {
 		cursor, err := h.Bucket(bucketnames.FILES).Cursor(nil)
 		if err != nil {
 			return nil, err
@@ -91,11 +91,5 @@ func All() Query {
 			}
 			return a, true
 		}), nil
-	})
-}
-
-func SortByNewest(it Iterator) Iterator {
-	return iter.Sorted(it, func(a1, a2 *asset.AssetModel) int {
-		return a1.Created.CompareDesc(a2.Created)
-	})
+	}
 }

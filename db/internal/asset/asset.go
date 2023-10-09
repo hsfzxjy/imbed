@@ -41,9 +41,9 @@ func NewFromKV(k, v []byte) (*AssetModel, error) {
 }
 
 func (template AssetTemplate) Create() internal.Runnable[*AssetModel] {
-	return internal.R[*AssetModel](func(h internal.H) (*AssetModel, error) {
+	return func(h internal.H) (*AssetModel, error) {
 		return template.doCreate(h)
-	})
+	}
 }
 
 func (t *AssetTemplate) getOriginOID() (ret ref.OID) {
