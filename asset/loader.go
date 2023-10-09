@@ -1,13 +1,13 @@
 package asset
 
 import (
-	"fmt"
 	"path"
 
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
+	"github.com/hsfzxjy/imbed/util/iter"
 )
 
 func LoadFile(filepath string) ExternalLoader {
@@ -42,12 +42,9 @@ func FromQ(app core.App, query assetq.Query) StockLoader {
 		if err != nil {
 			return nil, err
 		}
-		if !it.HasNext() {
-			return nil, fmt.Errorf("FromQ: query returns 0 result")
-		}
-		model := it.Next()
-		if it.HasNext() {
-			return nil, fmt.Errorf("FromQ: query returns more than 1 results")
+		model, err := iter.One(it)
+		if err != nil {
+			return nil, err
 		}
 		return fromDBModel(app, model)
 	}
