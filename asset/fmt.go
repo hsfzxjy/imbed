@@ -5,28 +5,28 @@ import (
 	"github.com/hsfzxjy/imbed/formatter"
 )
 
-var FmtFields = []*formatter.Field[Asset]{
+var FmtFields = []*formatter.Field[StockAsset]{
 	{
 		Name:   "oid",
 		Header: "OID",
 		Show:   true,
-		Getter: func(a Asset) any {
-			return a.(*asset).model.OID
+		Getter: func(a StockAsset) any {
+			return a.Model().OID
 		},
 	},
 	{
 		Name:   "originId",
 		Header: "ORIGIN",
 		Show:   true,
-		Getter: func(a Asset) any {
-			return a.(*asset).model.OriginOID
+		Getter: func(a StockAsset) any {
+			return a.Model().OriginOID
 		},
 	},
 	{
 		Name:   "name",
 		Header: "NAME",
 		Show:   true,
-		Getter: func(a Asset) any {
+		Getter: func(a StockAsset) any {
 			return a.BaseName()
 		},
 	},
@@ -34,8 +34,8 @@ var FmtFields = []*formatter.Field[Asset]{
 		Name:   "url",
 		Header: "URL",
 		Show:   true,
-		Getter: func(a Asset) any {
-			url := a.(*asset).model.Url
+		Getter: func(a StockAsset) any {
+			url := a.Model().Url
 			if url == "" {
 				return "<none>"
 			}
@@ -46,23 +46,23 @@ var FmtFields = []*formatter.Field[Asset]{
 		Name:   "fhash",
 		Header: "FHASH",
 		Show:   true,
-		Getter: func(a Asset) any {
-			return a.(*asset).model.FID.Hash()
+		Getter: func(a StockAsset) any {
+			return a.Model().FID.Hash()
 		},
 	},
 	{
 		Name:   "created",
 		Header: "CREATED",
 		Show:   true,
-		Getter: func(a Asset) any {
-			return a.(*asset).model.Created
+		Getter: func(a StockAsset) any {
+			return a.Model().Created
 		},
 	},
 	{
 		Name:   "size",
 		Header: "SIZE",
 		Show:   true,
-		Getter: func(a Asset) any {
+		Getter: func(a StockAsset) any {
 			s, err := a.Content().Size()
 			if err != nil {
 				return content.IllegalSize

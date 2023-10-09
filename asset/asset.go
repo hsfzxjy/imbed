@@ -30,8 +30,16 @@ type asset struct {
 	updatingInfo
 }
 
+func (a *asset) Model() *db.AssetModel {
+	return a.model
+}
+
 func (a *asset) Content() content.Content {
 	return a.content
+}
+
+func (a *asset) CompareCreated(other StockAsset) int {
+	return a.model.CompareCreated(other.Model())
 }
 
 func (a *asset) BaseName() string {
@@ -50,4 +58,10 @@ type Asset interface {
 	BaseName() string
 	save(ctx db.Context) error
 	saveFile(app core.App) (util.RevertFunc, error)
+}
+
+type StockAsset interface {
+	Asset
+	Model() *db.AssetModel
+	CompareCreated(other StockAsset) int
 }
