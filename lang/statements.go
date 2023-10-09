@@ -6,6 +6,7 @@ import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
+	"github.com/hsfzxjy/imbed/db/configq"
 )
 
 func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
@@ -15,7 +16,8 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 	}
 	var assets []asset.Asset
 	err = c.app.DB().RunR(func(h db.Context) error {
-		graph, err := c.parseTransSeq()
+		cfg := configq.NewProvider(h, c.app)
+		graph, err := c.parseTransSeq(cfg)
 		if err != nil {
 			return err
 		}

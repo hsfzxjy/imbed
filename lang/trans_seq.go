@@ -3,10 +3,11 @@ package lang
 import (
 	"fmt"
 
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-func (c *Context) parseTransSeq() (*transform.Graph, error) {
+func (c *Context) parseTransSeq(cfg core.ConfigProvider) (*transform.Graph, error) {
 	var transforms []transform.Transform
 	reader := transReader{Parser: c.parser}
 	for !reader.EOF() {
@@ -19,7 +20,7 @@ func (c *Context) parseTransSeq() (*transform.Graph, error) {
 		if !ok {
 			return nil, reader.Error(fmt.Errorf("no transform named %q", name))
 		}
-		t, err := m.Parse(c.app.Config(), reader)
+		t, err := m.Parse(cfg, reader)
 		if err != nil {
 			return nil, err
 		}
