@@ -1,5 +1,7 @@
 package schemareader
 
+import "math/big"
+
 type Void struct{}
 
 // Bool implements Reader.
@@ -7,8 +9,8 @@ func (Void) Bool() (bool, error) {
 	panic("unimplemented")
 }
 
-// Float64 implements Reader.
-func (Void) Float64() (float64, error) {
+// Rat implements Reader.
+func (Void) Rat() (*big.Rat, error) {
 	panic("unimplemented")
 }
 

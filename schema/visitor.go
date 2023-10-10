@@ -1,5 +1,7 @@
 package schema
 
+import "math/big"
+
 type Visitor interface {
 	AtomVisitor
 	VisitList(size int) (lv ListVisitor, elem Visitor, err error)
@@ -9,7 +11,7 @@ type Visitor interface {
 
 type AtomVisitor interface {
 	VisitInt64(x int64) error
-	VisitFloat64(x float64) error
+	VisitRat(x *big.Rat) error
 	VisitBool(x bool) error
 	VisitString(x string) error
 }

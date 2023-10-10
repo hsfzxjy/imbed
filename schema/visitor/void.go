@@ -1,6 +1,10 @@
 package schemavisitor
 
-import "github.com/hsfzxjy/imbed/schema"
+import (
+	"math/big"
+
+	"github.com/hsfzxjy/imbed/schema"
+)
 
 type Void struct{}
 
@@ -69,8 +73,8 @@ func (Void) VisitBool(x bool) error {
 	panic("unimplemented")
 }
 
-// VisitFloat64 implements schema.Visitor.
-func (Void) VisitFloat64(x float64) error {
+// VisitRat implements schema.Visitor.
+func (Void) VisitRat(x *big.Rat) error {
 	panic("unimplemented")
 }
 

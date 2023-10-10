@@ -3,6 +3,7 @@ package schema
 import (
 	"errors"
 	"io"
+	"math/big"
 	"unsafe"
 
 	"github.com/tinylib/msgp/msgp"
@@ -104,21 +105,9 @@ var _VTableBool = &_AtomVTable[bool]{
 
 func new_Bool(def optional[bool]) *_Bool { return &_Bool{def, _VTableBool} }
 
-type _Float = _Atom[float64]
-
-var _VTableFloat = &_AtomVTable[float64]{
-	typeName:        "float64",
-	decodeMsgFunc:   (*msgp.Reader).ReadFloat64,
-	decodeValueFunc: (Reader).Float64,
-	encodeMsgFunc:   (*msgp.Writer).WriteFloat64,
-	visitFunc:       Visitor.VisitFloat64,
-}
-
-func new_Float(def optional[float64]) *_Float { return &_Float{def, _VTableFloat} }
-
 func _() {
 	var _ schema[int64] = &_Int{}
 	var _ schema[bool] = &_Bool{}
 	var _ schema[string] = &_String{}
-	var _ schema[float64] = &_Float{}
+	var _ schema[*big.Rat] = &_Rat{}
 }

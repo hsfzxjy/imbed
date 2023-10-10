@@ -1,6 +1,8 @@
 package lang
 
 import (
+	"math/big"
+
 	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/schema"
 	schemareader "github.com/hsfzxjy/imbed/schema/reader"
@@ -20,11 +22,11 @@ func (p transReader) Bool() (bool, error) {
 	return v, err
 }
 
-func (p transReader) Float64() (float64, error) {
-	v, ok := p.Parser.Float64()
+func (p transReader) Rat() (*big.Rat, error) {
+	v, ok := p.Parser.Rat()
 	var err error
 	if !ok {
-		err = p.Expect(`float literal`)
+		err = p.Expect(`Rat literal`)
 	}
 	return v, err
 }

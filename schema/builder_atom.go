@@ -1,5 +1,7 @@
 package schema
 
+import "math/big"
+
 type atomBuilder[T any] struct {
 	def    optional[T]
 	vtable *_AtomVTable[T]
@@ -26,6 +28,6 @@ func String() atomBuilder[string] {
 	return atomBuilder[string]{vtable: _VTableString}
 }
 
-func Float() atomBuilder[float64] {
-	return atomBuilder[float64]{vtable: _VTableFloat}
+func Rat() atomBuilder[*big.Rat] {
+	return atomBuilder[*big.Rat]{vtable: _VTableRat}
 }

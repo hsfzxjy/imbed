@@ -1,6 +1,11 @@
 package schemareader
 
-import "github.com/hsfzxjy/imbed/schema"
+import (
+	"fmt"
+	"math/big"
+
+	"github.com/hsfzxjy/imbed/schema"
+)
 
 type anyReader struct{ value any }
 
@@ -15,14 +20,20 @@ func (r anyReader) Bool() (bool, error) {
 	}
 }
 
-func (r anyReader) Float64() (float64, error) {
+func (r anyReader) Rat() (*big.Rat, error) {
 	switch v := r.value.(type) {
 	case float64:
-		return v, nil
+		return new(big.Rat).SetFloat64(v), nil
+	case string:
+		r, ok := new(big.Rat).SetString(v)
+		if !ok {
+			return nil, fmt.Errorf("invalid rat %q", v)
+		}
+		return r, nil
 	case nil:
-		return 0, schema.ErrRequired
+		return nil, schema.ErrRequired
 	default:
-		return 0, wrongType(v, "float64")
+		return nil, wrongType(v, "rat")
 	}
 }
 

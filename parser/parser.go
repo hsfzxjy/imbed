@@ -3,6 +3,7 @@ package parser
 import (
 	"errors"
 	"fmt"
+	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
@@ -120,27 +121,34 @@ LOOP:
 	return
 }
 
-func (p *Parser) Float64() (value float64, ok bool) {
+func (p *Parser) Rat() (value *big.Rat, ok bool) {
 	if p == nil {
 		return
 	}
 	s := p.current()
-	var end int
-LOOP:
-	for end = 0; end < len(s); end++ {
-		switch b := s[end]; {
-		case b == '-' || b == '.':
-		case '0' <= b && b <= '9':
-		default:
-			break LOOP
+	var off int
+	if off < len(s) && s[off] == '-' {
+		off++
+	}
+	for ; off < len(s); off++ {
+		if b := s[off]; !('0' <= b && b <= '9') {
+			break
 		}
 	}
-	if end == 0 {
+	if off < len(s) && s[off] == '.' || s[off] == '/' {
+		off++
+	}
+	for ; off < len(s); off++ {
+		if b := s[off]; !('0' <= b && b <= '9') {
+			break
+		}
+	}
+	if off == 0 {
 		return
 	}
-	if x, err := strconv.ParseFloat(s[:end], 64); err == nil {
-		value, ok = x, true
-		p.advance(end)
+	if rat, good := new(big.Rat).SetString(s[:off]); good {
+		value, ok = rat, true
+		p.advance(off)
 	}
 	return
 }

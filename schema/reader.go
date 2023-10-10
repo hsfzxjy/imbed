@@ -1,10 +1,12 @@
 package schema
 
+import "math/big"
+
 type _AtomReader interface {
 	Int64() (int64, error)
 	Bool() (bool, error)
 	String() (string, error)
-	Float64() (float64, error)
+	Rat() (*big.Rat, error)
 }
 
 type _MapReader interface {
