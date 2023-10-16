@@ -6,27 +6,25 @@ import (
 	"github.com/hsfzxjy/imbed/lang/revparse"
 )
 
-func (c *Context) ParseRun_RevParseBody() (string, error) {
-	var result string
-	query, err := c.parseDBAsset()
+func (c *Context) ParseRun_RevParseBody() ([]string, error) {
+	var results []string
+	query, err := fuzzyExprs.parse(c)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
 	err = c.app.DB().RunR(func(ctx db.Context) error {
-		asset, err := query(ctx)
+		it, err := assetq.Chains(query, -1).RunR(ctx)
 		if err != nil {
 			return err
 		}
-		models, err := assetq.Chain(asset.Model(), -1).RunR(ctx)
-		if err != nil {
-			return err
+		for it.HasNext() {
+			parsed, err := revparse.Solve(it.Next(), c.registry)
+			if err != nil {
+				return err
+			}
+			results = append(results, parsed)
 		}
-		parsed, err := revparse.Solve(models, c.registry)
-		if err != nil {
-			return err
-		}
-		result = parsed
 		return nil
 	})
-	return result, err
+	return results, err
 }

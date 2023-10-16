@@ -29,6 +29,8 @@ func (c RevCommand) Run(app *app.App, command app.CommandSpec) error {
 	if err != nil {
 		return err
 	}
-	println(result)
+	for _, s := range result {
+		println(s)
+	}
 	return nil
 }

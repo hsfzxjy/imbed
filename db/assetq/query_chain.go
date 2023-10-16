@@ -3,14 +3,16 @@ package assetq
 import (
 	"slices"
 
+	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
 
-func Chain(targetModel *asset.AssetModel, depth int) internal.Runnable[[]*asset.AssetModel] {
+func ChainForModel(targetModel *db.AssetModel, depth int) internal.Runnable[[]*asset.AssetModel] {
 	if depth < 0 {
 		depth = 32768
 	}
@@ -30,5 +32,21 @@ func Chain(targetModel *asset.AssetModel, depth int) internal.Runnable[[]*asset.
 		}
 		slices.Reverse(results)
 		return results, nil
+	}
+}
+
+func Chains(targetq Query, depth int) internal.Runnable[core.Iterator[[]*asset.AssetModel]] {
+	return func(h internal.H) (core.Iterator[[]*asset.AssetModel], error) {
+		it, err := targetq.RunR(h)
+		if err != nil {
+			return nil, err
+		}
+		return iter.FilterMap(it, func(m *asset.AssetModel) ([]*asset.AssetModel, bool) {
+			chain, err := ChainForModel(m, depth).RunR(h)
+			if err != nil {
+				return nil, false
+			}
+			return chain, true
+		}), nil
 	}
 }
