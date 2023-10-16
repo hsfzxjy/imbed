@@ -53,14 +53,6 @@ func Open(app core.App) (Service, error) {
 	return Service{db}, nil
 }
 
-func (s Service) BeginR() (Context, func() error, error) {
-	tx, err := s.db.Begin(false)
-	if err != nil {
-		return H{}, nil, err
-	}
-	return H{helper.New(tx)}, tx.Rollback, nil
-}
-
 func (s Service) RunR(f func(Context) error) error {
 	return s.runR(func(h H) error { return f(h) })
 }
