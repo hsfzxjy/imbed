@@ -22,3 +22,11 @@ func One[T any, It core.Iterator[T]](it It) (T, error) {
 	}
 	return t, nil
 }
+
+func One2[T any, It core.Iterator[T]](it It, err error) (T, error) {
+	var zero T
+	if err != nil {
+		return zero, err
+	}
+	return One(it)
+}
