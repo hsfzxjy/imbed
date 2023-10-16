@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/transform"
 )
 
@@ -26,7 +27,7 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			if !ok {
 				return nil, reader.Expect("config hash")
 			}
-			needle, err := core.BytesPrefix(hex)
+			needle, err := ndl.HexPrefix(hex)
 			if err != nil {
 				return nil, reader.Error(fmt.Errorf("bad config hash %q: %w", hex, err))
 			}

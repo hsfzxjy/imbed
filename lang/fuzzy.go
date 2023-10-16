@@ -1,20 +1,20 @@
 package lang
 
 import (
-	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/db/assetq"
 )
 
 var (
 	fuzzyExprOid = &fuzzyExpr{
 		"db.oid@", "a hex string with length <= 64",
-		core.BytesNeedle, assetq.ByOid}
+		ndl.Hex, assetq.ByOid}
 	fuzzyExprFHash = &fuzzyExpr{
 		"db.fhash@", "a hex string with length <= 32",
-		core.BytesNeedle, assetq.ByFHash}
+		ndl.Hex, assetq.ByFHash}
 	fuzzyExprUrl = &fuzzyExpr{
 		"db.url@", "a URL string",
-		core.BytesNeedle, assetq.ByUrl}
+		ndl.Hex, assetq.ByUrl}
 	fuzzyExprs = fuzzyExprSet{
 		fuzzyExprOid,
 		fuzzyExprFHash,
@@ -25,8 +25,8 @@ var (
 type fuzzyExpr struct {
 	directive     string
 	expected      string
-	needleBuilder func(s string, prefix bool) (core.Needle, error)
-	queryBuilder  func(core.Needle) assetq.Query
+	needleBuilder func(s string, prefix bool) (ndl.Needle, error)
+	queryBuilder  func(ndl.Needle) assetq.Query
 }
 
 type fuzzyExprSet []*fuzzyExpr

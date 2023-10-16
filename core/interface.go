@@ -3,12 +3,13 @@ package core
 import (
 	"net/url"
 
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/schema"
 )
 
 type ConfigProvider interface {
 	ProvideWorkspaceConfig(key string) (schema.Reader, error)
-	ProvideStockConfig(Needle) ([]byte, error)
+	ProvideStockConfig(ndl.Needle) ([]byte, error)
 }
 
 type App interface {

@@ -2,6 +2,7 @@ package configq
 
 import (
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
@@ -13,7 +14,7 @@ type provider struct {
 	h internal.H
 }
 
-func (p provider) ProvideStockConfig(needle core.Needle) ([]byte, error) {
+func (p provider) ProvideStockConfig(needle ndl.Needle) ([]byte, error) {
 	cursor, err := p.h.Bucket(bucketnames.CONFIGS).Cursor(needle.Bytes())
 	if err != nil {
 		return nil, err

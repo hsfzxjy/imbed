@@ -2,6 +2,7 @@ package transform
 
 import (
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/tinylib/msgp/msgp"
@@ -67,7 +68,7 @@ func (m *metadata[C, P]) ConfigBuilderWorkspace() ConfigBuilder {
 	return configBuilderWorkspace[C, P]{m}
 }
 
-func (m *metadata[C, P]) ConfigBuilderNeedle(n core.Needle) ConfigBuilder {
+func (m *metadata[C, P]) ConfigBuilderNeedle(n ndl.Needle) ConfigBuilder {
 	return &configBuilderNeedle[C, P]{m, n}
 }
 

@@ -4,6 +4,7 @@ import (
 	"bytes"
 
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/tinylib/msgp/msgp"
@@ -55,7 +56,7 @@ func (b configBuilderWorkspace[C, P]) buildConfig(cp core.ConfigProvider) (*C, e
 
 type configBuilderNeedle[C any, P ParamStruct[C]] struct {
 	*metadata[C, P]
-	needle core.Needle
+	needle ndl.Needle
 }
 
 func (b *configBuilderNeedle[C, P]) ConfigHash() (zero ref.Sha256Hash) { return }
@@ -82,7 +83,7 @@ type configBuilderHash[C any, P ParamStruct[C]] struct {
 func (b *configBuilderHash[C, P]) ConfigHash() ref.Sha256Hash { return b.hash }
 
 func (b *configBuilderHash[C, P]) buildConfig(cp core.ConfigProvider) (*C, error) {
-	buf, err := cp.ProvideStockConfig(core.StringFull(ref.AsRawString(b.hash)))
+	buf, err := cp.ProvideStockConfig(ndl.RawFull(ref.AsRawString(b.hash)))
 	if err != nil {
 		return nil, err
 	}

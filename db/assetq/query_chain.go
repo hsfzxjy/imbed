@@ -3,7 +3,7 @@ package assetq
 import (
 	"slices"
 
-	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
@@ -19,7 +19,7 @@ func Chain(targetModel *asset.AssetModel, depth int) internal.Runnable[[]*asset.
 		results = append(results, targetModel)
 		model := targetModel
 		for !model.OriginOID.IsZero() && depth > 0 {
-			needle := core.StringFull(ref.AsRawString(model.OriginOID))
+			needle := ndl.RawFull(ref.AsRawString(model.OriginOID))
 			origModel, err := iter.One2(ByOid(needle).RunR(h))
 			if err != nil {
 				return nil, err

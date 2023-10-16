@@ -3,6 +3,7 @@ package transform
 import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/tinylib/msgp/msgp"
@@ -17,7 +18,7 @@ type Metadata interface {
 	Parse(paramsR schema.Reader) (ParamsWithMetadata, error)
 	decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error)
 	ConfigBuilderWorkspace() ConfigBuilder
-	ConfigBuilderNeedle(core.Needle) ConfigBuilder
+	ConfigBuilderNeedle(ndl.Needle) ConfigBuilder
 	ConfigBuilderHash(ref.Sha256Hash) ConfigBuilder
 }
 
