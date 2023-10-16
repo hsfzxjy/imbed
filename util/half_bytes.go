@@ -5,13 +5,13 @@ import (
 	"encoding/hex"
 )
 
-// ICBytes represents a byte slice that might hold a 4-bit item at the rear.
-// E.g., a hex string `deadb` with odd length could be parsed into ICBytes.
-type ICBytes struct {
+// HalfBytes represents a byte slice that might hold a 4-bit item at the rear.
+// E.g., a hex string `deadb` with odd length could be parsed into HalfBytes.
+type HalfBytes struct {
 	slice []byte
 }
 
-func NewICBytes(repr string) (ICBytes, error) {
+func NewHalfBytes(repr string) (HalfBytes, error) {
 	n := len(repr)
 	var reprSlice []byte
 	if n%2 == 0 {
@@ -31,12 +31,12 @@ func NewICBytes(repr string) (ICBytes, error) {
 	buf := make([]byte, len(reprSlice)/2)
 	_, err := hex.Decode(buf, reprSlice)
 	if err != nil {
-		return ICBytes{}, err
+		return HalfBytes{}, err
 	}
-	return ICBytes{buf}, nil
+	return HalfBytes{buf}, nil
 }
 
-func (i ICBytes) PrefixMatch(target []byte) bool {
+func (i HalfBytes) PrefixMatch(target []byte) bool {
 	n := len(i.slice)
 	last := i.slice[n-1]
 	if last == 0 {
@@ -54,7 +54,7 @@ func (i ICBytes) PrefixMatch(target []byte) bool {
 	}
 }
 
-func (i ICBytes) FullMatch(target []byte) bool {
+func (i HalfBytes) FullMatch(target []byte) bool {
 	n := len(i.slice)
 	last := i.slice[n-1]
 	if last == 0 {
@@ -63,6 +63,6 @@ func (i ICBytes) FullMatch(target []byte) bool {
 	return false
 }
 
-func (i ICBytes) Bytes() []byte {
+func (i HalfBytes) Bytes() []byte {
 	return i.slice[:len(i.slice)-1]
 }

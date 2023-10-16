@@ -13,28 +13,28 @@ type Needle interface {
 }
 
 type hex struct {
-	util.ICBytes
-	matchFunc func(ic util.ICBytes, target []byte) bool
+	util.HalfBytes
+	matchFunc func(ic util.HalfBytes, target []byte) bool
 }
 
 func (n hex) Match(key []byte) bool {
-	return n.matchFunc(n.ICBytes, key)
+	return n.matchFunc(n.HalfBytes, key)
 }
 
 func HexPrefix(prefixPretty string) (Needle, error) {
-	ic, err := util.NewICBytes(prefixPretty)
+	ic, err := util.NewHalfBytes(prefixPretty)
 	if err != nil {
 		return nil, err
 	}
-	return hex{ic, util.ICBytes.PrefixMatch}, nil
+	return hex{ic, util.HalfBytes.PrefixMatch}, nil
 }
 
 func HexFull(pretty string) (Needle, error) {
-	ic, err := util.NewICBytes(pretty)
+	ic, err := util.NewHalfBytes(pretty)
 	if err != nil {
 		return nil, err
 	}
-	return hex{ic, util.ICBytes.FullMatch}, nil
+	return hex{ic, util.HalfBytes.FullMatch}, nil
 }
 
 func Hex(pretty string, prefix bool) (Needle, error) {
