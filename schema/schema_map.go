@@ -34,16 +34,16 @@ func (s *_Map[V]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError 
 	return nil
 }
 
-func (s *_Map[V]) decodeValue(r Reader, target unsafe.Pointer) *schemaError {
+func (s *_Map[V]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	n, err := r.MapSize()
 	if err != nil {
 		return newError(err)
 	}
 	size := int(n)
 	ret := make(map[string]V, size)
-	err = r.IterKV(func(key string, r Reader) error {
+	err = r.IterKV(func(key string, r Scanner) error {
 		var value V
-		err := s.valueSchema.decodeValue(r, unsafe.Pointer(&value))
+		err := s.valueSchema.scanFrom(r, unsafe.Pointer(&value))
 		if err != nil {
 			return err.AppendPath(key).AsError()
 		}

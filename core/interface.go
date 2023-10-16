@@ -8,7 +8,7 @@ import (
 )
 
 type ConfigProvider interface {
-	ProvideWorkspaceConfig(key string) (schema.Reader, error)
+	ProvideWorkspaceConfig(key string) (schema.Scanner, error)
 	ProvideStockConfig(ndl.Needle) ([]byte, error)
 }
 
@@ -20,7 +20,7 @@ type App interface {
 	Mode() Mode
 	BuildMode() BuildMode
 
-	ProvideWorkspaceConfig(key string) (schema.Reader, error)
+	ProvideWorkspaceConfig(key string) (schema.Scanner, error)
 	ProxyFunc() func(reqURL *url.URL) (*url.URL, error)
 }
 

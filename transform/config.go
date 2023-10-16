@@ -47,7 +47,7 @@ func (b configBuilderWorkspace[C, P]) buildConfig(cp core.ConfigProvider) (*C, e
 		return nil, err
 	}
 	var cfg C
-	err = b.metadata.configSchema.DecodeValue(cfgR, &cfg)
+	err = b.metadata.configSchema.ScanFrom(cfgR, &cfg)
 	if err != nil {
 		return nil, err
 	}

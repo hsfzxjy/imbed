@@ -24,7 +24,7 @@ var _VTableRat = &_AtomVTable[*big.Rat]{
 		}
 		return rat, nil
 	},
-	decodeValueFunc: Reader.Rat,
+	scanFromFunc: Scanner.Rat,
 	encodeMsgFunc: func(w *msgp.Writer, value *big.Rat) error {
 		b, err := value.GobEncode()
 		if err != nil {

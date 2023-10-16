@@ -29,15 +29,15 @@ func (s *_List[E]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError
 	return nil
 }
 
-func (s *_List[E]) decodeValue(r Reader, target unsafe.Pointer) *schemaError {
+func (s *_List[E]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	var ret []E
 	size, err := r.ListSize()
 	if err != nil {
 		return newError(err)
 	}
 	ret = make([]E, size)
-	err = r.IterElem(func(i int, r Reader) error {
-		err := s.elemSchema.decodeValue(r, unsafe.Pointer(&ret[i]))
+	err = r.IterElem(func(i int, r Scanner) error {
+		err := s.elemSchema.scanFrom(r, unsafe.Pointer(&ret[i]))
 		if err != nil {
 			err.AppendIndex(i)
 		}

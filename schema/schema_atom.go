@@ -10,11 +10,11 @@ import (
 )
 
 type _AtomVTable[T any] struct {
-	typeName        string
-	decodeMsgFunc   func(r *msgp.Reader) (T, error)
-	decodeValueFunc func(r Reader) (T, error)
-	encodeMsgFunc   func(w *msgp.Writer, value T) error
-	visitFunc       func(v Visitor, value T) error
+	typeName      string
+	decodeMsgFunc func(r *msgp.Reader) (T, error)
+	scanFromFunc  func(r Scanner) (T, error)
+	encodeMsgFunc func(w *msgp.Writer, value T) error
+	visitFunc     func(v Visitor, value T) error
 }
 
 type _Atom[T any] struct {
@@ -31,8 +31,8 @@ func (s *_Atom[T]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError
 	return nil
 }
 
-func (s *_Atom[T]) decodeValue(r Reader, target unsafe.Pointer) *schemaError {
-	val, err := s.decodeValueFunc(r)
+func (s *_Atom[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
+	val, err := s.scanFromFunc(r)
 	if err != nil {
 		if !errors.Is(err, ErrRequired) {
 			return newError(err)
@@ -72,11 +72,11 @@ func (s *_Atom[T]) _schema_stub(T) {}
 type _Int = _Atom[int64]
 
 var _VTableInt = &_AtomVTable[int64]{
-	typeName:        "int64",
-	decodeMsgFunc:   (*msgp.Reader).ReadInt64,
-	decodeValueFunc: (Reader).Int64,
-	encodeMsgFunc:   (*msgp.Writer).WriteInt64,
-	visitFunc:       Visitor.VisitInt64,
+	typeName:      "int64",
+	decodeMsgFunc: (*msgp.Reader).ReadInt64,
+	scanFromFunc:  (Scanner).Int64,
+	encodeMsgFunc: (*msgp.Writer).WriteInt64,
+	visitFunc:     Visitor.VisitInt64,
 }
 
 func new_Int(def optional[int64]) *_Int { return &_Int{def, _VTableInt} }
@@ -84,11 +84,11 @@ func new_Int(def optional[int64]) *_Int { return &_Int{def, _VTableInt} }
 type _String = _Atom[string]
 
 var _VTableString = &_AtomVTable[string]{
-	typeName:        "string",
-	decodeMsgFunc:   (*msgp.Reader).ReadString,
-	decodeValueFunc: (Reader).String,
-	encodeMsgFunc:   (*msgp.Writer).WriteString,
-	visitFunc:       Visitor.VisitString,
+	typeName:      "string",
+	decodeMsgFunc: (*msgp.Reader).ReadString,
+	scanFromFunc:  (Scanner).String,
+	encodeMsgFunc: (*msgp.Writer).WriteString,
+	visitFunc:     Visitor.VisitString,
 }
 
 func new_String(def optional[string]) *_String { return &_String{def, _VTableString} }
@@ -96,11 +96,11 @@ func new_String(def optional[string]) *_String { return &_String{def, _VTableStr
 type _Bool = _Atom[bool]
 
 var _VTableBool = &_AtomVTable[bool]{
-	typeName:        "bool",
-	decodeMsgFunc:   (*msgp.Reader).ReadBool,
-	decodeValueFunc: (Reader).Bool,
-	encodeMsgFunc:   (*msgp.Writer).WriteBool,
-	visitFunc:       Visitor.VisitBool,
+	typeName:      "bool",
+	decodeMsgFunc: (*msgp.Reader).ReadBool,
+	scanFromFunc:  (Scanner).Bool,
+	encodeMsgFunc: (*msgp.Writer).WriteBool,
+	visitFunc:     Visitor.VisitBool,
 }
 
 func new_Bool(def optional[bool]) *_Bool { return &_Bool{def, _VTableBool} }

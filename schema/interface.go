@@ -8,7 +8,7 @@ import (
 )
 
 type Schema[T any] interface {
-	DecodeValue(r Reader, target *T) error
+	ScanFrom(r Scanner, target *T) error
 	DecodeMsg(r *msgp.Reader, target *T) error
 	EncodeMsg(w *msgp.Writer, source *T) error
 	Visit(v Visitor, source *T) error
@@ -21,7 +21,7 @@ type schema[T any] interface {
 }
 
 type genericSchema interface {
-	decodeValue(r Reader, target unsafe.Pointer) *schemaError
+	scanFrom(r Scanner, target unsafe.Pointer) *schemaError
 	decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError
 	encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
 	visit(v Visitor, source unsafe.Pointer) *schemaError

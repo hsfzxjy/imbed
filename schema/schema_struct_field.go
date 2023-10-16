@@ -17,9 +17,9 @@ type _StructField struct {
 func (*_StructField) _fieldSchema_stub() {}
 func (s *_StructField) Name() string     { return s.name }
 
-func (s *_StructField) decodeValue(r Reader, target unsafe.Pointer) *schemaError {
+func (s *_StructField) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return s.elemSchema.
-		decodeValue(r, unsafe.Add(target, s.offset)).
+		scanFrom(r, unsafe.Add(target, s.offset)).
 		AppendPath(s.name)
 }
 

@@ -102,7 +102,7 @@ func (s *App) Mode() core.Mode {
 	return s.mode
 }
 
-func (s *App) ProvideWorkspaceConfig(key string) (schema.Reader, error) {
+func (s *App) ProvideWorkspaceConfig(key string) (schema.Scanner, error) {
 	var cfg any
 	if s.cfgTree != nil {
 		cfg = s.cfgTree[key]

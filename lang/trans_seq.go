@@ -10,32 +10,32 @@ import (
 
 func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error) {
 	var transforms []transform.Transform
-	reader := transReader{Parser: c.parser}
-	for !reader.EOF() {
-		reader.Space()
-		name, ok := reader.Ident()
+	scanner := transScanner{Parser: c.parser}
+	for !scanner.EOF() {
+		scanner.Space()
+		name, ok := scanner.Ident()
 		if !ok {
-			return nil, reader.Expect("transform name")
+			return nil, scanner.Expect("transform name")
 		}
 		m, ok := c.registry.Lookup(name)
 		if !ok {
-			return nil, reader.Error(fmt.Errorf("no transform named %q", name))
+			return nil, scanner.Error(fmt.Errorf("no transform named %q", name))
 		}
 		var cb transform.ConfigBuilder
 		if c.parser.Byte('@') {
 			hex, ok := c.parser.String(" :")
 			if !ok {
-				return nil, reader.Expect("config hash")
+				return nil, scanner.Expect("config hash")
 			}
 			needle, err := ndl.HexPrefix(hex)
 			if err != nil {
-				return nil, reader.Error(fmt.Errorf("bad config hash %q: %w", hex, err))
+				return nil, scanner.Error(fmt.Errorf("bad config hash %q: %w", hex, err))
 			}
 			cb = m.ConfigBuilderNeedle(needle)
 		} else {
 			cb = m.ConfigBuilderWorkspace()
 		}
-		pm, err := m.Parse(reader)
+		pm, err := m.Parse(scanner)
 		if err != nil {
 			return nil, err
 		}
@@ -44,11 +44,11 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			return nil, err
 		}
 		transforms = append(transforms, t)
-		reader.Space()
-		if ok = reader.Byte(','); !ok {
-			reader.Space()
-			if !reader.EOF() {
-				return nil, reader.Expect(`','`)
+		scanner.Space()
+		if ok = scanner.Byte(','); !ok {
+			scanner.Space()
+			if !scanner.EOF() {
+				return nil, scanner.Expect(`','`)
 			}
 		}
 	}

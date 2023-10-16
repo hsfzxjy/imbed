@@ -19,4 +19,4 @@ func wrongType(v any, expected string) error {
 	return &ErrWrongType{expected, v}
 }
 
-type Reader = schema.Reader
+type Reader = schema.Scanner

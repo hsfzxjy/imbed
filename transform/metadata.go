@@ -45,9 +45,9 @@ type metadata[C any, P ParamStruct[C]] struct {
 
 func (m *metadata[C, P]) Name() string { return m.name }
 
-func (m *metadata[C, P]) Parse(paramsR schema.Reader) (ParamsWithMetadata, error) {
+func (m *metadata[C, P]) Parse(paramsR schema.Scanner) (ParamsWithMetadata, error) {
 	var params P
-	err := m.paramsSchema.DecodeValue(paramsR, &params)
+	err := m.paramsSchema.ScanFrom(paramsR, &params)
 	if err != nil {
 		return nil, paramsR.Error(err)
 	}

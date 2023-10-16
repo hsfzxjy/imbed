@@ -8,12 +8,12 @@ import (
 	schemareader "github.com/hsfzxjy/imbed/schema/reader"
 )
 
-type transReader struct {
+type transScanner struct {
 	*parser.Parser
 	schemareader.Void
 }
 
-func (p transReader) Bool() (bool, error) {
+func (p transScanner) Bool() (bool, error) {
 	v, ok := p.Parser.Bool()
 	var err error
 	if !ok {
@@ -22,7 +22,7 @@ func (p transReader) Bool() (bool, error) {
 	return v, err
 }
 
-func (p transReader) Rat() (*big.Rat, error) {
+func (p transScanner) Rat() (*big.Rat, error) {
 	v, ok := p.Parser.Rat()
 	var err error
 	if !ok {
@@ -31,7 +31,7 @@ func (p transReader) Rat() (*big.Rat, error) {
 	return v, err
 }
 
-func (p transReader) Int64() (int64, error) {
+func (p transScanner) Int64() (int64, error) {
 	v, ok := p.Parser.Int64()
 	var err error
 	if !ok {
@@ -40,7 +40,7 @@ func (p transReader) Int64() (int64, error) {
 	return v, err
 }
 
-func (p transReader) String() (string, error) {
+func (p transScanner) String() (string, error) {
 	v, ok := p.Parser.String(",:=")
 	var err error
 	if !ok {
@@ -49,7 +49,7 @@ func (p transReader) String() (string, error) {
 	return v, err
 }
 
-func (p transReader) IterField(f func(name string, r schema.Reader) error) error {
+func (p transScanner) IterField(f func(name string, r schema.Scanner) error) error {
 	const FIELD_SEP = ':'
 	const KV_SEP = '='
 	const BOUNDARY = ','
@@ -77,8 +77,8 @@ func (p transReader) IterField(f func(name string, r schema.Reader) error) error
 	return nil
 }
 
-func (p transReader) Error(e error) error {
+func (p transScanner) Error(e error) error {
 	return p.Parser.Error(e)
 }
 
-func _() { var _ schema.Reader = transReader{} }
+func _() { var _ schema.Scanner = transScanner{} }

@@ -15,7 +15,7 @@ type ParamStruct[C any] interface {
 
 type Metadata interface {
 	Name() string
-	Parse(paramsR schema.Reader) (ParamsWithMetadata, error)
+	Parse(paramsR schema.Scanner) (ParamsWithMetadata, error)
 	decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error)
 	ConfigBuilderWorkspace() ConfigBuilder
 	ConfigBuilderNeedle(ndl.Needle) ConfigBuilder

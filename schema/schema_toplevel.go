@@ -12,8 +12,8 @@ type _TopLevel[S any] struct {
 	*_Struct[S]
 }
 
-func (s *_TopLevel[S]) DecodeValue(r Reader, target *S) error {
-	err := s.decodeValue(r, unsafe.Pointer(target))
+func (s *_TopLevel[S]) ScanFrom(r Scanner, target *S) error {
+	err := s.scanFrom(r, unsafe.Pointer(target))
 
 	if err != nil && errors.Is(err.AsError(), ErrRequired) {
 		err2 := s.setDefault(unsafe.Pointer(target))
@@ -24,7 +24,7 @@ func (s *_TopLevel[S]) DecodeValue(r Reader, target *S) error {
 	}
 RETURN:
 	if err != nil {
-		return err.SetOp("DecodeValue").AsError()
+		return err.SetOp("ScanFrom").AsError()
 	}
 	return nil
 }

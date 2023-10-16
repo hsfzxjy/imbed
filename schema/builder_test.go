@@ -32,7 +32,7 @@ func ExampleNew() {
 		schema.F("str", &x.string, schema.String())).
 		DebugName("X")
 	sch := schema.New(s)
-	err := sch.DecodeValue(schemareader.Any(map[string]any{
+	err := sch.ScanFrom(schemareader.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
 		"m":     map[string]any{"a": int64(1)},

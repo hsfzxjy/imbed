@@ -14,14 +14,14 @@ type _Struct[T any] struct {
 	m      map[string]*_StructField
 }
 
-func (s *_Struct[T]) decodeValue(r Reader, target unsafe.Pointer) *schemaError {
+func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	var seen = map[string]struct{}{}
-	err := r.IterField(func(name string, r Reader) error {
+	err := r.IterField(func(name string, r Scanner) error {
 		f, ok := s.m[name]
 		if !ok {
 			return unexpectedField(name)
 		}
-		err := f.decodeValue(r, target)
+		err := f.scanFrom(r, target)
 		if err != nil {
 			if !errors.Is(err.AsError(), ErrRequired) {
 				return err.AsError()
