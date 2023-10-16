@@ -35,7 +35,7 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		} else {
 			cb = m.ConfigBuilderWorkspace()
 		}
-		pm, err := m.Parse(scanner)
+		pm, err := m.ScanParams(scanner)
 		if err != nil {
 			return nil, err
 		}
