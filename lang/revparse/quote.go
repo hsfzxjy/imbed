@@ -2,7 +2,7 @@ package revparse
 
 import "strings"
 
-func  quoteString(b *strings.Builder, s string, quote rune) {
+func quoteString(b *strings.Builder, s string, quote rune) {
 	var quoteR rune
 	switch quote {
 	case '[':
