@@ -50,6 +50,10 @@ func (s *_TopLevel[S]) EncodeMsg(w *msgp.Writer, source *S) error {
 	return s.encodeMsg(w, unsafe.Pointer(source)).SetOp("EncodeMsg").AsError()
 }
 
+func (s *_TopLevel[S]) Visit(v Visitor, source *S) error {
+	return s.visit(v, unsafe.Pointer(source)).SetOp("Visit").AsError()
+}
+
 func _() {
 	type X struct{}
 	var _ Schema[X] = &_TopLevel[X]{}

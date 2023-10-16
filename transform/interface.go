@@ -3,17 +3,34 @@ package transform
 import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/tinylib/msgp/msgp"
 )
 
-type Params[C any] interface {
+type ParamStruct[C any] interface {
 	BuildTransform(cfg *C) (asset.Applier, error)
 }
 
-type genericMetadata interface {
-	Parse(cp core.ConfigProvider, paramsR schema.Reader) (Transform, error)
-	decodeMsg(cp core.ConfigProvider, paramsR *msgp.Reader) (Transform, error)
+type Metadata interface {
+	Name() string
+	Parse(paramsR schema.Reader) (ParamsWithMetadata, error)
+	decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error)
+	ConfigBuilderWorkspace() ConfigBuilder
+	ConfigBuilderNeedle(core.Needle) ConfigBuilder
+	ConfigBuilderHash(ref.Sha256Hash) ConfigBuilder
+}
+
+type ParamsWithMetadata interface {
+	Metadata() Metadata
+	VisitParams(v schema.Visitor) error
+	BuildWith(cfgBuilder ConfigBuilder, cp core.ConfigProvider) (Transform, error)
+}
+
+type Builder interface {
+	ParamsWithMetadata
+	ConfigHash() ref.Sha256Hash
+	Build(cp core.ConfigProvider) (Transform, error)
 }
 
 type Transform interface {

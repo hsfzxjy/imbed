@@ -6,7 +6,7 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type singleTransform[C any, P Params[C]] struct {
+type singleTransform[C any, P ParamStruct[C]] struct {
 	asset.Applier
 	*metadata[C, P]
 
@@ -17,7 +17,7 @@ type singleTransform[C any, P Params[C]] struct {
 	ref.LazyEncodableObject[*singleTransform[C, P]]
 }
 
-func newSingleTransform[C any, P Params[C]](
+func newSingleTransform[C any, P ParamStruct[C]](
 	metadata *metadata[C, P],
 	cfg *C, params *P,
 	applier asset.Applier,

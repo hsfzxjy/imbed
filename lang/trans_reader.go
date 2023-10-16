@@ -55,6 +55,8 @@ func (p transReader) IterField(f func(name string, r schema.Reader) error) error
 	const BOUNDARY = ','
 	for {
 		p.Parser.Space()
+		p.Parser.Byte(FIELD_SEP)
+		p.Parser.Space()
 		field_name, ok := p.Parser.Ident()
 		if !ok {
 			break
@@ -68,9 +70,6 @@ func (p transReader) IterField(f func(name string, r schema.Reader) error) error
 		if err != nil {
 			return err
 		}
-		p.Parser.Space()
-		p.Parser.Byte(FIELD_SEP)
-		p.Parser.Space()
 		if p.EOF() || p.PeekByte() == BOUNDARY {
 			break
 		}

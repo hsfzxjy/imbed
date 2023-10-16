@@ -4,19 +4,19 @@ import (
 	"github.com/hsfzxjy/imbed/schema"
 )
 
-type registrar[C any, P Params[C]] struct {
+type registrar[C any, P ParamStruct[C]] struct {
 	registry Registry
 	*metadata[C, P]
 }
 
-func Register[C any, P Params[C]](
+func Register[C any, P ParamStruct[C]](
 	name string,
 	configSchema schema.Schema[C],
 	paramsSchema schema.Schema[P]) registrar[C, P] {
 	return RegisterIn(defaultRegistry, name, configSchema, paramsSchema)
 }
 
-func RegisterIn[C any, P Params[C]](
+func RegisterIn[C any, P ParamStruct[C]](
 	registry Registry,
 	name string,
 	configSchema schema.Schema[C],

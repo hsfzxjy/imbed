@@ -7,7 +7,7 @@ import (
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-func (c *Context) parseTransSeq(cfg core.ConfigProvider) (*transform.Graph, error) {
+func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error) {
 	var transforms []transform.Transform
 	reader := transReader{Parser: c.parser}
 	for !reader.EOF() {
@@ -20,7 +20,11 @@ func (c *Context) parseTransSeq(cfg core.ConfigProvider) (*transform.Graph, erro
 		if !ok {
 			return nil, reader.Error(fmt.Errorf("no transform named %q", name))
 		}
-		t, err := m.Parse(cfg, reader)
+		pm, err := m.Parse(reader)
+		if err != nil {
+			return nil, err
+		}
+		t, err := pm.BuildWith(m.ConfigBuilderWorkspace(), cp)
 		if err != nil {
 			return nil, err
 		}

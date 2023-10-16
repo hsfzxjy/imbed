@@ -10,77 +10,77 @@ type Void struct{}
 
 // VisitStructBegin implements schema.StructVisitor.
 func (Void) VisitStructBegin(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitStructEnd implements schema.StructVisitor.
 func (Void) VisitStructEnd(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitStructFieldBegin implements schema.StructVisitor.
 func (Void) VisitStructFieldBegin(name string) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitStructFieldEnd implements schema.StructVisitor.
 func (Void) VisitStructFieldEnd(name string) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitMapBegin implements schema.MapVisitor.
 func (Void) VisitMapBegin(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitMapEnd implements schema.MapVisitor.
 func (Void) VisitMapEnd(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitMapItemBegin implements schema.MapVisitor.
 func (Void) VisitMapItemBegin(key string) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitMapItemEnd implements schema.MapVisitor.
 func (Void) VisitMapItemEnd(key string) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitListBegin implements schema.ListVisitor.
 func (Void) VisitListBegin(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitListEnd implements schema.ListVisitor.
 func (Void) VisitListEnd(size int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitListItemBegin implements schema.ListVisitor.
 func (Void) VisitListItemBegin(i int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitListItemEnd implements schema.ListVisitor.
 func (Void) VisitListItemEnd(i int) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitBool implements schema.Visitor.
 func (Void) VisitBool(x bool) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitRat implements schema.Visitor.
 func (Void) VisitRat(x *big.Rat) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitInt64 implements schema.Visitor.
 func (Void) VisitInt64(x int64) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitList implements schema.Visitor.
@@ -95,7 +95,7 @@ func (Void) VisitMap(size int) (mv schema.MapVisitor, elem schema.Visitor, err e
 
 // VisitString implements schema.Visitor.
 func (Void) VisitString(x string) error {
-	panic("unimplemented")
+	return nil
 }
 
 // VisitStruct implements schema.Visitor.

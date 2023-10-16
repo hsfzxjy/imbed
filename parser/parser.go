@@ -219,6 +219,22 @@ LOOP:
 	for off < len(s) {
 		r, size := utf8.DecodeRuneInString(s[off:])
 		if escaping {
+			switch r {
+			case 'a':
+				r = '\a'
+			case 'b':
+				r = '\b'
+			case 'f':
+				r = '\f'
+			case 'n':
+				r = '\n'
+			case 'r':
+				r = '\r'
+			case 't':
+				r = '\t'
+			case 'v':
+				r = '\v'
+			}
 			b.WriteRune(r)
 			off += size
 		} else {

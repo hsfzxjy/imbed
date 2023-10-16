@@ -11,6 +11,7 @@ type Schema[T any] interface {
 	DecodeValue(r Reader, target *T) error
 	DecodeMsg(r *msgp.Reader, target *T) error
 	EncodeMsg(w *msgp.Writer, source *T) error
+	Visit(v Visitor, source *T) error
 	schema[T]
 }
 
