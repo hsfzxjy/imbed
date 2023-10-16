@@ -12,7 +12,7 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/schema"
-	schemareader "github.com/hsfzxjy/imbed/schema/reader"
+	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
 	"github.com/spf13/pflag"
 )
 
@@ -107,7 +107,7 @@ func (s *App) ProvideWorkspaceConfig(key string) (schema.Scanner, error) {
 	if s.cfgTree != nil {
 		cfg = s.cfgTree[key]
 	}
-	return schemareader.Any(cfg), nil
+	return schemascanner.Any(cfg), nil
 }
 
 func (s *App) BuildMode() core.BuildMode {

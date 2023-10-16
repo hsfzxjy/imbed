@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/hsfzxjy/imbed/schema"
-	schemareader "github.com/hsfzxjy/imbed/schema/reader"
+	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -32,7 +32,7 @@ func ExampleNew() {
 		schema.F("str", &x.string, schema.String())).
 		DebugName("X")
 	sch := schema.New(s)
-	err := sch.ScanFrom(schemareader.Any(map[string]any{
+	err := sch.ScanFrom(schemascanner.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
 		"m":     map[string]any{"a": int64(1)},

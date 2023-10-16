@@ -5,12 +5,12 @@ import (
 
 	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/schema"
-	schemareader "github.com/hsfzxjy/imbed/schema/reader"
+	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
 )
 
 type transScanner struct {
 	*parser.Parser
-	schemareader.Void
+	schemascanner.Void
 }
 
 func (p transScanner) Bool() (bool, error) {

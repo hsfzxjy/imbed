@@ -1,4 +1,4 @@
-package schemareader
+package schemascanner
 
 import (
 	"fmt"
@@ -19,4 +19,4 @@ func wrongType(v any, expected string) error {
 	return &ErrWrongType{expected, v}
 }
 
-type Reader = schema.Scanner
+type Scanner = schema.Scanner

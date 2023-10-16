@@ -1,4 +1,4 @@
-package schemareader
+package schemascanner
 
 import (
 	"fmt"
@@ -7,9 +7,9 @@ import (
 	"github.com/hsfzxjy/imbed/schema"
 )
 
-type anyReader struct{ value any }
+type anyScanner struct{ value any }
 
-func (r anyReader) Bool() (bool, error) {
+func (r anyScanner) Bool() (bool, error) {
 	switch v := r.value.(type) {
 	case bool:
 		return v, nil
@@ -20,7 +20,7 @@ func (r anyReader) Bool() (bool, error) {
 	}
 }
 
-func (r anyReader) Rat() (*big.Rat, error) {
+func (r anyScanner) Rat() (*big.Rat, error) {
 	switch v := r.value.(type) {
 	case float64:
 		return new(big.Rat).SetFloat64(v), nil
@@ -37,7 +37,7 @@ func (r anyReader) Rat() (*big.Rat, error) {
 	}
 }
 
-func (r anyReader) Int64() (int64, error) {
+func (r anyScanner) Int64() (int64, error) {
 	switch v := r.value.(type) {
 	case int64:
 		return v, nil
@@ -48,7 +48,7 @@ func (r anyReader) Int64() (int64, error) {
 	}
 }
 
-func (r anyReader) String() (string, error) {
+func (r anyScanner) String() (string, error) {
 	switch v := r.value.(type) {
 	case string:
 		return v, nil
@@ -59,10 +59,10 @@ func (r anyReader) String() (string, error) {
 	}
 }
 
-func (r anyReader) IterElem(f func(i int, elem Reader) error) error {
+func (r anyScanner) IterElem(f func(i int, elem Scanner) error) error {
 	switch v := r.value.(type) {
 	case []any:
-		return NewSliceReader(v).IterElem(f)
+		return NewSliceScanner(v).IterElem(f)
 	case nil:
 		return nil
 	default:
@@ -70,28 +70,28 @@ func (r anyReader) IterElem(f func(i int, elem Reader) error) error {
 	}
 }
 
-func (r anyReader) IterField(f func(name string, field Reader) error) error {
+func (r anyScanner) IterField(f func(name string, field Scanner) error) error {
 	switch v := r.value.(type) {
 	case map[string]any:
-		return NewMapReader(v).IterKV(f)
+		return NewMapScanner(v).IterKV(f)
 	default:
 		return nil
 	}
 }
 
-func (r anyReader) IterKV(f func(key string, value Reader) error) error {
+func (r anyScanner) IterKV(f func(key string, value Scanner) error) error {
 	switch v := r.value.(type) {
 	case map[string]any:
-		return NewMapReader(v).IterKV(f)
+		return NewMapScanner(v).IterKV(f)
 	default:
 		return wrongType(v, "map[string]any")
 	}
 }
 
-func (r anyReader) ListSize() (int, error) {
+func (r anyScanner) ListSize() (int, error) {
 	switch v := r.value.(type) {
 	case []any:
-		return NewSliceReader(v).ListSize()
+		return NewSliceScanner(v).ListSize()
 	case nil:
 		return 0, schema.ErrRequired
 	default:
@@ -99,10 +99,10 @@ func (r anyReader) ListSize() (int, error) {
 	}
 }
 
-func (r anyReader) MapSize() (int, error) {
+func (r anyScanner) MapSize() (int, error) {
 	switch v := r.value.(type) {
 	case map[string]any:
-		return NewMapReader(v).MapSize()
+		return NewMapScanner(v).MapSize()
 	case nil:
 		return 0, schema.ErrRequired
 	default:
@@ -110,8 +110,8 @@ func (r anyReader) MapSize() (int, error) {
 	}
 }
 
-func (r anyReader) Error(e error) error { return e }
+func (r anyScanner) Error(e error) error { return e }
 
-func _() { var _ Reader = anyReader{} }
+func _() { var _ Scanner = anyScanner{} }
 
-func Any(value any) Reader { return anyReader{value} }
+func Any(value any) Scanner { return anyScanner{value} }
