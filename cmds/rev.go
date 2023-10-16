@@ -25,6 +25,6 @@ func (RevCommand) Spec() app.CommandSpec {
 
 func (c RevCommand) Run(app *app.App, command app.CommandSpec) error {
 	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
-	_, err := langCtx.ParseRun_RevBody()
+	_, err := langCtx.ParseRun_RevParseBody()
 	return err
 }

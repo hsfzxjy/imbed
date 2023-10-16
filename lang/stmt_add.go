@@ -1,11 +1,8 @@
 package lang
 
 import (
-	"fmt"
-
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/db"
-	"github.com/hsfzxjy/imbed/db/assetq"
 	"github.com/hsfzxjy/imbed/db/configq"
 )
 
@@ -39,19 +36,4 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 		return nil, err
 	}
 	return stockAssets, nil
-}
-
-func (c *Context) ParseRun_QBody() (assetq.Query, error) {
-	q, err := fuzzyExprs.parse(c)
-	if err != nil {
-		return nil, err
-	}
-	if q != nil {
-		return q, nil
-	}
-	c.parser.Space()
-	if !c.parser.EOF() {
-		return nil, c.parser.Error(fmt.Errorf("invalid query"))
-	}
-	return assetq.All(), nil
 }

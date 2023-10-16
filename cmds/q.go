@@ -31,7 +31,7 @@ func (QCommand) Spec() app.CommandSpec {
 
 func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
-	query, err := langCtx.ParseRun_QBody()
+	query, err := langCtx.ParseRun_QueryBody()
 	if err != nil {
 		return err
 	}

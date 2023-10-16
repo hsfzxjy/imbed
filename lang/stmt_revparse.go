@@ -16,7 +16,7 @@ import (
 	"github.com/hsfzxjy/imbed/util/iter"
 )
 
-func (c *Context) ParseRun_RevBody() (string, error) {
+func (c *Context) ParseRun_RevParseBody() (string, error) {
 	var builder strings.Builder
 	_ = builder
 	err := c.app.DB().RunR(func(ctx db.Context) error {
