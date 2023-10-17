@@ -93,14 +93,6 @@ var ErrRequired = errors.New("value is required")
 var ErrUnexpectedField = errors.New("unexpected field")
 var ErrValidation = errors.New("validation error")
 
-// func requiredErr(typ string, err error) error {
-// 	return fmt.Errorf("%w (type=%s): %w", ErrRequired, typ, err)
-// }
-
-// func required(typ string) error {
-// 	return fmt.Errorf("%w (type=%s)", ErrRequired, typ)
-// }
-
 func unexpectedField(badFieldName string) error {
 	return fmt.Errorf("%w %q", ErrUnexpectedField, badFieldName)
 }
