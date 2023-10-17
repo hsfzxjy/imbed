@@ -8,11 +8,11 @@ import (
 )
 
 type Schema[T any] interface {
-	ScanFrom(r Scanner, target *T) error
-	DecodeMsg(r *msgp.Reader, target *T) error
-	EncodeMsg(w *msgp.Writer, source *T) error
-	Visit(v Visitor, source *T) error
-	schema[T]
+	ScanFrom(r Scanner) (T, error)
+	DecodeMsg(r *msgp.Reader) (T, error)
+	EncodeMsg(w *msgp.Writer, source T) error
+	Visit(v Visitor, source T) error
+	New() T
 }
 
 type schema[T any] interface {

@@ -13,11 +13,11 @@ import (
 	"github.com/hsfzxjy/imbed/util"
 )
 
-type applier struct {
+type localUpload struct {
 	Path string
 }
 
-func (t applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
+func (t *localUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	fid, err := content.BuildFID(a.Content(), a.BaseName())
 	if err != nil {
 		return nil, err
@@ -53,13 +53,14 @@ func (c *Config) Validate() error {
 
 type Params struct{}
 
-func (Params) BuildTransform(c *Config) (asset.Applier, error) {
-	return applier{c.Path}, nil
+func (Params) BuildTransform(c *Config) (*localUpload, error) {
+	return &localUpload{c.Path}, nil
 }
 
 func Register(r transform.Registry) {
 	var c Config
 	var p Params
+	var a localUpload
 	transform.RegisterIn(
 		r,
 		"upload.local",
@@ -67,5 +68,8 @@ func Register(r transform.Registry) {
 			schema.F("path", &c.Path, schema.String()),
 		).Build(),
 		schema.Struct(&p).Build(),
+		schema.Struct(&a,
+			schema.F("Path", &a.Path, schema.String()),
+		).Build(),
 	).Kind(transform.KindPersist)
 }

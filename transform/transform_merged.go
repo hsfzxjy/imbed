@@ -1,21 +1,24 @@
 package transform
 
 import (
+	"bytes"
+	"crypto/sha256"
+	"slices"
+
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
-	"github.com/tinylib/msgp/msgp"
 )
 
 type mergedTransform struct {
 	transforms []Transform
-	ref.LazyEncodableObject[*mergedTransform]
+	encodable
 }
 
 func newMergedTransform(transforms []Transform) *mergedTransform {
 	t := new(mergedTransform)
 	t.transforms = transforms
-	t.Inner = t
+	t.Compute = t.compute
 	return t
 }
 
@@ -40,18 +43,45 @@ func (m *mergedTransform) Apply(app core.App, a asset.Asset) (asset.Update, erro
 	return asset.MergeUpdates(updates...), nil
 }
 
-func (m *mergedTransform) EncodeSelf(w *msgp.Writer) error {
+func (m *mergedTransform) compute() {
+	var (
+		buf     bytes.Buffer
+		err     error
+		hash    ref.Sha256Hash
+		encoded []byte
+	)
 	for _, t := range m.transforms {
-		encoded, err := t.GetRawEncoded()
+		encoded, err = t.GetRawEncoded()
 		if err != nil {
-			return err
+			goto ERROR
 		}
-		err = w.Append(encoded...)
-		if err != nil {
-			return err
-		}
+		buf.Write(encoded)
 	}
-	return nil
+	encoded = slices.Clone(buf.Bytes())
+	buf.Reset()
+
+	if len(m.transforms) == 1 {
+		hash, err = m.transforms[0].GetSha256Hash()
+		if err != nil {
+			goto ERROR
+		}
+	} else {
+		buf.Grow(len(m.transforms) * sha256.Size)
+		for _, t := range m.transforms {
+			hash, err = t.GetSha256Hash()
+			if err != nil {
+				goto ERROR
+			}
+			buf.Write(ref.AsRaw(hash))
+		}
+		hash = ref.Sha256HashSum(buf.Bytes())
+	}
+
+	m.encoded, m.hash = encoded, hash
+	return
+
+ERROR:
+	m.encodeError = err
 }
 
 func (m *mergedTransform) Kind() Kind {

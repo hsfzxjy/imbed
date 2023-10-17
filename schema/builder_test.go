@@ -23,8 +23,8 @@ func (x X) GoString() string {
 }
 
 func ExampleNew() {
-	var x = X{}
-	s := schema.Struct(&x,
+	var x = new(X)
+	s := schema.Struct(x,
 		schema.F("int", &x.int64, schema.Int()),
 		schema.F("bool", &x.bool, schema.Bool()),
 		schema.F("float", &x.Rat, schema.Rat()),
@@ -32,13 +32,13 @@ func ExampleNew() {
 		schema.F("str", &x.string, schema.String())).
 		DebugName("X")
 	sch := schema.New(s)
-	err := sch.ScanFrom(schemascanner.Any(map[string]any{
+	x, err := sch.ScanFrom(schemascanner.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
 		"m":     map[string]any{"a": int64(1)},
 		"float": "3.14",
 		"str":   "test",
-	}), &x)
+	}))
 	if err != nil {
 		panic(err)
 	}
@@ -46,14 +46,13 @@ func ExampleNew() {
 
 	var buf bytes.Buffer
 	w := msgp.NewWriter(&buf)
-	err = sch.EncodeMsg(w, &x)
+	err = sch.EncodeMsg(w, x)
 	if err != nil {
 		panic(err)
 	}
 	w.Flush()
-	x = X{}
 	r := msgp.NewReader(&buf)
-	err = sch.DecodeMsg(r, &x)
+	x, err = sch.DecodeMsg(r)
 	if err != nil {
 		panic(err)
 	}

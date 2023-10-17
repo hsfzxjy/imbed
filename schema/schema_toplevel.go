@@ -7,12 +7,15 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type _TopLevel[S any] struct {
+type _TopLevel[pS *S, S any] struct {
 	sig sig
 	*_Struct[S]
 }
 
-func (s *_TopLevel[S]) ScanFrom(r Scanner, target *S) error {
+func (s *_TopLevel[pS, S]) New() pS { return new(S) }
+
+func (s *_TopLevel[pS, S]) ScanFrom(r Scanner) (pS, error) {
+	var target = new(S)
 	err := s.scanFrom(r, unsafe.Pointer(target))
 
 	if err != nil && errors.Is(err.AsError(), ErrRequired) {
@@ -24,25 +27,30 @@ func (s *_TopLevel[S]) ScanFrom(r Scanner, target *S) error {
 	}
 RETURN:
 	if err != nil {
-		return err.SetOp("ScanFrom").AsError()
+		return nil, err.SetOp("ScanFrom").AsError()
 	}
-	return nil
+	return target, nil
 }
 
-func (s *_TopLevel[S]) DecodeMsg(r *msgp.Reader, target *S) error {
+func (s *_TopLevel[pS, S]) DecodeMsg(r *msgp.Reader) (pS, error) {
+	var target = new(S)
 	var sig sig
 	_, err := r.ReadFull(sig[:])
 	if err != nil {
-		return newError(err).SetOp("DecodeMsg").AsError()
+		return nil, newError(err).SetOp("DecodeMsg").AsError()
 	}
 	if sig != s.sig {
 		err = badSig(s.sig, sig)
-		return newError(err).SetOp("DecodeMsg").AsError()
+		return nil, newError(err).SetOp("DecodeMsg").AsError()
 	}
-	return s.decodeMsg(r, unsafe.Pointer(target)).SetOp("DecodeMsg").AsError()
+	err = s.decodeMsg(r, unsafe.Pointer(target)).SetOp("DecodeMsg").AsError()
+	if err != nil {
+		return nil, err
+	}
+	return target, nil
 }
 
-func (s *_TopLevel[S]) EncodeMsg(w *msgp.Writer, source *S) error {
+func (s *_TopLevel[pS, S]) EncodeMsg(w *msgp.Writer, source pS) error {
 	err := w.Append(s.sig[:]...)
 	if err != nil {
 		return newError(err).SetOp("EncodeMsg").AsError()
@@ -50,11 +58,11 @@ func (s *_TopLevel[S]) EncodeMsg(w *msgp.Writer, source *S) error {
 	return s.encodeMsg(w, unsafe.Pointer(source)).SetOp("EncodeMsg").AsError()
 }
 
-func (s *_TopLevel[S]) Visit(v Visitor, source *S) error {
+func (s *_TopLevel[pS, S]) Visit(v Visitor, source pS) error {
 	return s.visit(v, unsafe.Pointer(source)).SetOp("Visit").AsError()
 }
 
 func _() {
 	type X struct{}
-	var _ Schema[X] = &_TopLevel[X]{}
+	var _ Schema[*X] = &_TopLevel[*X, X]{}
 }

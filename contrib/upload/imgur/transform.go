@@ -53,7 +53,7 @@ type Params struct {
 	AppName string
 }
 
-func (p Params) BuildTransform(c *Config) (asset.Applier, error) {
+func (p *Params) BuildTransform(c *Config) (*ImgurUpload, error) {
 	appName := p.AppName
 	if appName == "" {
 		appName = c.Default
@@ -79,8 +79,12 @@ func Register(r transform.Registry) {
 	paramsSchema := schema.Struct(&params,
 		schema.F("app", &params.AppName, schema.String().Default("")),
 	).DebugName("ImgurParams")
+	var applier ImgurUpload
+	applierSchema := schema.Struct(&applier,
+		schema.F("App", &applier.App, appSchema))
 	transform.RegisterIn(r, "upload.imgur",
 		schema.New(configSchema), schema.New(paramsSchema),
+		schema.New(applierSchema),
 	).Alias("imgur").Kind(transform.KindPersist)
 }
 

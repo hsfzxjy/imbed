@@ -63,6 +63,6 @@ func (s *structBuilder[S]) buildSchema() schema[S] {
 }
 func (s *structBuilder[T]) buildGenericSchema() genericSchema { return s.buildSchema() }
 
-func (s *structBuilder[T]) Build() Schema[T] {
+func (s *structBuilder[T]) Build() Schema[*T] {
 	return New(s)
 }

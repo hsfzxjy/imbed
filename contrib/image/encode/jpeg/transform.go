@@ -12,11 +12,11 @@ import (
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-type applier struct {
-	Quality int
+type jpegEncoder struct {
+	Quality int64
 }
 
-func (x applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
+func (x *jpegEncoder) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	ic := content.AsImage(a.Content())
 	c := content.New(content.WithLoadFunc(func(w io.Writer) error {
 		im, err := ic.Image()
@@ -24,7 +24,7 @@ func (x applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 			return err
 		}
 		return jpeg.Encode(w, im, &jpeg.Options{
-			Quality: x.Quality,
+			Quality: int(x.Quality),
 		})
 	}))
 	return asset.MergeUpdates(
@@ -55,17 +55,18 @@ func (p *Params) Validate() error {
 	return nil
 }
 
-func (p Params) BuildTransform(c *Config) (asset.Applier, error) {
+func (p *Params) BuildTransform(c *Config) (*jpegEncoder, error) {
 	var q = p.Quality
 	if q == -1 {
 		q = c.DefaultQuality
 	}
-	return applier{int(q)}, nil
+	return &jpegEncoder{q}, nil
 }
 
 func Register(r transform.Registry) {
 	var c Config
 	var p Params
+	var a jpegEncoder
 	transform.
 		RegisterIn(
 			r,
@@ -88,6 +89,9 @@ func Register(r transform.Registry) {
 			).
 				DebugName("image.encode.jpeg#params").
 				Build(),
+			schema.Struct(&a,
+				schema.F("Quality", &a.Quality, schema.Int()),
+			).Build(),
 		).
 		Alias("jpeg", "jpg").
 		Kind(transform.KindChangeContent)

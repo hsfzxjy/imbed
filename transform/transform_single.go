@@ -1,59 +1,106 @@
 package transform
 
 import (
+	"bytes"
+	"slices"
+
 	"github.com/hsfzxjy/imbed/asset"
+	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/tinylib/msgp/msgp"
 )
 
-type singleTransform[C any, P ParamStruct[C]] struct {
-	asset.Applier
-	*metadata[C, P]
+type singleTransform[C any, P IParam[C, A], A IApplier] struct {
+	*metadata[C, P, A]
+	config  *configWrapper[C]
+	params  P
+	applier A
 
-	config *configInstance[C]
-
-	params *P
-
-	ref.LazyEncodableObject[*singleTransform[C, P]]
+	encodable
 }
 
-func newSingleTransform[C any, P ParamStruct[C]](
-	metadata *metadata[C, P],
-	cfg *C, params *P,
-	applier asset.Applier,
-) *singleTransform[C, P] {
-	t := new(singleTransform[C, P])
-	t.Applier = applier
-	t.metadata = metadata
-	t.config = newConfigInstance(metadata.configSchema, cfg)
-	t.params = params
-	t.LazyEncodableObject.Inner = t
-	return t
+func (t *singleTransform[C, P, A]) Apply(app core.App, asset asset.Asset) (asset.Update, error) {
+	return t.applier.Apply(app, asset)
 }
 
-func (t *singleTransform[C, P]) EncodeSelf(w *msgp.Writer) error {
+func (t *singleTransform[C, P, A]) compute() {
+	var (
+		buf     bytes.Buffer
+		w       *msgp.Writer
+		encoded []byte
+		hash    ref.Sha256Hash
+	)
 	configHash, err := t.config.GetSha256Hash()
 	if err != nil {
-		return err
+		goto ERROR
 	}
+
+	// compute encoded
+	w = msgp.NewWriter(&buf)
 	err = w.Append(ref.AsRaw(configHash)...)
 	if err != nil {
-		return err
+		goto ERROR
 	}
 	err = w.WriteString(t.metadata.name)
 	if err != nil {
-		return err
+		goto ERROR
 	}
 	err = t.paramsSchema.EncodeMsg(w, t.params)
-	return err
+	if err != nil {
+		goto ERROR
+	}
+	err = w.Flush()
+	if err != nil {
+		goto ERROR
+	}
+	encoded = slices.Clone(buf.Bytes())
+
+	// compute hash
+	buf.Reset()
+	err = w.WriteString(t.metadata.name)
+	if err != nil {
+		goto ERROR
+	}
+	err = t.applierSchema.EncodeMsg(w, t.applier)
+	if err != nil {
+		goto ERROR
+	}
+	err = w.Flush()
+	if err != nil {
+		goto ERROR
+	}
+	hash = ref.Sha256HashSum(buf.Bytes())
+
+	t.encoded, t.hash = encoded, hash
+	return
+
+ERROR:
+	t.encodeError = err
+
 }
 
-func (t *singleTransform[C, P]) AssociatedConfigs() []ref.EncodableObject {
+func (t *singleTransform[C, P, A]) AssociatedConfigs() []ref.EncodableObject {
 	return []ref.EncodableObject{t.config}
 }
 
-func (t *singleTransform[C, P]) Name() string {
+func (t *singleTransform[C, P, A]) Name() string {
 	return t.name
 }
 
-func (t *singleTransform[C, P]) Kind() Kind { return t.metadata.kind }
+func (t *singleTransform[C, P, A]) Kind() Kind {
+	return t.metadata.kind
+}
+
+func newSingleTransform[C any, P IParam[C, A], A IApplier](
+	metadata *metadata[C, P, A],
+	cfg C, params P,
+	applier A,
+) *singleTransform[C, P, A] {
+	t := new(singleTransform[C, P, A])
+	t.applier = applier
+	t.metadata = metadata
+	t.config = wrapConfig(metadata.configSchema, cfg)
+	t.params = params
+	t.Compute = t.compute
+	return t
+}

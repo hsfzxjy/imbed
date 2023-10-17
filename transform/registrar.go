@@ -4,33 +4,36 @@ import (
 	"github.com/hsfzxjy/imbed/schema"
 )
 
-type registrar[C any, P ParamStruct[C]] struct {
+type registrar[C any, P IParam[C, A], A IApplier] struct {
 	registry Registry
-	*metadata[C, P]
+	*metadata[C, P, A]
 }
 
-func Register[C any, P ParamStruct[C]](
+func Register[C any, P IParam[C, A], A IApplier](
 	name string,
 	configSchema schema.Schema[C],
-	paramsSchema schema.Schema[P]) registrar[C, P] {
-	return RegisterIn(defaultRegistry, name, configSchema, paramsSchema)
+	paramsSchema schema.Schema[P],
+	applierSchema schema.Schema[A]) registrar[C, P, A] {
+	return RegisterIn(defaultRegistry, name, configSchema, paramsSchema, applierSchema)
 }
 
-func RegisterIn[C any, P ParamStruct[C]](
+func RegisterIn[C any, P IParam[C, A], A IApplier](
 	registry Registry,
 	name string,
 	configSchema schema.Schema[C],
-	paramsSchema schema.Schema[P]) registrar[C, P] {
-	m := new(metadata[C, P])
+	paramsSchema schema.Schema[P],
+	applierSchema schema.Schema[A]) registrar[C, P, A] {
+	m := new(metadata[C, P, A])
 	m.name = name
 	m.configSchema = configSchema
 	m.paramsSchema = paramsSchema
-	r := registrar[C, P]{registry, m}
+	m.applierSchema = applierSchema
+	r := registrar[C, P, A]{registry, m}
 	r.registerToName(name)
 	return r
 }
 
-func (r registrar[C, P]) Alias(aliases ...string) registrar[C, P] {
+func (r registrar[C, P, A]) Alias(aliases ...string) registrar[C, P, A] {
 	r.aliases = append(r.aliases, aliases...)
 	for _, alias := range aliases {
 		r.registerToName(alias)
@@ -38,12 +41,12 @@ func (r registrar[C, P]) Alias(aliases ...string) registrar[C, P] {
 	return r
 }
 
-func (r registrar[C, P]) Kind(kind Kind) registrar[C, P] {
+func (r registrar[C, P, A]) Kind(kind Kind) registrar[C, P, A] {
 	r.kind = kind
 	return r
 }
 
-func (r registrar[C, P]) registerToName(name string) {
+func (r registrar[C, P, A]) registerToName(name string) {
 	_, ok := r.registry.metadataTable[name]
 	if ok {
 		panic(name + " is already taken")

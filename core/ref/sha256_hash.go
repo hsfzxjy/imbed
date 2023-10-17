@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
-	"sync"
 
 	"github.com/tinylib/msgp/msgp"
 )
@@ -66,58 +65,7 @@ func HashEncodeFunc(encodeF func(w *msgp.Writer) error) (Sha256Hash, []byte, err
 	return h, encoded, nil
 }
 
-type selfEncoder interface {
-	EncodeSelf(w *msgp.Writer) error
-}
-
 type EncodableObject interface {
 	GetSha256Hash() (Sha256Hash, error)
 	GetRawEncoded() ([]byte, error)
-}
-
-type LazyEncodableObject[T selfEncoder] struct {
-	Inner   T
-	once    sync.Once
-	hash    Sha256Hash
-	encoded []byte
-}
-
-func (v *LazyEncodableObject[T]) compute() error {
-	var err error
-	v.once.Do(func() {
-		v.hash, v.encoded, err = HashEncodeFunc(v.Inner.EncodeSelf)
-	})
-	return err
-}
-
-func (v *LazyEncodableObject[T]) GetSha256Hash() (Sha256Hash, error) {
-	if err := v.compute(); err != nil {
-		return Sha256Hash{}, err
-	}
-	return v.hash, nil
-}
-
-func (v *LazyEncodableObject[T]) GetRawEncoded() ([]byte, error) {
-	if err := v.compute(); err != nil {
-		return nil, err
-	}
-	return v.encoded, nil
-}
-
-type ConstantEncodableObject struct {
-	once    sync.Once
-	hash    Sha256Hash
-	Encoded []byte
-}
-
-func (v *ConstantEncodableObject) GetSha256Hash() (Sha256Hash, error) {
-	v.once.Do(func() {
-		var sum = sha256.Sum256(v.Encoded)
-		v.hash.raw = string(sum[:])
-	})
-	return v.hash, nil
-}
-
-func (v *ConstantEncodableObject) GetRawEncoded() ([]byte, error) {
-	return v.Encoded, nil
 }

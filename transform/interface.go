@@ -9,8 +9,12 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type ParamStruct[C any] interface {
-	BuildTransform(cfg *C) (asset.Applier, error)
+type IParam[C any, A IApplier] interface {
+	BuildTransform(cfg C) (A, error)
+}
+
+type IApplier interface {
+	asset.Applier
 }
 
 type Metadata interface {
