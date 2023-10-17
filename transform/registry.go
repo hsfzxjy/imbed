@@ -12,10 +12,6 @@ type Registry struct {
 	metadataTable map[string]Metadata
 }
 
-var defaultRegistry = NewRegistry()
-
-func DefaultRegistry() Registry { return defaultRegistry }
-
 func NewRegistry() Registry {
 	return Registry{map[string]Metadata{}}
 }

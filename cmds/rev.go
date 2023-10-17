@@ -5,7 +5,6 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/lang"
 	"github.com/hsfzxjy/imbed/parser"
-	"github.com/hsfzxjy/imbed/transform"
 )
 
 type RevCommand struct {
@@ -24,7 +23,7 @@ func (RevCommand) Spec() app.CommandSpec {
 }
 
 func (c RevCommand) Run(app *app.App, command app.CommandSpec) error {
-	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
+	langCtx := lang.NewContext(parser.New(command.Args()), app)
 	result, err := langCtx.ParseRun_RevParseBody()
 	if err != nil {
 		return err

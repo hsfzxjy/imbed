@@ -9,14 +9,6 @@ type registrar[C any, P IParam[C, A], A IApplier] struct {
 	*metadata[C, P, A]
 }
 
-func Register[C any, P IParam[C, A], A IApplier](
-	name string,
-	configSchema schema.Schema[C],
-	paramsSchema schema.Schema[P],
-	applierSchema schema.Schema[A]) registrar[C, P, A] {
-	return RegisterIn(defaultRegistry, name, configSchema, paramsSchema, applierSchema)
-}
-
 func RegisterIn[C any, P IParam[C, A], A IApplier](
 	registry Registry,
 	name string,

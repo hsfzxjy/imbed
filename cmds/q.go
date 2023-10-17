@@ -10,7 +10,6 @@ import (
 	"github.com/hsfzxjy/imbed/formatter"
 	"github.com/hsfzxjy/imbed/lang"
 	"github.com/hsfzxjy/imbed/parser"
-	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
 
@@ -30,7 +29,7 @@ func (QCommand) Spec() app.CommandSpec {
 }
 
 func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
-	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
+	langCtx := lang.NewContext(parser.New(command.Args()), app)
 	query, err := langCtx.ParseRun_QueryBody()
 	if err != nil {
 		return err

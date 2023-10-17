@@ -13,6 +13,7 @@ import (
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/schema"
 	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
+	"github.com/hsfzxjy/imbed/transform"
 	"github.com/spf13/pflag"
 )
 
@@ -27,9 +28,11 @@ type App struct {
 
 	proxyConfig *httpproxy.Config
 	proxyOnce   sync.Once
+
+	registry transform.Registry
 }
 
-func ParseAndRun(cmdArgs []string, specs Commands) error {
+func ParseAndRun(cmdArgs []string, specs Commands, registry transform.Registry) error {
 	var err error
 	if len(cmdArgs) == 1 {
 		return errors.New("no subcommand")
@@ -71,15 +74,20 @@ func ParseAndRun(cmdArgs []string, specs Commands) error {
 		}
 
 		app := &App{
-			mode:    spec.Mode,
-			workDir: workDir,
-			dbDir:   path.Join(workDir, DB_DIR),
-			cfgTree: cfgTree,
+			mode:     spec.Mode,
+			workDir:  workDir,
+			dbDir:    path.Join(workDir, DB_DIR),
+			cfgTree:  cfgTree,
+			registry: registry,
 		}
 		return spec.Runner(app, spec)
 	}
 
 	return fmt.Errorf("no command %s", cmd)
+}
+
+func (s *App) Registry() transform.Registry {
+	return s.registry
 }
 
 func (s *App) DBDir() string {

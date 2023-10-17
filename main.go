@@ -13,13 +13,14 @@ import (
 )
 
 func main() {
-	contrib.Register(transform.DefaultRegistry())
+	registry := transform.NewRegistry()
+	contrib.Register(registry)
 	commands := app.Commands{}.
 		Register(cmds.InitCommand{}.Spec()).
 		Register(cmds.AddCommand{}.Spec()).
 		Register(cmds.QCommand{}.Spec()).
 		Register(cmds.RevCommand{}.Spec())
-	err := app.ParseAndRun(os.Args, commands)
+	err := app.ParseAndRun(os.Args, commands, registry)
 	if err != nil {
 		switch {
 		case errors.Is(err, pflag.ErrHelp):

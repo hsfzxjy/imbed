@@ -9,7 +9,6 @@ import (
 	"github.com/hsfzxjy/imbed/formatter"
 	"github.com/hsfzxjy/imbed/lang"
 	"github.com/hsfzxjy/imbed/parser"
-	"github.com/hsfzxjy/imbed/transform"
 )
 
 type AddCommand struct {
@@ -28,7 +27,7 @@ func (AddCommand) Spec() app.CommandSpec {
 }
 
 func (c AddCommand) Run(app *app.App, command app.CommandSpec) error {
-	langCtx := lang.NewContext(parser.New(command.Args()), app, transform.DefaultRegistry())
+	langCtx := lang.NewContext(parser.New(command.Args()), app)
 	assets, err := langCtx.ParseRun_AddBody()
 	if err != nil {
 		return err
