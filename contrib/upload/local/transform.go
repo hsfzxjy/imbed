@@ -39,22 +39,24 @@ type Config struct {
 	Path string
 }
 
-func (c *Config) Validate() error {
-	if c.Path == "" {
-		return errors.New("empty upload path")
-	}
-	var err error
-	c.Path, err = filepath.Abs(c.Path)
-	if err != nil {
-		return err
-	}
-	return nil
+type Params struct {
+	Path string
 }
 
-type Params struct{}
-
-func (Params) BuildTransform(c *Config) (*localUpload, error) {
-	return &localUpload{c.Path}, nil
+func (p *Params) BuildTransform(c *Config) (*localUpload, error) {
+	var path = p.Path
+	if path == "" {
+		path = c.Path
+	}
+	if path == "" {
+		return nil, errors.New("empty upload path")
+	}
+	var err error
+	path, err = filepath.Abs(path)
+	if err != nil {
+		return nil, err
+	}
+	return &localUpload{path}, nil
 }
 
 func Register(r transform.Registry) {
@@ -65,9 +67,11 @@ func Register(r transform.Registry) {
 		r,
 		"upload.local",
 		schema.Struct(&c,
-			schema.F("path", &c.Path, schema.String()),
+			schema.F("path", &c.Path, schema.String().Default("")),
 		).Build(),
-		schema.Struct(&p).Build(),
+		schema.Struct(&p,
+			schema.F("path", &p.Path, schema.String().Default("")),
+		).Build(),
 		schema.Struct(&a,
 			schema.F("Path", &a.Path, schema.String()),
 		).Build(),
