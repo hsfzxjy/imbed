@@ -24,14 +24,21 @@ func (w schemaErrorWrapper) Error() string {
 		b.WriteString(": ")
 	}
 
-	if len(e.path) > 0 {
-		b.WriteRune('[')
-		for i := len(e.path) - 1; i > 0; i-- {
-			b.WriteString(e.path[i])
-			b.WriteString(" -> ")
+	writeString := func(s string) {
+		if strings.ContainsRune(s, '.') {
+			b.WriteString(strconv.Quote(s))
+		} else {
+			b.WriteString(s)
 		}
-		b.WriteString(e.path[0])
-		b.WriteString("]: ")
+	}
+
+	if len(e.path) > 0 {
+		for i := len(e.path) - 1; i > 0; i-- {
+			writeString(e.path[i])
+			b.WriteString(".")
+		}
+		writeString(e.path[0])
+		b.WriteString(": ")
 	}
 
 	b.WriteString(e.err.Error())

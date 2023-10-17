@@ -76,14 +76,18 @@ func Register(r transform.Registry) {
 					&c.DefaultQuality,
 					schema.Int().
 						Default(jpeg.DefaultQuality)),
-			).Build(),
+			).
+				DebugName("image.encode.jpeg#config").
+				Build(),
 			schema.Struct(&p,
 				schema.F(
 					"q",
 					&p.Quality,
 					schema.Int().
 						Default(-1)),
-			).Build(),
+			).
+				DebugName("image.encode.jpeg#params").
+				Build(),
 		).
 		Alias("jpeg", "jpg").
 		Kind(transform.KindChangeContent)
