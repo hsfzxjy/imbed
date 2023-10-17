@@ -80,6 +80,7 @@ func ParseAndRun(cmdArgs []string, specs Commands, registry transform.Registry) 
 			cfgTree:  cfgTree,
 			registry: registry,
 		}
+		defer app.Close()
 		return spec.Runner(app, spec)
 	}
 
@@ -92,6 +93,11 @@ func (s *App) Registry() transform.Registry {
 
 func (s *App) DBDir() string {
 	return s.dbDir
+}
+
+func (s *App) Close() error {
+	s.dbOnce.Do(func() {})
+	return s.dbs.Close()
 }
 
 func (s *App) WorkDir() string {

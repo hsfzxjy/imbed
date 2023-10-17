@@ -82,3 +82,10 @@ func (s Service) runRW(f func(H) error) error {
 		return h.Err()
 	})
 }
+
+func (s Service) Close() error {
+	if s.db == nil {
+		return nil
+	}
+	return s.db.Close()
+}
