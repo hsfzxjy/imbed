@@ -46,16 +46,17 @@ func (s fuzzyExprSet) parse(c *Context) (assetq.Query, error) {
 
 func (f *fuzzyExpr) parse(c *Context) (assetq.Query, error) {
 	if !c.parser.Term(f.directive) {
+		c.parser.ClearLastErr()
 		return nil, nil
 	}
 	exact := c.parser.Byte('=')
 	value, ok := c.parser.String("")
 	if !ok {
-		return nil, c.parser.Expect(f.expected)
+		return nil, c.parser.Error(nil)
 	}
 	needle, err := f.needleBuilder(value, !exact)
 	if err != nil {
-		return nil, err
+		return nil, c.parser.Error(err)
 	}
 	return f.queryBuilder(needle), nil
 }

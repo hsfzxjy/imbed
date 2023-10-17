@@ -15,7 +15,7 @@ func (c *Context) parseAsset() (asset.Loader, error) {
 	c.parser.Term("file@")
 	filename, ok := c.parser.String("")
 	if !ok {
-		return nil, c.parser.Expect("a file name")
+		return nil, c.parser.ErrorString("illegal file name")
 	}
 	return asset.LoadFile(filename), nil
 }
@@ -28,5 +28,5 @@ func (c *Context) parseDBAsset() (asset.StockLoader, error) {
 	if q != nil {
 		return asset.FromQ(c.app, q), nil
 	}
-	return nil, c.parser.Expect("an asset query")
+	return nil, c.parser.ErrorString("expect asset query")
 }

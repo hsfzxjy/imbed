@@ -17,7 +17,7 @@ func (p transScanner) Bool() (bool, error) {
 	v, ok := p.Parser.Bool()
 	var err error
 	if !ok {
-		err = p.Expect(`'true' or 'false'`)
+		err = p.Error(nil)
 	}
 	return v, err
 }
@@ -26,7 +26,7 @@ func (p transScanner) Rat() (*big.Rat, error) {
 	v, ok := p.Parser.Rat()
 	var err error
 	if !ok {
-		err = p.Expect(`Rat literal`)
+		err = p.Error(nil)
 	}
 	return v, err
 }
@@ -35,7 +35,7 @@ func (p transScanner) Int64() (int64, error) {
 	v, ok := p.Parser.Int64()
 	var err error
 	if !ok {
-		err = p.Expect(`int literal`)
+		err = p.Error(nil)
 	}
 	return v, err
 }
@@ -44,7 +44,7 @@ func (p transScanner) String() (string, error) {
 	v, ok := p.Parser.String(",:=")
 	var err error
 	if !ok {
-		err = p.Expect(`string literal`)
+		err = p.Error(nil)
 	}
 	return v, err
 }
@@ -63,7 +63,7 @@ func (p transScanner) IterField(f func(name string, r schema.Scanner) error) err
 		}
 		p.Parser.Space()
 		if ok = p.Parser.Byte(KV_SEP); !ok {
-			return p.Expect(`'='`)
+			return p.Error(nil)
 		}
 		p.Parser.Space()
 		err := f(field_name, p)

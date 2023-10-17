@@ -15,21 +15,21 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		scanner.Space()
 		name, ok := scanner.Ident()
 		if !ok {
-			return nil, scanner.Expect("transform name")
+			return nil, scanner.ErrorString("unknown transform")
 		}
 		m, ok := c.registry.Lookup(name)
 		if !ok {
-			return nil, scanner.Error(fmt.Errorf("no transform named %q", name))
+			return nil, scanner.ErrorString("unknown transform")
 		}
 		var cb transform.ConfigBuilder
 		if c.parser.Byte('@') {
 			hex, ok := c.parser.String(" :")
 			if !ok {
-				return nil, scanner.Expect("config hash")
+				return nil, scanner.ErrorString("expect config SHA")
 			}
 			needle, err := ndl.HexPrefix(hex)
 			if err != nil {
-				return nil, scanner.Error(fmt.Errorf("bad config hash %q: %w", hex, err))
+				return nil, scanner.Error(fmt.Errorf("invalid config SHA %q: %w", hex, err))
 			}
 			cb = m.ConfigBuilderNeedle(needle)
 		} else {
@@ -48,7 +48,7 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		if ok = scanner.Byte(','); !ok {
 			scanner.Space()
 			if !scanner.EOF() {
-				return nil, scanner.Expect(`','`)
+				return nil, scanner.ErrorString(`expect ','`)
 			}
 		}
 	}

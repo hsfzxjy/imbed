@@ -1,7 +1,6 @@
 package parser
 
 import (
-	"errors"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -11,16 +10,20 @@ import (
 )
 
 type Parser struct {
-	buf string
-	i   int
+	buf     string
+	i       int
+	lastErr struct {
+		error
+		span
+	}
 }
 
 func New(input []string) *Parser {
 	buf := strings.Join(input, " ")
-	return &Parser{buf, 0}
+	return &Parser{buf: buf}
 }
 func NewString(input string) *Parser {
-	return &Parser{input, 0}
+	return &Parser{buf: input}
 }
 
 func (p *Parser) advance(off int) {
@@ -34,6 +37,10 @@ func (p *Parser) current() string {
 	return p.buf[p.i:]
 }
 
+func (p *Parser) span(off int) span {
+	return span{p.i, p.i + off}
+}
+
 func (p *Parser) PeekByte() byte {
 	if p.EOF() {
 		return 0
@@ -45,9 +52,12 @@ func (p *Parser) Byte(b byte) (ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	if s := p.current(); s != "" && s[0] == b {
 		p.advance(1)
 		ok = true
+	} else {
+		p.setLastErr(byteError(b))
 	}
 	return
 }
@@ -56,9 +66,12 @@ func (p *Parser) Term(term string) (ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	if s := p.current(); s != "" && strings.HasPrefix(s, term) {
 		p.advance(len(term))
 		ok = true
+	} else {
+		p.setLastErr(termError(term))
 	}
 	return
 }
@@ -67,12 +80,15 @@ func (p *Parser) AnyByte(charset string) (matched byte, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	if s := p.current(); s != "" {
 		if b := s[0]; strings.IndexByte(charset, b) >= 0 {
 			p.advance(1)
 			matched, ok = b, true
+			return
 		}
 	}
+	p.setLastErr(anyByteError(charset))
 	return
 }
 
@@ -82,6 +98,7 @@ func (p *Parser) Space() {
 	}
 	buf := p.buf
 	i := p.i
+	p.ClearLastErr()
 LOOP:
 	for i < len(buf) {
 		r, size := utf8.DecodeRuneInString(buf[i:])
@@ -100,23 +117,28 @@ func (p *Parser) Int64() (value int64, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	s := p.current()
-	var end int
+	var off int
 LOOP:
-	for end = 0; end < len(s); end++ {
-		switch b := s[end]; {
+	for off = 0; off < len(s); off++ {
+		switch b := s[off]; {
 		case b == '-':
 		case '0' <= b && b <= '9':
 		default:
 			break LOOP
 		}
 	}
-	if end == 0 {
+	p.setLastErrSpan(p.span(off))
+	if off == 0 {
+		p.setLastErrString("expect 64-bit integer (e.g. '42')")
 		return
 	}
-	if x, err := strconv.ParseInt(s[:end], 10, 64); err == nil {
+	if x, err := strconv.ParseInt(s[:off], 10, 64); err == nil {
 		value, ok = x, true
-		p.advance(end)
+		p.advance(off)
+	} else {
+		p.setLastErr(numError{err})
 	}
 	return
 }
@@ -125,6 +147,7 @@ func (p *Parser) Rat() (value *big.Rat, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	s := p.current()
 	var off int
 	if off < len(s) && s[off] == '-' {
@@ -135,7 +158,7 @@ func (p *Parser) Rat() (value *big.Rat, ok bool) {
 			break
 		}
 	}
-	if off < len(s) && s[off] == '.' || s[off] == '/' {
+	if off < len(s) && (s[off] == '.' || s[off] == '/') {
 		off++
 	}
 	for ; off < len(s); off++ {
@@ -143,12 +166,16 @@ func (p *Parser) Rat() (value *big.Rat, ok bool) {
 			break
 		}
 	}
+	p.setLastErrSpan(p.span(off))
 	if off == 0 {
+		p.setLastErrString("expect rational number (e.g. '3/5', '3.14')")
 		return
 	}
 	if rat, good := new(big.Rat).SetString(s[:off]); good {
 		value, ok = rat, true
 		p.advance(off)
+	} else {
+		p.setLastErrString("illegal rational number")
 	}
 	return
 }
@@ -157,6 +184,7 @@ func (p *Parser) Ident() (value string, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	s := p.current()
 	var off int
 LOOP:
@@ -171,7 +199,10 @@ LOOP:
 		}
 	}
 
+	p.setLastErrSpan(p.span(off))
+
 	if off == 0 {
+		p.setLastErrString("expect identifier (e.g. 'foo.bar')")
 		return
 	}
 
@@ -188,19 +219,18 @@ func (p *Parser) String(stopRunes string) (value string, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	s := p.current()
 	if len(s) == 0 {
+		p.setLastErrString("expect string")
 		return
 	}
 	switch s[0] {
 	case '[':
-		p.advance(1)
 		return p.quotedString(']')
 	case '"':
-		p.advance(1)
 		return p.quotedString('"')
 	case '\'':
-		p.advance(1)
 		return p.quotedString('\'')
 	default:
 		return p.unquotedString(stopRunes)
@@ -210,7 +240,7 @@ func (p *Parser) String(stopRunes string) (value string, ok bool) {
 func (p *Parser) quotedString(closing rune) (value string, ok bool) {
 	s := p.current()
 	var (
-		off      int
+		off      int = 1
 		escaping bool
 		closed   bool
 		b        strings.Builder
@@ -218,6 +248,14 @@ func (p *Parser) quotedString(closing rune) (value string, ok bool) {
 LOOP:
 	for off < len(s) {
 		r, size := utf8.DecodeRuneInString(s[off:])
+		if r == utf8.RuneError {
+			if size == 1 {
+				b.WriteByte(s[off])
+				off += size
+			}
+			escaping = false
+			continue
+		}
 		if escaping {
 			switch r {
 			case 'a':
@@ -237,10 +275,12 @@ LOOP:
 			}
 			b.WriteRune(r)
 			off += size
+			escaping = false
 		} else {
 			switch r {
 			case '\\':
 				escaping = true
+				off += size
 			case closing:
 				off += size
 				closed = true
@@ -251,7 +291,9 @@ LOOP:
 			}
 		}
 	}
+	p.setLastErrSpan(p.span(off))
 	if !closed {
+		p.setLastErr(fmt.Errorf("expect %q, string unclosed", closing))
 		return
 	}
 	value, ok = b.String(), true
@@ -267,7 +309,7 @@ LOOP:
 		r, size := utf8.DecodeRuneInString(s[off:])
 		switch {
 		case r == utf8.RuneError:
-			break LOOP
+			off += size
 		case unicode.IsSpace(r):
 			break LOOP
 		case strings.ContainsRune(stopRunes, r):
@@ -276,8 +318,9 @@ LOOP:
 			off += size
 		}
 	}
-
+	p.setLastErrSpan(p.span(off))
 	if off == 0 {
+		p.setLastErrString("expect string")
 		return
 	}
 	value, ok = s[:off], true
@@ -289,19 +332,26 @@ func (p *Parser) Bool() (value, ok bool) {
 	if p == nil {
 		return
 	}
+	p.ClearLastErr()
 	s := p.current()
 	if len(s) >= 4 && s[:4] == "true" {
 		value, ok = true, true
+		p.setLastErrSpan(p.span(4))
 		p.advance(4)
 	} else if len(s) >= 5 && s[:5] == "false" {
 		value, ok = false, true
+		p.setLastErrSpan(p.span(5))
 		p.advance(5)
+	} else {
+		p.setLastErrString("expect 'true' or 'false'")
 	}
 	return
 }
 
 func (p *Parser) Rest() string {
+	p.ClearLastErr()
 	result := p.current()
+	p.setLastErrSpan(p.span(len(p.buf)))
 	p.i = len(p.buf)
 	return result
 }
@@ -309,30 +359,3 @@ func (p *Parser) Rest() string {
 func (p *Parser) EOF() bool {
 	return p == nil || p.i == len(p.buf)
 }
-
-func (p *Parser) Error(err error) error {
-	var perr *parserError
-	if errors.As(err, &perr) {
-		return err
-	}
-	return &parserError{p, err}
-}
-
-func (p *Parser) Expect(expected string) error {
-	return p.Error(fmt.Errorf("expect %s", expected))
-}
-
-type parserError struct {
-	*Parser
-	error
-}
-
-func (e *parserError) Error() string {
-	p := e.Parser
-	if p == nil {
-		return e.error.Error()
-	}
-	return fmt.Sprintf("%s\n\t%s\n\t% *s", e.error.Error(), p.buf, p.i+1, "^")
-}
-
-func (e *parserError) Unwrap() error { return e.error }
