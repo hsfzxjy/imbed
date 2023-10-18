@@ -68,5 +68,5 @@ func TestReflectBad(t *testing.T) {
 	_, err = schema.Register[struct {
 		foo struct{ int } `imbed:""`
 	}](store)
-	assert.ErrorContains(t, err, "field \"foo\": cannot create schema for struct { int }")
+	assert.ErrorContains(t, err, "field \"foo\": no schema registered for struct { int }")
 }

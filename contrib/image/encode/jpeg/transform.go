@@ -13,6 +13,7 @@ import (
 )
 
 type jpegEncoder struct {
+	transform.EncodeMsgHelper[jpegEncoder]
 	Quality int64
 }
 
@@ -55,18 +56,17 @@ func (p *Params) Validate() error {
 	return nil
 }
 
-func (p *Params) BuildTransform(c *Config) (*jpegEncoder, error) {
+func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 	var q = p.Quality
 	if q == -1 {
 		q = c.DefaultQuality
 	}
-	return &jpegEncoder{q}, nil
+	return &jpegEncoder{Quality: q}, nil
 }
 
 func Register(r *transform.Registry) {
 	var c Config
 	var p Params
-	var a jpegEncoder
 	transform.
 		RegisterIn(
 			r,
@@ -89,9 +89,6 @@ func Register(r *transform.Registry) {
 			).
 				DebugName("image.encode.jpeg#params").
 				Build(),
-			schema.Struct(&a,
-				schema.F("Quality", &a.Quality, schema.Int()),
-			).Build(),
 		).
 		Alias("jpeg", "jpg").
 		Kind(transform.KindChangeContent)

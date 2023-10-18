@@ -20,7 +20,7 @@ import (
 )
 
 type App struct {
-	ClientId string
+	ClientId string `imbed:""`
 }
 
 type Config struct {
@@ -53,7 +53,7 @@ type Params struct {
 	AppName string
 }
 
-func (p *Params) BuildTransform(c *Config) (*ImgurUpload, error) {
+func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 	appName := p.AppName
 	if appName == "" {
 		appName = c.Default
@@ -62,10 +62,11 @@ func (p *Params) BuildTransform(c *Config) (*ImgurUpload, error) {
 	if !ok {
 		return nil, fmt.Errorf("imgur: no app named %q", appName)
 	}
-	return &ImgurUpload{app}, nil
+	return &ImgurUpload{App: app}, nil
 }
 
 func Register(r *transform.Registry) {
+	schema.RegisterMust[App](r.SchemaStore())
 	var app App
 	appSchema := schema.Struct(&app,
 		schema.F("clientId", &app.ClientId, schema.String()),
@@ -79,17 +80,14 @@ func Register(r *transform.Registry) {
 	paramsSchema := schema.Struct(&params,
 		schema.F("app", &params.AppName, schema.String().Default("")),
 	).DebugName("ImgurParams")
-	var applier ImgurUpload
-	applierSchema := schema.Struct(&applier,
-		schema.F("App", &applier.App, appSchema))
 	transform.RegisterIn(r, "upload.imgur",
 		schema.New(configSchema), schema.New(paramsSchema),
-		schema.New(applierSchema),
 	).Alias("imgur").Kind(transform.KindPersist)
 }
 
 type ImgurUpload struct {
-	App
+	transform.EncodeMsgHelper[ImgurUpload]
+	App `imbed:""`
 }
 
 const API = "https://api.imgur.com/3/image"

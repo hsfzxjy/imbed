@@ -8,16 +8,16 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type paramsWithMetadata[C any, P IParam[C, A], A IApplier] struct {
-	metadata *metadata[C, P, A]
+type paramsWithMetadata[C any, P ParamFor[C]] struct {
+	metadata *metadata[C, P]
 	params   P
 }
 
-func (pm *paramsWithMetadata[C, P, A]) Metadata() Metadata { return pm.metadata }
-func (pm *paramsWithMetadata[C, P, A]) VisitParams(v schema.Visitor) error {
+func (pm *paramsWithMetadata[C, P]) Metadata() Metadata { return pm.metadata }
+func (pm *paramsWithMetadata[C, P]) VisitParams(v schema.Visitor) error {
 	return pm.metadata.paramsSchema.Visit(v, pm.params)
 }
-func (pm *paramsWithMetadata[C, P, A]) BuildWith(cfgBuilder ConfigBuilder, cp core.ConfigProvider) (Transform, error) {
+func (pm *paramsWithMetadata[C, P]) BuildWith(cfgBuilder ConfigBuilder, cp core.ConfigProvider) (Transform, error) {
 	if b, ok := cfgBuilder.(configBuilderTyped[C]); ok {
 		cfg, err := b.buildConfig(cp)
 		if err != nil {
@@ -33,45 +33,45 @@ func (pm *paramsWithMetadata[C, P, A]) BuildWith(cfgBuilder ConfigBuilder, cp co
 	}
 }
 
-type metadata[C any, P IParam[C, A], A IApplier] struct {
+type metadata[C any, P ParamFor[C]] struct {
+	*Registry
 	name    string
 	aliases []string
 
-	configSchema  schema.Schema[C]
-	paramsSchema  schema.Schema[P]
-	applierSchema schema.Schema[A]
+	configSchema schema.Schema[C]
+	paramsSchema schema.Schema[P]
 
 	kind Kind
 }
 
-func (m *metadata[C, P, A]) Name() string {
+func (m *metadata[C, P]) Name() string {
 	return m.name
 }
 
-func (m *metadata[C, P, A]) ScanParams(paramsR schema.Scanner) (ParamsWithMetadata, error) {
+func (m *metadata[C, P]) ScanParams(paramsR schema.Scanner) (ParamsWithMetadata, error) {
 	params, err := m.paramsSchema.ScanFrom(paramsR)
 	if err != nil {
 		return nil, paramsR.Error(err)
 	}
-	return &paramsWithMetadata[C, P, A]{metadata: m, params: params}, nil
+	return &paramsWithMetadata[C, P]{metadata: m, params: params}, nil
 }
 
-func (m *metadata[C, P, A]) decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error) {
+func (m *metadata[C, P]) decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error) {
 	params, err := m.paramsSchema.DecodeMsg(msgR)
 	if err != nil {
 		return nil, err
 	}
-	return &paramsWithMetadata[C, P, A]{metadata: m, params: params}, nil
+	return &paramsWithMetadata[C, P]{metadata: m, params: params}, nil
 }
 
-func (m *metadata[C, P, A]) ConfigBuilderWorkspace() ConfigBuilder {
-	return configBuilderWorkspace[C, P, A]{m}
+func (m *metadata[C, P]) ConfigBuilderWorkspace() ConfigBuilder {
+	return configBuilderWorkspace[C, P]{m}
 }
 
-func (m *metadata[C, P, A]) ConfigBuilderNeedle(n ndl.Needle) ConfigBuilder {
-	return &configBuilderNeedle[C, P, A]{m, n}
+func (m *metadata[C, P]) ConfigBuilderNeedle(n ndl.Needle) ConfigBuilder {
+	return &configBuilderNeedle[C, P]{m, n}
 }
 
-func (m *metadata[C, P, A]) ConfigBuilderHash(h ref.Sha256Hash) ConfigBuilder {
-	return &configBuilderHash[C, P, A]{m, h}
+func (m *metadata[C, P]) ConfigBuilderHash(h ref.Sha256Hash) ConfigBuilder {
+	return &configBuilderHash[C, P]{m, h}
 }

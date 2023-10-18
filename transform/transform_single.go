@@ -4,26 +4,20 @@ import (
 	"bytes"
 	"slices"
 
-	"github.com/hsfzxjy/imbed/asset"
-	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/tinylib/msgp/msgp"
 )
 
-type singleTransform[C any, P IParam[C, A], A IApplier] struct {
-	*metadata[C, P, A]
-	config  *configWrapper[C]
-	params  P
-	applier A
+type singleTransform[C any, P ParamFor[C]] struct {
+	*metadata[C, P]
+	config *configWrapper[C]
+	params P
+	Applier
 
 	encodable
 }
 
-func (t *singleTransform[C, P, A]) Apply(app core.App, asset asset.Asset) (asset.Update, error) {
-	return t.applier.Apply(app, asset)
-}
-
-func (t *singleTransform[C, P, A]) compute() {
+func (t *singleTransform[C, P]) compute() {
 	var (
 		buf     bytes.Buffer
 		w       *msgp.Writer
@@ -61,7 +55,7 @@ func (t *singleTransform[C, P, A]) compute() {
 	if err != nil {
 		goto ERROR
 	}
-	err = t.applierSchema.EncodeMsg(w, t.applier)
+	err = t.Applier.EncodeMsg(t.Registry, w)
 	if err != nil {
 		goto ERROR
 	}
@@ -79,25 +73,25 @@ ERROR:
 
 }
 
-func (t *singleTransform[C, P, A]) AssociatedConfigs() []ref.EncodableObject {
+func (t *singleTransform[C, P]) AssociatedConfigs() []ref.EncodableObject {
 	return []ref.EncodableObject{t.config}
 }
 
-func (t *singleTransform[C, P, A]) Name() string {
+func (t *singleTransform[C, P]) Name() string {
 	return t.name
 }
 
-func (t *singleTransform[C, P, A]) Kind() Kind {
+func (t *singleTransform[C, P]) Kind() Kind {
 	return t.metadata.kind
 }
 
-func newSingleTransform[C any, P IParam[C, A], A IApplier](
-	metadata *metadata[C, P, A],
+func newSingleTransform[C any, P ParamFor[C]](
+	metadata *metadata[C, P],
 	cfg C, params P,
-	applier A,
-) *singleTransform[C, P, A] {
-	t := new(singleTransform[C, P, A])
-	t.applier = applier
+	applier Applier,
+) *singleTransform[C, P] {
+	t := new(singleTransform[C, P])
+	t.Applier = applier
 	t.metadata = metadata
 	t.config = wrapConfig(metadata.configSchema, cfg)
 	t.params = params

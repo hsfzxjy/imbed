@@ -17,6 +17,7 @@ type Schema[T any] interface {
 }
 
 type GenericSchema interface {
+	genericSchema
 	EncodeMsgAny(w *msgp.Writer, source any) error
 }
 

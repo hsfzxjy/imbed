@@ -9,12 +9,13 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type IParam[C any, A IApplier] interface {
-	BuildTransform(cfg C) (A, error)
+type ParamFor[C any] interface {
+	BuildTransform(cfg C) (Applier, error)
 }
 
-type IApplier interface {
+type Applier interface {
 	asset.Applier
+	EncodeMsg(r *Registry, w *msgp.Writer) error
 }
 
 type Metadata interface {

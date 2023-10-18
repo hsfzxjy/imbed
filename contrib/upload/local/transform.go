@@ -14,7 +14,8 @@ import (
 )
 
 type localUpload struct {
-	Path string
+	transform.EncodeMsgHelper[localUpload]
+	Path string `imbed:""`
 }
 
 func (t *localUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
@@ -43,7 +44,7 @@ type Params struct {
 	Path string
 }
 
-func (p *Params) BuildTransform(c *Config) (*localUpload, error) {
+func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 	var path = p.Path
 	if path == "" {
 		path = c.Path
@@ -56,13 +57,12 @@ func (p *Params) BuildTransform(c *Config) (*localUpload, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &localUpload{path}, nil
+	return &localUpload{Path: path}, nil
 }
 
 func Register(r *transform.Registry) {
 	var c Config
 	var p Params
-	var a localUpload
 	transform.RegisterIn(
 		r,
 		"upload.local",
@@ -71,9 +71,6 @@ func Register(r *transform.Registry) {
 		).Build(),
 		schema.Struct(&p,
 			schema.F("path", &p.Path, schema.String().Default("")),
-		).Build(),
-		schema.Struct(&a,
-			schema.F("Path", &a.Path, schema.String()),
 		).Build(),
 	).Kind(transform.KindPersist)
 }

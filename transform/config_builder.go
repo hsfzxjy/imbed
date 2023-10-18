@@ -18,11 +18,11 @@ type ConfigBuilder interface {
 	ConfigHash() ref.Sha256Hash
 }
 
-type configBuilderWorkspace[C any, P IParam[C, A], A IApplier] struct{ *metadata[C, P, A] }
+type configBuilderWorkspace[C any, P ParamFor[C]] struct{ *metadata[C, P] }
 
-func (b configBuilderWorkspace[C, P, A]) ConfigHash() (zero ref.Sha256Hash) { return }
+func (b configBuilderWorkspace[C, P]) ConfigHash() (zero ref.Sha256Hash) { return }
 
-func (b configBuilderWorkspace[C, P, A]) buildConfig(cp core.ConfigProvider) (result C, err error) {
+func (b configBuilderWorkspace[C, P]) buildConfig(cp core.ConfigProvider) (result C, err error) {
 	cfgR, err := cp.ProvideWorkspaceConfig(b.metadata.name)
 	if err != nil {
 		return
@@ -34,14 +34,14 @@ func (b configBuilderWorkspace[C, P, A]) buildConfig(cp core.ConfigProvider) (re
 	return cfg, nil
 }
 
-type configBuilderNeedle[C any, P IParam[C, A], A IApplier] struct {
-	*metadata[C, P, A]
+type configBuilderNeedle[C any, P ParamFor[C]] struct {
+	*metadata[C, P]
 	needle ndl.Needle
 }
 
-func (b *configBuilderNeedle[C, P, A]) ConfigHash() (zero ref.Sha256Hash) { return }
+func (b *configBuilderNeedle[C, P]) ConfigHash() (zero ref.Sha256Hash) { return }
 
-func (b *configBuilderNeedle[C, P, A]) buildConfig(cp core.ConfigProvider) (result C, err error) {
+func (b *configBuilderNeedle[C, P]) buildConfig(cp core.ConfigProvider) (result C, err error) {
 	buf, err := cp.ProvideStockConfig(b.needle)
 	if err != nil {
 		return
@@ -54,14 +54,14 @@ func (b *configBuilderNeedle[C, P, A]) buildConfig(cp core.ConfigProvider) (resu
 	return cfg, nil
 }
 
-type configBuilderHash[C any, P IParam[C, A], A IApplier] struct {
-	*metadata[C, P, A]
+type configBuilderHash[C any, P ParamFor[C]] struct {
+	*metadata[C, P]
 	hash ref.Sha256Hash
 }
 
-func (b *configBuilderHash[C, P, A]) ConfigHash() ref.Sha256Hash { return b.hash }
+func (b *configBuilderHash[C, P]) ConfigHash() ref.Sha256Hash { return b.hash }
 
-func (b *configBuilderHash[C, P, A]) buildConfig(cp core.ConfigProvider) (result C, err error) {
+func (b *configBuilderHash[C, P]) buildConfig(cp core.ConfigProvider) (result C, err error) {
 	buf, err := cp.ProvideStockConfig(ndl.RawFull(ref.AsRawString(b.hash)))
 	if err != nil {
 		return

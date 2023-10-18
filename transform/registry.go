@@ -5,15 +5,24 @@ import (
 	"fmt"
 
 	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/schema"
 	"github.com/tinylib/msgp/msgp"
 )
 
 type Registry struct {
 	metadataTable map[string]Metadata
+	schemaStore   *schema.Store
 }
 
 func NewRegistry() *Registry {
-	return &Registry{map[string]Metadata{}}
+	return &Registry{
+		map[string]Metadata{},
+		schema.NewStore(),
+	}
+}
+
+func (r *Registry) SchemaStore() *schema.Store {
+	return r.schemaStore
 }
 
 func (r *Registry) Lookup(name string) (Metadata, bool) {

@@ -1,9 +1,11 @@
 package schema
 
 import (
+	"errors"
 	"fmt"
 	"math/big"
 	"reflect"
+	"sync"
 
 	"github.com/hsfzxjy/imbed/util"
 )
@@ -11,7 +13,8 @@ import (
 var ratType = reflect.TypeOf((*big.Rat)(nil))
 
 type Store struct {
-	m map[reflect.Type]GenericSchema
+	mu sync.RWMutex
+	m  map[reflect.Type]GenericSchema
 }
 
 func NewStore() *Store {
@@ -21,6 +24,9 @@ func NewStore() *Store {
 }
 
 func Register[T any](store *Store) (GenericSchema, error) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
 	var dummy T
 	typ := reflect.TypeOf(dummy)
 	if typ.Kind() != reflect.Struct {
@@ -61,19 +67,31 @@ func RegisterMust[T any](store *Store) GenericSchema {
 	return util.Unwrap(Register[T](store))
 }
 
+var ErrNotRegistered = errors.New("no schema registered")
+
 func (s *Store) Get(v any) (GenericSchema, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	typ := reflect.TypeOf(v)
 	if typ.Kind() != reflect.Ptr {
 		return nil, fmt.Errorf("Store.Get() expect *T, got %T", v)
 	}
-	if sch, ok := s.m[typ.Elem()]; ok {
+	return s.get(typ.Elem())
+}
+
+func (s *Store) get(typ reflect.Type) (GenericSchema, error) {
+	if sch, ok := s.m[typ]; ok {
 		return sch, nil
 	} else {
-		return nil, fmt.Errorf("no schema registered for %s", typ.Elem().String())
+		return nil, fmt.Errorf("%w for %s", ErrNotRegistered, typ.String())
 	}
 }
 
 func (s *Store) Lookup(v any) (GenericSchema, bool) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
 	typ := reflect.TypeOf(v)
 	if typ.Kind() != reflect.Ptr {
 		return nil, false
@@ -94,6 +112,8 @@ func (s *Store) schemaFor(typ reflect.Type) (genericSchema, error) {
 		return new_Bool(optional[bool]{}), nil
 	case reflect.String:
 		return new_String(optional[string]{}), nil
+	case reflect.Struct:
+		return s.get(typ)
 	}
 	return nil, fmt.Errorf("cannot create schema for %s", typ.String())
 }
