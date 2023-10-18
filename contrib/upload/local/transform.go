@@ -59,7 +59,7 @@ func (p *Params) BuildTransform(c *Config) (*localUpload, error) {
 	return &localUpload{path}, nil
 }
 
-func Register(r transform.Registry) {
+func Register(r *transform.Registry) {
 	var c Config
 	var p Params
 	var a localUpload

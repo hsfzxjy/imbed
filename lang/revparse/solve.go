@@ -7,7 +7,7 @@ import (
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-func Solve(models []*db.AssetModel, registry transform.Registry) (string, error) {
+func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error) {
 	var builder strings.Builder
 	first := true
 	for i, model := range models {

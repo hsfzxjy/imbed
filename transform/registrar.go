@@ -5,12 +5,12 @@ import (
 )
 
 type registrar[C any, P IParam[C, A], A IApplier] struct {
-	registry Registry
+	registry *Registry
 	*metadata[C, P, A]
 }
 
 func RegisterIn[C any, P IParam[C, A], A IApplier](
-	registry Registry,
+	registry *Registry,
 	name string,
 	configSchema schema.Schema[C],
 	paramsSchema schema.Schema[P],

@@ -12,16 +12,16 @@ type Registry struct {
 	metadataTable map[string]Metadata
 }
 
-func NewRegistry() Registry {
-	return Registry{map[string]Metadata{}}
+func NewRegistry() *Registry {
+	return &Registry{map[string]Metadata{}}
 }
 
-func (r Registry) Lookup(name string) (Metadata, bool) {
+func (r *Registry) Lookup(name string) (Metadata, bool) {
 	m, ok := r.metadataTable[name]
 	return m, ok
 }
 
-func (r Registry) DecodeParams(buf []byte) (result []Builder, err error) {
+func (r *Registry) DecodeParams(buf []byte) (result []Builder, err error) {
 	bufR := bytes.NewReader(buf)
 	msgR := msgp.NewReader(bufR)
 	for bufR.Len() > 0 {

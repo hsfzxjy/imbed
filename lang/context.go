@@ -9,7 +9,7 @@ import (
 type Context struct {
 	app      *app.App
 	parser   *parser.Parser
-	registry transform.Registry
+	registry *transform.Registry
 }
 
 func NewContext(parser *parser.Parser, app *app.App) *Context {

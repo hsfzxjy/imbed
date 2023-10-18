@@ -5,6 +5,6 @@ import (
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-func Register(r transform.Registry) {
+func Register(r *transform.Registry) {
 	jpeg.Register(r)
 }

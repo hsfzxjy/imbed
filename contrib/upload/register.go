@@ -6,7 +6,7 @@ import (
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-func Register(r transform.Registry) {
+func Register(r *transform.Registry) {
 	local.Register(r)
 	imgur.Register(r)
 }

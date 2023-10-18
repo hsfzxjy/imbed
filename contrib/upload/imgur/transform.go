@@ -65,7 +65,7 @@ func (p *Params) BuildTransform(c *Config) (*ImgurUpload, error) {
 	return &ImgurUpload{app}, nil
 }
 
-func Register(r transform.Registry) {
+func Register(r *transform.Registry) {
 	var app App
 	appSchema := schema.Struct(&app,
 		schema.F("clientId", &app.ClientId, schema.String()),

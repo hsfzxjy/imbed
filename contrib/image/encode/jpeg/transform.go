@@ -63,7 +63,7 @@ func (p *Params) BuildTransform(c *Config) (*jpegEncoder, error) {
 	return &jpegEncoder{q}, nil
 }
 
-func Register(r transform.Registry) {
+func Register(r *transform.Registry) {
 	var c Config
 	var p Params
 	var a jpegEncoder

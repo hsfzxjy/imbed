@@ -29,10 +29,10 @@ type App struct {
 	proxyConfig *httpproxy.Config
 	proxyOnce   sync.Once
 
-	registry transform.Registry
+	registry *transform.Registry
 }
 
-func ParseAndRun(cmdArgs []string, specs Commands, registry transform.Registry) error {
+func ParseAndRun(cmdArgs []string, specs Commands, registry *transform.Registry) error {
 	var err error
 	if len(cmdArgs) == 1 {
 		return errors.New("no subcommand")
@@ -87,7 +87,7 @@ func ParseAndRun(cmdArgs []string, specs Commands, registry transform.Registry) 
 	return fmt.Errorf("no command %s", cmd)
 }
 
-func (s *App) Registry() transform.Registry {
+func (s *App) Registry() *transform.Registry {
 	return s.registry
 }
 
