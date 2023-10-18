@@ -18,3 +18,16 @@ func EncodeBytes[S any](schema Schema[S], value S) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+
+func EncodeBytesAny(schema GenericSchema, value any) ([]byte, error) {
+	var buf bytes.Buffer
+	var w = msgp.NewWriter(&buf)
+	err := schema.EncodeMsgAny(w, value)
+	if err != nil {
+		return nil, err
+	}
+	if err = w.Flush(); err != nil {
+		return nil, err
+	}
+	return buf.Bytes(), nil
+}

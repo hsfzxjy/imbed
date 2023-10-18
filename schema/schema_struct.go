@@ -1,8 +1,10 @@
 package schema
 
 import (
+	"cmp"
 	"errors"
 	"io"
+	"slices"
 	"unsafe"
 
 	"github.com/tinylib/msgp/msgp"
@@ -12,6 +14,17 @@ type _Struct[T any] struct {
 	name   string
 	fields []*_StructField
 	m      map[string]*_StructField
+}
+
+func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
+	slices.SortFunc(fields, func(a, b *_StructField) int {
+		return cmp.Compare(a.name, b.name)
+	})
+	m := make(map[string]*_StructField, len(fields))
+	for _, f := range fields {
+		m[f.name] = f
+	}
+	return &_Struct[T]{name, fields, m}
 }
 
 func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {

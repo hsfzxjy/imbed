@@ -13,6 +13,11 @@ type Schema[T any] interface {
 	EncodeMsg(w *msgp.Writer, source T) error
 	Visit(v Visitor, source T) error
 	New() T
+	GenericSchema
+}
+
+type GenericSchema interface {
+	EncodeMsgAny(w *msgp.Writer, source any) error
 }
 
 type schema[T any] interface {

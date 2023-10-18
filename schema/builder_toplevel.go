@@ -1,9 +1,5 @@
 package schema
 
-func New[pS *S, S any](builder *structBuilder[S]) Schema[pS] {
-	schema := builder.buildSchema()
-	return &_TopLevel[pS, S]{
-		sig:     sigFor(schema),
-		_Struct: schema.(*_Struct[S]),
-	}
+func New[S any](builder *structBuilder[S]) Schema[*S] {
+	return new_Toplevel(builder.buildStruct())
 }

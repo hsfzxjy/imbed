@@ -1,8 +1,6 @@
 package schema
 
 import (
-	"cmp"
-	"slices"
 	"unsafe"
 )
 
@@ -36,9 +34,6 @@ func Struct[S any](ptr *S, fieldBuilders ...*fieldBuilder) *structBuilder[S] {
 			panic("ptr of " + field.name + " underflows/overflows")
 		}
 	}
-	slices.SortFunc(fieldBuilders, func(a, b *fieldBuilder) int {
-		return cmp.Compare(a.name, b.name)
-	})
 	return &structBuilder[S]{"<anonymous>", basePtr, fieldBuilders}
 }
 
@@ -47,9 +42,8 @@ func (s *structBuilder[T]) DebugName(name string) *structBuilder[T] {
 	return s
 }
 
-func (s *structBuilder[S]) buildSchema() schema[S] {
+func (s *structBuilder[S]) buildStruct() *_Struct[S] {
 	fields := make([]*_StructField, len(s.fieldBuilders))
-	m := make(map[string]*_StructField, len(fields))
 	for i, f := range s.fieldBuilders {
 		field := &_StructField{
 			name:       f.name,
@@ -57,11 +51,11 @@ func (s *structBuilder[S]) buildSchema() schema[S] {
 			elemSchema: f.subBuilder.buildGenericSchema(),
 		}
 		fields[i] = field
-		m[f.name] = field
 	}
-	return &_Struct[S]{s.name, fields, m}
+	return new_Struct[S](s.name, fields)
 }
-func (s *structBuilder[T]) buildGenericSchema() genericSchema { return s.buildSchema() }
+func (s *structBuilder[T]) buildGenericSchema() genericSchema { return s.buildStruct() }
+func (s *structBuilder[T]) buildSchema() schema[T]            { return s.buildStruct() }
 
 func (s *structBuilder[T]) Build() Schema[*T] {
 	return New(s)
