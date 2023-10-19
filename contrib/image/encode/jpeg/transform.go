@@ -8,16 +8,17 @@ import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 )
 
-type jpegEncoder struct {
-	transform.EncodeMsgHelper[jpegEncoder]
-	Quality int64
+//go:generate go run github.com/hsfzxjy/imbed/schema/gen
+
+//imbed:schemagen
+type Applier struct {
+	Quality int64 `imbed:""`
 }
 
-func (x *jpegEncoder) Apply(app core.App, a asset.Asset) (asset.Update, error) {
+func (x *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	ic := content.AsImage(a.Content())
 	c := content.New(content.WithLoadFunc(func(w io.Writer) error {
 		im, err := ic.Image()
@@ -34,8 +35,9 @@ func (x *jpegEncoder) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	), nil
 }
 
+//imbed:schemagen image.encode.jpeg#Config
 type Config struct {
-	DefaultQuality int64
+	DefaultQuality int64 `imbed:"default_quality,75"`
 }
 
 func (c *Config) Validate() error {
@@ -45,8 +47,9 @@ func (c *Config) Validate() error {
 	return nil
 }
 
+//imbed:schemagen image.encode.jpeg#Params
 type Params struct {
-	Quality int64
+	Quality int64 `imbed:"q,-1"`
 }
 
 func (p *Params) Validate() error {
@@ -61,35 +64,14 @@ func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 	if q == -1 {
 		q = c.DefaultQuality
 	}
-	return &jpegEncoder{Quality: q}, nil
+	return &Applier{Quality: q}, nil
 }
 
 func Register(r *transform.Registry) {
-	var c Config
-	var p Params
-	transform.
-		RegisterIn(
-			r,
-			"image.encode.jpeg",
-			schema.Struct(&c,
-				schema.F(
-					"default_quality",
-					&c.DefaultQuality,
-					schema.Int().
-						Default(jpeg.DefaultQuality)),
-			).
-				DebugName("image.encode.jpeg#config").
-				Build(),
-			schema.Struct(&p,
-				schema.F(
-					"q",
-					&p.Quality,
-					schema.Int().
-						Default(-1)),
-			).
-				DebugName("image.encode.jpeg#params").
-				Build(),
-		).
+	transform.RegisterIn(
+		r, "image.encode.jpeg",
+		ConfigSchema.Build(),
+		ParamsSchema.Build()).
 		Alias("jpeg", "jpg").
 		Kind(transform.KindChangeContent)
 }

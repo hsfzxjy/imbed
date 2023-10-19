@@ -20,7 +20,8 @@ func new_Toplevel[S any](schema *_Struct[S]) *_TopLevel[S] {
 	}
 }
 
-func (s *_TopLevel[S]) New() *S { return new(S) }
+func (s *_TopLevel[S]) New() *S             { return new(S) }
+func (s *_TopLevel[S]) Struct() *_Struct[S] { return s._Struct }
 
 func (s *_TopLevel[S]) ScanFrom(r Scanner) (*S, error) {
 	var target = new(S)

@@ -14,79 +14,14 @@ import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
 )
 
-type App struct {
-	ClientId string `imbed:""`
-}
+//go:generate go run github.com/hsfzxjy/imbed/schema/gen
 
-type Config struct {
-	Apps    map[string]App
-	Default string
-}
-
-func (c *Config) Validate() error {
-	n := len(c.Apps)
-	if n == 0 {
-		return errors.New("imgur: no available app")
-	}
-	if c.Default != "" {
-		_, ok := c.Apps[c.Default]
-		if !ok {
-			return fmt.Errorf("imgur: bad default app name %q", c.Default)
-		}
-	} else if n == 1 {
-		for k := range c.Apps {
-			c.Default = k
-			break
-		}
-	} else {
-		return fmt.Errorf("imgur: no default app specified")
-	}
-	return nil
-}
-
-type Params struct {
-	AppName string
-}
-
-func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
-	appName := p.AppName
-	if appName == "" {
-		appName = c.Default
-	}
-	app, ok := c.Apps[appName]
-	if !ok {
-		return nil, fmt.Errorf("imgur: no app named %q", appName)
-	}
-	return &ImgurUpload{App: app}, nil
-}
-
-func Register(r *transform.Registry) {
-	schema.RegisterMust[App](r.SchemaStore())
-	var app App
-	appSchema := schema.Struct(&app,
-		schema.F("clientId", &app.ClientId, schema.String()),
-	).DebugName("ImgurApp")
-	var config Config
-	configSchema := schema.Struct(&config,
-		schema.F("apps", &config.Apps, schema.Map(appSchema)),
-		schema.F("default", &config.Default, schema.String().Default("")),
-	).DebugName("ImgurConfig")
-	var params Params
-	paramsSchema := schema.Struct(&params,
-		schema.F("app", &params.AppName, schema.String().Default("")),
-	).DebugName("ImgurParams")
-	transform.RegisterIn(r, "upload.imgur",
-		schema.New(configSchema), schema.New(paramsSchema),
-	).Alias("imgur").Kind(transform.KindPersist)
-}
-
-type ImgurUpload struct {
-	transform.EncodeMsgHelper[ImgurUpload]
+//imbed:schemagen upload.imgur#Applier
+type Applier struct {
 	App `imbed:""`
 }
 
@@ -94,7 +29,7 @@ const API = "https://api.imgur.com/3/image"
 
 var apiUrl, _ = url.Parse(API)
 
-func (u *ImgurUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
+func (u *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	client, err := util.ClientWithProxy(app.ProxyFunc(), apiUrl)
 	if err != nil {
 		return nil, err
@@ -177,4 +112,61 @@ func (u *ImgurUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 		asset.UpdateExt([]byte(respBody.Data.DeleteHash)),
 		asset.UpdateUrl(respBody.Data.Link),
 	), nil
+}
+
+//imbed:schemagen
+type App struct {
+	ClientId string `imbed:"clientId"`
+}
+
+//imbed:schemagen upload.imgur#Config
+type Config struct {
+	Apps    map[string]App `imbed:"apps"`
+	Default string         `imbed:"default,\"\""`
+}
+
+func (c *Config) Validate() error {
+	n := len(c.Apps)
+	if n == 0 {
+		return errors.New("imgur: no available app")
+	}
+	if c.Default != "" {
+		_, ok := c.Apps[c.Default]
+		if !ok {
+			return fmt.Errorf("imgur: bad default app name %q", c.Default)
+		}
+	} else if n == 1 {
+		for k := range c.Apps {
+			c.Default = k
+			break
+		}
+	} else {
+		return fmt.Errorf("imgur: no default app specified")
+	}
+	return nil
+}
+
+//imbed:schemagen upload.imgur#Params
+type Params struct {
+	AppName string `imbed:"app,\"\""`
+}
+
+func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
+	appName := p.AppName
+	if appName == "" {
+		appName = c.Default
+	}
+	app, ok := c.Apps[appName]
+	if !ok {
+		return nil, fmt.Errorf("imgur: no app named %q", appName)
+	}
+	return &Applier{App: app}, nil
+}
+
+func Register(r *transform.Registry) {
+	transform.
+		RegisterIn(r, "upload.imgur",
+			ConfigSchema.Build(), ParamsSchema.Build()).
+		Alias("imgur").
+		Kind(transform.KindPersist)
 }

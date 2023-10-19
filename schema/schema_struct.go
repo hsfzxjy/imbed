@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"slices"
+	"sync"
 	"unsafe"
 
 	"github.com/tinylib/msgp/msgp"
@@ -14,6 +15,9 @@ type _Struct[T any] struct {
 	name   string
 	fields []*_StructField
 	m      map[string]*_StructField
+
+	buildOnce sync.Once
+	toplevel  *_TopLevel[T]
 }
 
 func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
@@ -24,7 +28,7 @@ func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
 	for _, f := range fields {
 		m[f.name] = f
 	}
-	return &_Struct[T]{name, fields, m}
+	return &_Struct[T]{name: name, fields: fields, m: m}
 }
 
 func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
@@ -134,7 +138,23 @@ func (s *_Struct[T]) writeTypeInfo(w io.Writer) error {
 
 func (s *_Struct[T]) _schema_stub(T) {}
 
+func (s *_Struct[T]) buildGenericSchema() genericSchema {
+	return s
+}
+
+func (s *_Struct[T]) buildSchema() schema[T] {
+	return s
+}
+
+func (s *_Struct[T]) Build() *_TopLevel[T] {
+	s.buildOnce.Do(func() {
+		s.toplevel = new_Toplevel(s)
+	})
+	return s.toplevel
+}
+
 func _() {
 	type X struct{}
 	var _ schema[X] = &_Struct[X]{}
+	var _ builder[X] = &_Struct[X]{}
 }

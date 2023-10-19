@@ -8,17 +8,18 @@ import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
 )
 
-type localUpload struct {
-	transform.EncodeMsgHelper[localUpload]
+//go:generate go run github.com/hsfzxjy/imbed/schema/gen
+
+//imbed:schemagen upload.local#Applier
+type Applier struct {
 	Path string `imbed:""`
 }
 
-func (t *localUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
+func (t *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	fid, err := content.BuildFID(a.Content(), a.BaseName())
 	if err != nil {
 		return nil, err
@@ -36,12 +37,14 @@ func (t *localUpload) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 	return asset.UpdateUrl(filepath), nil
 }
 
+//imbed:schemagen upload.local#Config
 type Config struct {
-	Path string
+	Path string `imbed:"path,\"\""`
 }
 
+//imbed:schemagen upload.local#Params
 type Params struct {
-	Path string
+	Path string `imbed:"path,\"\""`
 }
 
 func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
@@ -57,20 +60,13 @@ func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &localUpload{Path: path}, nil
+	return &Applier{Path: path}, nil
 }
 
 func Register(r *transform.Registry) {
-	var c Config
-	var p Params
 	transform.RegisterIn(
-		r,
-		"upload.local",
-		schema.Struct(&c,
-			schema.F("path", &c.Path, schema.String().Default("")),
-		).Build(),
-		schema.Struct(&p,
-			schema.F("path", &p.Path, schema.String().Default("")),
-		).Build(),
+		r, "upload.local",
+		ConfigSchema.Build(),
+		ParamsSchema.Build(),
 	).Kind(transform.KindPersist)
 }
