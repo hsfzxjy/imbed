@@ -1,6 +1,8 @@
 package cmds
 
 import (
+	"fmt"
+
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/lang"
@@ -29,7 +31,7 @@ func (c RevCommand) Run(app *app.App, command app.CommandSpec) error {
 		return err
 	}
 	for _, s := range result {
-		println(s)
+		fmt.Println(s)
 	}
 	return nil
 }
