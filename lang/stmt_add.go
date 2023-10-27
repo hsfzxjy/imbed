@@ -22,7 +22,7 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 		if err != nil {
 			return err
 		}
-		assets, err = graph.Compute(h, c.app, initialAsset)
+		assets, err = graph.Run(h, c.app, initialAsset)
 		if err != nil {
 			return err
 		}

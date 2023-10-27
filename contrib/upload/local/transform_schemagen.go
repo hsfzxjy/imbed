@@ -4,7 +4,6 @@ package local
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/hsfzxjy/imbed/transform"
 	"github.com/tinylib/msgp/msgp"
 )
 
@@ -14,7 +13,7 @@ var ApplierSchema = schema.StructFunc(func(prototype *Applier) *schema.StructBui
 	).DebugName("upload.local#Applier")
 })
 
-func (x *Applier) EncodeMsg(r *transform.Registry, w *msgp.Writer) error {
+func (x *Applier) EncodeMsg(w *msgp.Writer) error {
 	return ApplierSchema.Build().EncodeMsg(w, x)
 }
 
@@ -24,7 +23,7 @@ var ConfigSchema = schema.StructFunc(func(prototype *Config) *schema.StructBuild
 	).DebugName("upload.local#Config")
 })
 
-func (x *Config) EncodeMsg(r *transform.Registry, w *msgp.Writer) error {
+func (x *Config) EncodeMsg(w *msgp.Writer) error {
 	return ConfigSchema.Build().EncodeMsg(w, x)
 }
 
@@ -34,6 +33,6 @@ var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuild
 	).DebugName("upload.local#Params")
 })
 
-func (x *Params) EncodeMsg(r *transform.Registry, w *msgp.Writer) error {
+func (x *Params) EncodeMsg(w *msgp.Writer) error {
 	return ParamsSchema.Build().EncodeMsg(w, x)
 }

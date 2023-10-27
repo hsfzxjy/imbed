@@ -71,7 +71,7 @@ func Register(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.encode.jpeg",
 		ConfigSchema.Build(),
-		ParamsSchema.Build()).
-		Alias("jpeg", "jpg").
-		Kind(transform.KindChangeContent)
+		ParamsSchema.Build(),
+	).
+		Alias("jpeg", "jpg")
 }

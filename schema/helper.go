@@ -31,3 +31,34 @@ func EncodeBytesAny(schema GenericSchema, value any) ([]byte, error) {
 	}
 	return buf.Bytes(), nil
 }
+
+type GenericValue interface {
+	EncodeMsg(w *msgp.Writer) error
+	Visit(visitor Visitor) error
+}
+
+type Value[T any] interface {
+	GenericValue
+	Get() T
+}
+
+type Wrapped[T any] struct {
+	schema Schema[T]
+	data   T
+}
+
+func (v *Wrapped[T]) EncodeMsg(w *msgp.Writer) error {
+	return v.schema.EncodeMsg(w, v.data)
+}
+
+func (v *Wrapped[T]) Visit(visitor Visitor) error {
+	return v.schema.Visit(visitor, v.data)
+}
+
+func (v *Wrapped[T]) Get() T {
+	return v.data
+}
+
+func Wrap[T any](schema Schema[T], data T) *Wrapped[T] {
+	return &Wrapped[T]{schema, data}
+}

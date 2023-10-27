@@ -1,77 +1,41 @@
 package transform
 
 import (
-	"github.com/hsfzxjy/imbed/core"
-	ndl "github.com/hsfzxjy/imbed/core/needle"
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	cfgf "github.com/hsfzxjy/imbed/transform/configfactory"
 )
 
-type paramsWithMetadata[C any, P ParamFor[C]] struct {
-	metadata *metadata[C, P]
-	params   P
+type _constraint[C any, P ParamFor[C]] struct{}
+
+func (_constraint[C, P]) buildApplier(params, config any) (Applier, error) {
+	return params.(P).BuildTransform(config.(C))
 }
 
-func (pm *paramsWithMetadata[C, P]) Metadata() Metadata { return pm.metadata }
-func (pm *paramsWithMetadata[C, P]) VisitParams(v schema.Visitor) error {
-	return pm.metadata.paramsSchema.Visit(v, pm.params)
-}
-func (pm *paramsWithMetadata[C, P]) BuildWith(cfgBuilder ConfigBuilder, cp core.ConfigProvider) (Transform, error) {
-	if b, ok := cfgBuilder.(configBuilderTyped[C]); ok {
-		cfg, err := b.buildConfig(cp)
-		if err != nil {
-			return nil, err
-		}
-		applier, err := (pm.params).BuildTransform(cfg)
-		if err != nil {
-			return nil, err
-		}
-		return newSingleTransform(pm.metadata, cfg, pm.params, applier), nil
-	} else {
-		panic("configBuilder is of wrong type")
-	}
+type constraint interface {
+	buildApplier(params, config any) (Applier, error)
 }
 
-type metadata[C any, P ParamFor[C]] struct {
+type metadata struct {
 	*Registry
 	name    string
 	aliases []string
 
-	configSchema schema.Schema[C]
-	paramsSchema schema.Schema[P]
+	constraint
 
-	kind Kind
+	configSchema schema.GenericSchema
+	paramsSchema schema.GenericSchema
+
+	category Category
 }
 
-func (m *metadata[C, P]) Name() string {
+func (m *metadata) Name() string {
 	return m.name
 }
 
-func (m *metadata[C, P]) ScanParams(paramsR schema.Scanner) (ParamsWithMetadata, error) {
-	params, err := m.paramsSchema.ScanFrom(paramsR)
-	if err != nil {
-		return nil, paramsR.Error(err)
-	}
-	return &paramsWithMetadata[C, P]{metadata: m, params: params}, nil
+func (m *metadata) Category() Category {
+	return m.category
 }
 
-func (m *metadata[C, P]) decodeMsg(msgR *msgp.Reader) (ParamsWithMetadata, error) {
-	params, err := m.paramsSchema.DecodeMsg(msgR)
-	if err != nil {
-		return nil, err
-	}
-	return &paramsWithMetadata[C, P]{metadata: m, params: params}, nil
-}
-
-func (m *metadata[C, P]) ConfigBuilderWorkspace() ConfigBuilder {
-	return configBuilderWorkspace[C, P]{m}
-}
-
-func (m *metadata[C, P]) ConfigBuilderNeedle(n ndl.Needle) ConfigBuilder {
-	return &configBuilderNeedle[C, P]{m, n}
-}
-
-func (m *metadata[C, P]) ConfigBuilderHash(h ref.Sha256Hash) ConfigBuilder {
-	return &configBuilderHash[C, P]{m, h}
+func (m *metadata) ConfigFactory(opt cfgf.Opt) cfgf.Factory {
+	return opt(m.name, m.configSchema)
 }

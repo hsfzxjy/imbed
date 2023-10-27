@@ -164,9 +164,11 @@ func (p *Params) BuildTransform(c *Config) (transform.Applier, error) {
 }
 
 func Register(r *transform.Registry) {
-	transform.
-		RegisterIn(r, "upload.imgur",
-			ConfigSchema.Build(), ParamsSchema.Build()).
+	transform.RegisterIn(
+		r, "upload.imgur",
+		ConfigSchema.Build(),
+		ParamsSchema.Build(),
+	).
 		Alias("imgur").
-		Kind(transform.KindPersist)
+		Category(transform.Terminal)
 }

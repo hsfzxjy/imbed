@@ -6,8 +6,8 @@ import (
 )
 
 type Transform interface {
-	Name() string
-	Applier
+	// Name() string
+	// Applier
 	ref.EncodableObject
 	AssociatedConfigs() []ref.EncodableObject
 }

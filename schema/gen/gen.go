@@ -49,7 +49,6 @@ func main() {
 		Printfln("import (").
 		Printfln(`"github.com/hsfzxjy/imbed/schema"`).
 		Printfln(`"github.com/tinylib/msgp/msgp"`).
-		Printfln(`"github.com/hsfzxjy/imbed/transform"`).
 		Printfln(`)`)
 	var decls []*ast.GenDecl
 	for _, decl := range f.Decls {
@@ -214,7 +213,7 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string) {
 	printer.
 		Printfln(").DebugName(%q)", debugName).
 		Printfln("})\n").
-		Printfln("func (x*%s)EncodeMsg(r *transform.Registry,w *msgp.Writer)error{", name).
+		Printfln("func (x*%s)EncodeMsg(w *msgp.Writer)error{", name).
 		Printfln("return %sSchema.Build().EncodeMsg(w, x)", name).
 		Printfln("}\n")
 }

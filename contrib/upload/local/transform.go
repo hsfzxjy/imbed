@@ -68,5 +68,6 @@ func Register(r *transform.Registry) {
 		r, "upload.local",
 		ConfigSchema.Build(),
 		ParamsSchema.Build(),
-	).Kind(transform.KindPersist)
+	).
+		Category(transform.Terminal)
 }

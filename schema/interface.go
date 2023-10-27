@@ -9,6 +9,7 @@ import (
 
 type Schema[T any] interface {
 	ScanFrom(r Scanner) (T, error)
+
 	DecodeMsg(r *msgp.Reader) (T, error)
 	EncodeMsg(w *msgp.Writer, source T) error
 	Visit(v Visitor, source T) error
@@ -18,7 +19,12 @@ type Schema[T any] interface {
 
 type GenericSchema interface {
 	genericSchema
+	ScanFromAny(r Scanner) (any, error)
+	DecodeMsgAny(r *msgp.Reader) (any, error)
 	EncodeMsgAny(w *msgp.Writer, source any) error
+	VisitAny(v Visitor, source any) error
+	NewAny() any
+	WrapAny(data any) GenericValue
 }
 
 type schema[T any] interface {

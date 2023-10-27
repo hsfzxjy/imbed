@@ -1,10 +1,12 @@
 package revparse
 
 import (
+	"bytes"
 	"strings"
 
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/transform"
+	"github.com/tinylib/msgp/msgp"
 )
 
 func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error) {
@@ -16,11 +18,13 @@ func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error
 			builder.WriteString(model.OID.FmtHumanize())
 			builder.WriteString(" ")
 		}
-		transforms, err := registry.DecodeParams(model.TransSeqRaw)
-		if err != nil {
-			return "", err
-		}
-		for _, t := range transforms {
+		buf := bytes.NewBuffer(model.TransSeqRaw)
+		r := msgp.NewReader(buf)
+		for buf.Len() > 0 {
+			t, err := registry.DecodeMsg(r)
+			if err != nil {
+				return "", err
+			}
 			if !first {
 				builder.WriteString(", ")
 			}
@@ -29,7 +33,7 @@ func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error
 			builder.WriteByte('@')
 			v := NewVisitor(&builder)
 			builder.WriteString(t.ConfigHash().FmtHumanize())
-			err := t.VisitParams(&v)
+			err = t.Visit(&v)
 			if err != nil {
 				return "", err
 			}

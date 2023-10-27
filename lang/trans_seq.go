@@ -6,10 +6,11 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/transform"
+	cfgf "github.com/hsfzxjy/imbed/transform/configfactory"
 )
 
 func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error) {
-	var transforms []transform.Transform
+	var transforms []*transform.Transform
 	scanner := transScanner{Parser: c.parser}
 	for !scanner.EOF() {
 		scanner.Space()
@@ -17,11 +18,11 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		if !ok {
 			return nil, scanner.ErrorString("unknown transform")
 		}
-		m, ok := c.registry.Lookup(name)
-		if !ok {
-			return nil, scanner.ErrorString("unknown transform")
+		data, err := c.registry.ScanFrom(name, scanner)
+		if err != nil {
+			return nil, err
 		}
-		var cb transform.ConfigBuilder
+		var cb cfgf.Factory
 		if c.parser.Byte('@') {
 			hex, ok := c.parser.String(" :")
 			if !ok {
@@ -31,15 +32,11 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			if err != nil {
 				return nil, scanner.Error(fmt.Errorf("invalid config SHA %q: %w", hex, err))
 			}
-			cb = m.ConfigBuilderNeedle(needle)
+			cb = data.ConfigFactory(cfgf.Needle(needle))
 		} else {
-			cb = m.ConfigBuilderWorkspace()
+			cb = data.ConfigFactory(cfgf.Workspace())
 		}
-		pm, err := m.ScanParams(scanner)
-		if err != nil {
-			return nil, err
-		}
-		t, err := pm.BuildWith(cb, cp)
+		t, err := data.AsBuilder(cb).Build(cp)
 		if err != nil {
 			return nil, err
 		}
@@ -52,5 +49,5 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			}
 		}
 	}
-	return transform.BuildGraph(transforms), nil
+	return transform.Schedule(c.registry, transforms)
 }
