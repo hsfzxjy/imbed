@@ -20,7 +20,7 @@ func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error
 		}
 		buf := bytes.NewBuffer(model.TransSeqRaw)
 		r := msgp.NewReader(buf)
-		for buf.Len() > 0 {
+		for buf.Len() > 0 || r.Buffered() > 0 {
 			t, err := registry.DecodeMsg(r)
 			if err != nil {
 				return "", err

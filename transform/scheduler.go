@@ -23,30 +23,36 @@ type step struct {
 	Next     stepSet
 }
 
-func (s *step) Run(cache *assetCache, a asset.Asset, ret *[]asset.Asset) error {
-	var cached asset.Asset
+func (s *step) Run(cache *assetCache, upstream asset.Asset, ret *[]asset.Asset) error {
+	var result asset.Asset
 	var err error
-	if cached, err = cache.Lookup(a, &s.transSeq); err != nil {
+	if result, err = cache.Lookup(upstream, &s.transSeq); err != nil {
 		return err
 	}
-	if cached != nil {
-		a = cached
-	} else {
+	if result == nil {
+		a := upstream
+		updates := make([]asset.Update, 0, len(s.Appliers))
 		for _, applier := range s.Appliers {
 			update, err := applier.Apply(cache.app, a)
 			if err != nil {
 				return err
 			}
+			println("applying")
 			a, err = asset.ApplyUpdate(a, s, update)
 			if err != nil {
-				return nil
+				return err
 			}
+			updates = append(updates, update)
+		}
+		result, err = asset.ApplyUpdate(upstream, s, asset.MergeUpdates(updates...))
+		if err != nil {
+			return err
 		}
 	}
 	if s.IsTerminal() {
-		*ret = append(*ret, a)
+		*ret = append(*ret, result)
 	}
-	return s.Next.Run(cache, a, ret)
+	return s.Next.Run(cache, result, ret)
 }
 
 type Graph struct {

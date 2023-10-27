@@ -26,6 +26,10 @@ func (ts *transSeq) compute() {
 		hash    ref.Sha256Hash
 		err     error
 	)
+	println("computing", ts.Start, ts.End)
+	w = msgp.NewWriter(&buf)
+
+	// compute encoded
 	for _, t := range ts.Seq[ts.Start:ts.End] {
 		var configHash ref.Sha256Hash
 		configHash, err = t.Config.GetSha256Hash()
@@ -33,8 +37,6 @@ func (ts *transSeq) compute() {
 			goto ERROR
 		}
 
-		// compute encoded
-		w = msgp.NewWriter(&buf)
 		err = w.Append(ref.AsRaw(configHash)...)
 		if err != nil {
 			goto ERROR
@@ -47,12 +49,13 @@ func (ts *transSeq) compute() {
 		if err != nil {
 			goto ERROR
 		}
-		err = w.Flush()
-		if err != nil {
-			goto ERROR
-		}
+	}
+	err = w.Flush()
+	if err != nil {
+		goto ERROR
 	}
 	encoded = slices.Clone(buf.Bytes())
+	println(string(encoded))
 
 	// compute hash
 	buf.Reset()
@@ -66,12 +69,12 @@ func (ts *transSeq) compute() {
 		if err != nil {
 			goto ERROR
 		}
-		err = w.Flush()
-		if err != nil {
-			goto ERROR
-		}
-		hash = ref.Sha256HashSum(buf.Bytes())
 	}
+	err = w.Flush()
+	if err != nil {
+		goto ERROR
+	}
+	hash = ref.Sha256HashSum(buf.Bytes())
 
 	ts.encoded, ts.hash = encoded, hash
 	return
