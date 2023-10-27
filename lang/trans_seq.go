@@ -18,13 +18,9 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		if !ok {
 			return nil, scanner.ErrorString("unknown transform")
 		}
-		data, err := c.registry.ScanFrom(name, scanner)
-		if err != nil {
-			return nil, err
-		}
-		var cb cfgf.Factory
+		var copt cfgf.Opt
 		if c.parser.Byte('@') {
-			hex, ok := c.parser.String(" :")
+			hex, ok := c.parser.String(" :,")
 			if !ok {
 				return nil, scanner.ErrorString("expect config SHA")
 			}
@@ -32,13 +28,17 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			if err != nil {
 				return nil, scanner.Error(fmt.Errorf("invalid config SHA %q: %w", hex, err))
 			}
-			cb = data.ConfigFactory(cfgf.Needle(needle))
+			copt = cfgf.Needle(needle)
 		} else {
-			cb = data.ConfigFactory(cfgf.Workspace())
+			copt = cfgf.Workspace()
 		}
-		t, err := data.AsBuilder(cb).Build(cp)
+		data, err := c.registry.ScanFrom(name, scanner)
 		if err != nil {
-			return nil, err
+			return nil, scanner.Error(err)
+		}
+		t, err := data.AsBuilder(data.ConfigFactory(copt)).Build(cp)
+		if err != nil {
+			return nil, scanner.Error(err)
 		}
 		transforms = append(transforms, t)
 		scanner.Space()
