@@ -37,7 +37,6 @@ func (s *step) Run(cache *assetCache, upstream asset.Asset, ret *[]asset.Asset) 
 			if err != nil {
 				return err
 			}
-			println("applying")
 			a, err = asset.ApplyUpdate(a, s, update)
 			if err != nil {
 				return err

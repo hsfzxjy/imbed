@@ -9,15 +9,16 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-type _AtomVTable[T any] struct {
+type _AtomVTable[T comparable] struct {
 	typeName      string
 	decodeMsgFunc func(r *msgp.Reader) (T, error)
 	scanFromFunc  func(r Scanner) (T, error)
 	encodeMsgFunc func(w *msgp.Writer, value T) error
-	visitFunc     func(v Visitor, value T) error
+	visitFunc     func(v Visitor, value T, isDefault bool) error
+	equalFunc     func(a, b T) bool
 }
 
-type _Atom[T any] struct {
+type _Atom[T comparable] struct {
 	def optional[T]
 	*_AtomVTable[T]
 }
@@ -51,7 +52,16 @@ func (s *_Atom[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
 }
 
 func (s *_Atom[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
-	return newError(s.visitFunc(v, (*(*T)(source))))
+	value := (*(*T)(source))
+	var isDefault bool
+	if s.def.IsValid {
+		if s.equalFunc != nil {
+			isDefault = s.equalFunc(value, s.def.Value)
+		} else {
+			isDefault = value == s.def.Value
+		}
+	}
+	return newError(s.visitFunc(v, value, isDefault))
 }
 
 func (s *_Atom[T]) setDefault(target unsafe.Pointer) *schemaError {

@@ -103,7 +103,7 @@ func (s *_Struct[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
 		if err := sv.VisitStructFieldBegin(f.name); err != nil {
 			return newError(err).AppendPath(f.name).AppendPath(s.name)
 		}
-		if err := f.elemSchema.visit(ev, source); err != nil {
+		if err := f.visit(ev, source); err != nil {
 			return err.AppendPath(s.name)
 		}
 		if err := sv.VisitStructFieldEnd(f.name); err != nil {

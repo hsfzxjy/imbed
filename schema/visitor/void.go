@@ -69,17 +69,17 @@ func (Void) VisitListItemEnd(i int) error {
 }
 
 // VisitBool implements schema.Visitor.
-func (Void) VisitBool(x bool) error {
+func (Void) VisitBool(x bool, isDefault bool) error {
 	return nil
 }
 
 // VisitRat implements schema.Visitor.
-func (Void) VisitRat(x *big.Rat) error {
+func (Void) VisitRat(x *big.Rat, isDefault bool) error {
 	return nil
 }
 
 // VisitInt64 implements schema.Visitor.
-func (Void) VisitInt64(x int64) error {
+func (Void) VisitInt64(x int64, isDefault bool) error {
 	return nil
 }
 
@@ -94,7 +94,7 @@ func (Void) VisitMap(size int) (mv schema.MapVisitor, elem schema.Visitor, err e
 }
 
 // VisitString implements schema.Visitor.
-func (Void) VisitString(x string) error {
+func (Void) VisitString(x string, isDefault bool) error {
 	return nil
 }
 

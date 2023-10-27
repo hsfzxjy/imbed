@@ -10,10 +10,10 @@ type Visitor interface {
 }
 
 type AtomVisitor interface {
-	VisitInt64(x int64) error
-	VisitRat(x *big.Rat) error
-	VisitBool(x bool) error
-	VisitString(x string) error
+	VisitInt64(x int64, isDefault bool) error
+	VisitRat(x *big.Rat, isDefault bool) error
+	VisitBool(x bool, isDefault bool) error
+	VisitString(x string, isDefault bool) error
 }
 
 type ListVisitor interface {

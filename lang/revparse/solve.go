@@ -33,7 +33,7 @@ func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error
 			builder.WriteByte('@')
 			v := NewVisitor(&builder)
 			builder.WriteString(t.ConfigHash().FmtHumanize())
-			err = t.Visit(&v)
+			err = t.Visit(v)
 			if err != nil {
 				return "", err
 			}

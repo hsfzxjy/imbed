@@ -26,7 +26,6 @@ func (ts *transSeq) compute() {
 		hash    ref.Sha256Hash
 		err     error
 	)
-	println("computing", ts.Start, ts.End)
 	w = msgp.NewWriter(&buf)
 
 	// compute encoded
@@ -55,7 +54,6 @@ func (ts *transSeq) compute() {
 		goto ERROR
 	}
 	encoded = slices.Clone(buf.Bytes())
-	println(string(encoded))
 
 	// compute hash
 	buf.Reset()

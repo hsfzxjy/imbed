@@ -2,7 +2,7 @@ package schema
 
 import "math/big"
 
-type atomBuilder[T any] struct {
+type atomBuilder[T comparable] struct {
 	def    optional[T]
 	vtable *_AtomVTable[T]
 }
