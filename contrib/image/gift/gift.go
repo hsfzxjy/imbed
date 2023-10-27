@@ -120,13 +120,15 @@ func (a *composedApplier) filter() gift.Filter {
 
 func (composer) Compose(applier []transform.Applier) (transform.Applier, error) {
 	filters := make([]gift.Filter, 0, len(applier))
-	for _, a := range filters {
+	for _, a := range applier {
 		filters = append(filters, a.(filterer).filter())
 	}
+	println(filters)
 	return &composedApplier{GIFT: gift.New(filters...)}, nil
 }
 
 func Register(r *transform.Registry) {
+	r.RegisterComposer(Category, composer{})
 	regsiterResize(r)
 	registerRotate(r)
 }
