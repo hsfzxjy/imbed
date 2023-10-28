@@ -25,7 +25,7 @@ func (x *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 		if err != nil {
 			return err
 		}
-		return jpeg.Encode(w, im, &jpeg.Options{
+		return jpeg.Encode(w, im.Image, &jpeg.Options{
 			Quality: int(x.Quality),
 		})
 	}))

@@ -2,7 +2,6 @@ package content
 
 import (
 	"bytes"
-	"image"
 	"io"
 
 	"github.com/hsfzxjy/imbed/core/ref"
@@ -29,7 +28,7 @@ type Content interface {
 
 type ImageContent interface {
 	Content
-	Image() (image.Image, error)
+	Image() (Image, error)
 }
 
 func BuildFID(content Content, basename string) (ref.FID, error) {

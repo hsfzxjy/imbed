@@ -29,9 +29,10 @@ func (ptr *applierHead[T]) Apply(app core.App, ass asset.Asset) (asset.Update, e
 	if err != nil {
 		return nil, err
 	}
-	dst := newImage(src, filter.Bounds(src.Bounds()))
-	filter.Draw(dst, src, nil)
-	return asset.UpdateContent(content.NewImage(dst)), nil
+	dst := newImage(src.Image, filter.Bounds(src.Image.Bounds()))
+	filter.Draw(dst, src.Image, nil)
+	src.Image = dst
+	return asset.UpdateContent(content.NewImage(src)), nil
 }
 
 func newImage(src image.Image, newBounds image.Rectangle) draw.Image {

@@ -7,27 +7,39 @@ import (
 	"sync"
 )
 
+type Image struct {
+	Image image.Image
+
+	SourceFormat string
+}
+
 type imageContent struct {
 	*content
-	imageCache image.Image
+	imageCache Image
 	once       sync.Once
 }
 
-func (i *imageContent) Image() (im image.Image, err error) {
-	im = i.imageCache
+func (i *imageContent) Image() (Image, error) {
+	var err error
 	i.once.Do(func() {
 		var r *bytes.Reader
 		r, err = i.BytesReader()
 		if err != nil {
 			return
 		}
-		im, _, err = image.Decode(r)
+		im, format, err := image.Decode(r)
 		if err != nil {
 			return
 		}
-		i.imageCache = im
+		i.imageCache = Image{
+			Image:        im,
+			SourceFormat: format,
+		}
 	})
-	return
+	if err != nil {
+		return Image{}, err
+	}
+	return i.imageCache, nil
 }
 
 func (i *imageContent) BytesReader() (*bytes.Reader, error) {
