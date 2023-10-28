@@ -14,6 +14,7 @@ type ConfigProvider interface {
 
 type App interface {
 	DBDir() string
+	TmpDir() string
 	WorkDir() string
 	ConfigFilePath() string
 	FilePath(filename string) string

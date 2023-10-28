@@ -21,6 +21,7 @@ type App struct {
 	mode    core.Mode
 	workDir string
 	dbDir   string
+	tmpDir  string
 	cfgTree map[string]any
 
 	dbs    db.Service
@@ -77,6 +78,7 @@ func ParseAndRun(cmdArgs []string, specs Commands, registry *transform.Registry)
 			mode:     spec.Mode,
 			workDir:  workDir,
 			dbDir:    path.Join(workDir, DB_DIR),
+			tmpDir:   path.Join(workDir, DB_DIR, TMP_DIR),
 			cfgTree:  cfgTree,
 			registry: registry,
 		}
@@ -93,6 +95,10 @@ func (s *App) Registry() *transform.Registry {
 
 func (s *App) DBDir() string {
 	return s.dbDir
+}
+
+func (s *App) TmpDir() string {
+	return s.tmpDir
 }
 
 func (s *App) Close() error {

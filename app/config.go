@@ -7,6 +7,7 @@ import (
 )
 
 const DB_DIR = ".imbed"
+const TMP_DIR = "tmp"
 const FILES_DIR = "files"
 const CONFIG_FILENAME = "imbed.toml"
 

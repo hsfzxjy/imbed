@@ -29,6 +29,10 @@ func (InitCommand) Run(app *app.App, spec app.CommandSpec) error {
 	if err != nil {
 		return err
 	}
+	err = os.Mkdir(app.TmpDir(), 0o700)
+	if err != nil {
+		return err
+	}
 	err = os.Mkdir(app.FilePath(""), 0o700)
 	if err != nil {
 		return err
