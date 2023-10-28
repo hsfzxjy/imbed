@@ -131,4 +131,5 @@ func Register(r *transform.Registry) {
 	r.RegisterComposer(Category, composer{})
 	regsiterResize(r)
 	registerRotate(r)
+	registerOpacity(r)
 }
