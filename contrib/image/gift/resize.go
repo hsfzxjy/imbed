@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/disintegration/gift"
+	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
 )
@@ -41,9 +42,6 @@ func (a *resizeApplier) filter() gift.Filter {
 }
 
 //imbed:schemagen
-type resizeConfig struct{}
-
-//imbed:schemagen
 type resizeParams struct {
 	H int64 `imbed:"h,0"`
 	W int64 `imbed:"w,0"`
@@ -78,7 +76,7 @@ func (p *resizeParams) Validate() error {
 	return nil
 }
 
-func (p *resizeParams) BuildTransform(*resizeConfig) (transform.Applier, error) {
+func (p *resizeParams) BuildTransform(*schema.ZST) (transform.Applier, error) {
 	return &resizeApplier{
 		resizeParams: *p,
 	}, nil
@@ -87,7 +85,7 @@ func (p *resizeParams) BuildTransform(*resizeConfig) (transform.Applier, error) 
 func regsiterResize(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.resize",
-		resizeConfigSchema.Build(),
+		schema.ZSTSchema.Build(),
 		resizeParamsSchema.Build(),
 	).
 		Alias("resize").

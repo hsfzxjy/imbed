@@ -17,14 +17,6 @@ func (x *resizeApplier) EncodeMsg(w *msgp.Writer) error {
 	return resizeApplierSchema.Build().EncodeMsg(w, x)
 }
 
-var resizeConfigSchema = schema.StructFunc(func(prototype *resizeConfig) *schema.StructBuilder[resizeConfig] {
-	return schema.Struct(prototype).DebugName("resizeConfig")
-})
-
-func (x *resizeConfig) EncodeMsg(w *msgp.Writer) error {
-	return resizeConfigSchema.Build().EncodeMsg(w, x)
-}
-
 var resizeParamsSchema = schema.StructFunc(func(prototype *resizeParams) *schema.StructBuilder[resizeParams] {
 	return schema.Struct(prototype,
 		schema.F("h", &prototype.H, schema.Int().Default(0)),

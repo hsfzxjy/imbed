@@ -17,14 +17,6 @@ func (x *rotateApplier) EncodeMsg(w *msgp.Writer) error {
 	return rotateApplierSchema.Build().EncodeMsg(w, x)
 }
 
-var rotateConfigSchema = schema.StructFunc(func(prototype *rotateConfig) *schema.StructBuilder[rotateConfig] {
-	return schema.Struct(prototype).DebugName("rotateConfig")
-})
-
-func (x *rotateConfig) EncodeMsg(w *msgp.Writer) error {
-	return rotateConfigSchema.Build().EncodeMsg(w, x)
-}
-
 var rotateParamsSchema = schema.StructFunc(func(prototype *rotateParams) *schema.StructBuilder[rotateParams] {
 	return schema.Struct(prototype,
 		schema.F("deg", &prototype.Deg, schema.Rat()),

@@ -5,6 +5,7 @@ import (
 	"math/big"
 
 	"github.com/disintegration/gift"
+	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
 )
@@ -23,9 +24,6 @@ func (a *rotateApplier) filter() gift.Filter {
 }
 
 //imbed:schemagen
-type rotateConfig struct{}
-
-//imbed:schemagen
 type rotateParams struct {
 	Deg           *big.Rat `imbed:"deg"`
 	Interpolation string   `imbed:"itpl,\"lin\""`
@@ -38,7 +36,7 @@ func (p *rotateParams) Validate() error {
 	return nil
 }
 
-func (p *rotateParams) BuildTransform(*rotateConfig) (transform.Applier, error) {
+func (p *rotateParams) BuildTransform(*schema.ZST) (transform.Applier, error) {
 	return &rotateApplier{
 		rotateParams: *p,
 	}, nil
@@ -47,7 +45,7 @@ func (p *rotateParams) BuildTransform(*rotateConfig) (transform.Applier, error) 
 func registerRotate(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.rotate",
-		rotateConfigSchema.Build(),
+		schema.ZSTSchema.Build(),
 		rotateParamsSchema.Build(),
 	).
 		Alias("rotate", "rot").
