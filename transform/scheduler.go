@@ -37,18 +37,25 @@ func (s *step) Run(cache *assetCache, upstream asset.Asset, ret *[]asset.Asset) 
 			if err != nil {
 				return err
 			}
+			if update == nil {
+				continue
+			}
 			a, err = asset.ApplyUpdate(a, s, update)
 			if err != nil {
 				return err
 			}
 			updates = append(updates, update)
 		}
-		result, err = asset.ApplyUpdate(upstream, s, asset.MergeUpdates(updates...))
-		if err != nil {
-			return err
+		if len(updates) > 0 {
+			result, err = asset.ApplyUpdate(upstream, s, asset.MergeUpdates(updates...))
+			if err != nil {
+				return err
+			}
+		} else {
+			result = upstream
 		}
 	}
-	if s.IsTerminal() {
+	if s.IsTerminal() && result != upstream {
 		*ret = append(*ret, result)
 	}
 	return s.Next.Run(cache, result, ret)
