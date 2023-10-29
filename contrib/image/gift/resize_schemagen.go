@@ -11,8 +11,8 @@ var resizeSchema = schema.StructFunc(func(prototype *resize) *schema.StructBuild
 	return schema.Struct(prototype,
 		schema.F("h", &prototype.H, schema.Int().Default(0)),
 		schema.F("w", &prototype.W, schema.Int().Default(0)),
-		schema.F("sample", &prototype.Resampling, schema.String().Default("cub")),
-		schema.F("anchor", &prototype.Anchor, schema.String().Default("c")),
+		schema.F("sample", (*string)(&prototype.Resampling), schema.String().Default("cub")),
+		schema.F("anchor", (*string)(&prototype.Anchor), schema.String().Default("c")),
 		schema.F("mode", &prototype.Mode, schema.String().Default("default")),
 	).DebugName("resize")
 })

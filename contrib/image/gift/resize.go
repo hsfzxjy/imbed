@@ -18,10 +18,9 @@ type resize struct {
 	H int64 `imbed:"h,0"`
 	W int64 `imbed:"w,0"`
 
-	Resampling string `imbed:"sample,\"cub\""`
-
-	Anchor string `imbed:"anchor,\"c\""`
-	Mode   string `imbed:"mode,\"default\""`
+	Resampling `imbed:"sample!string,\"cub\""`
+	Anchor     `imbed:"anchor!string,\"c\""`
+	Mode       string `imbed:"mode,\"default\""`
 }
 
 func (a *resize) filter() gift.Filter {
@@ -29,18 +28,18 @@ func (a *resize) filter() gift.Filter {
 	case "default":
 		return gift.Resize(
 			int(a.W), int(a.H),
-			util.Unwrap(Resampling(a.Resampling)),
+			util.Unwrap(a.Resampling.Get()),
 		)
 	case "fit":
 		return gift.ResizeToFit(
 			int(a.W), int(a.H),
-			util.Unwrap(Resampling(a.Resampling)),
+			util.Unwrap(a.Resampling.Get()),
 		)
 	case "fill":
 		return gift.ResizeToFill(
 			int(a.W), int(a.H),
-			util.Unwrap(Resampling(a.Resampling)),
-			util.Unwrap(Anchor(a.Anchor)),
+			util.Unwrap(a.Resampling.Get()),
+			util.Unwrap(a.Anchor.Get()),
 		)
 	default:
 		panic("unreachable")
@@ -51,13 +50,13 @@ func (p *resize) Validate() error {
 	if p.H <= 0 && p.W <= 0 {
 		return errors.New("at least one of h and w should be positive integer (mode=default)")
 	}
-	if _, err := Resampling(p.Resampling); err != nil {
+	if _, err := p.Resampling.Get(); err != nil {
 		return err
 	}
 	switch p.Mode {
 	case "default":
 	case "fit":
-		if _, err := Anchor(p.Anchor); err != nil {
+		if _, err := p.Anchor.Get(); err != nil {
 			return err
 		}
 		fallthrough

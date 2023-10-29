@@ -16,16 +16,16 @@ import (
 type rotate struct {
 	apHead[*rotate]
 	Deg           *big.Rat `imbed:"deg"`
-	Interpolation string   `imbed:"itpl,\"lin\""`
+	Interpolation `imbed:"itpl!string,\"lin\""`
 }
 
 func (a *rotate) filter() gift.Filter {
 	deg, _ := a.Deg.Float32()
-	return gift.Rotate(deg, color.Opaque, util.Unwrap(Interpolation(a.Interpolation)))
+	return gift.Rotate(deg, color.Opaque, util.Unwrap(a.Interpolation.Get()))
 }
 
 func (p *rotate) Validate() error {
-	if _, err := Interpolation(p.Interpolation); err != nil {
+	if _, err := p.Interpolation.Get(); err != nil {
 		return err
 	}
 	return nil

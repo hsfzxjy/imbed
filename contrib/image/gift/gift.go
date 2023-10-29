@@ -68,7 +68,7 @@ func newImage(src image.Image, newBounds image.Rectangle) draw.Image {
 	return dst
 }
 
-var resamplingMap = map[string]gift.Resampling{
+var resamplingMap = map[Resampling]gift.Resampling{
 	"box": gift.BoxResampling,
 	"cub": gift.CubicResampling,
 	"lan": gift.LanczosResampling,
@@ -76,7 +76,9 @@ var resamplingMap = map[string]gift.Resampling{
 	"nn":  gift.NearestNeighborResampling,
 }
 
-func Resampling(x string) (gift.Resampling, error) {
+type Resampling string
+
+func (x Resampling) Get() (gift.Resampling, error) {
 	r, ok := resamplingMap[x]
 	if !ok {
 		return nil, fmt.Errorf("unknown Resampling: %q", x)
@@ -84,7 +86,7 @@ func Resampling(x string) (gift.Resampling, error) {
 	return r, nil
 }
 
-var anchorMap = map[string]gift.Anchor{
+var anchorMap = map[Anchor]gift.Anchor{
 	"c":  gift.CenterAnchor,
 	"t":  gift.TopAnchor,
 	"l":  gift.LeftAnchor,
@@ -96,7 +98,9 @@ var anchorMap = map[string]gift.Anchor{
 	"br": gift.BottomRightAnchor,
 }
 
-func Anchor(x string) (gift.Anchor, error) {
+type Anchor string
+
+func (x Anchor) Get() (gift.Anchor, error) {
 	a, ok := anchorMap[x]
 	if !ok {
 		return 0, fmt.Errorf("unknown Anchor: %q", x)
@@ -104,13 +108,15 @@ func Anchor(x string) (gift.Anchor, error) {
 	return a, nil
 }
 
-var interpolationMap = map[string]gift.Interpolation{
+var interpolationMap = map[Interpolation]gift.Interpolation{
 	"nn":  gift.NearestNeighborInterpolation,
 	"lin": gift.LinearInterpolation,
 	"cub": gift.CubicInterpolation,
 }
 
-func Interpolation(x string) (gift.Interpolation, error) {
+type Interpolation string
+
+func (x Interpolation) Get() (gift.Interpolation, error) {
 	i, ok := interpolationMap[x]
 	if !ok {
 		return 0, fmt.Errorf("unknown Interpolation: %q", x)

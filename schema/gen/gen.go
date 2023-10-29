@@ -90,8 +90,9 @@ func (p *Printer) Printfln(tmpl string, args ...any) *Printer {
 }
 
 type FieldConfig struct {
-	Rename  string
-	Default string
+	TypeHint string
+	Rename   string
+	Default  string
 }
 
 func getConfig(tag *ast.BasicLit) *FieldConfig {
@@ -105,21 +106,31 @@ func getConfig(tag *ast.BasicLit) *FieldConfig {
 		return nil
 	}
 	configs := strings.SplitN(item, ",", 2)
+	var cfg *FieldConfig
 	switch len(configs) {
 	case 1:
-		return &FieldConfig{Rename: configs[0]}
+		cfg = &FieldConfig{Rename: configs[0]}
 	case 2:
-		return &FieldConfig{Rename: configs[0], Default: configs[1]}
+		cfg = &FieldConfig{Rename: configs[0], Default: configs[1]}
 	}
-	return nil
+	if cfg != nil {
+		parts := strings.SplitN(cfg.Rename, "!", 2)
+		if len(parts) == 2 {
+			cfg.Rename = parts[0]
+			cfg.TypeHint = parts[1]
+		}
+	}
+	return cfg
 }
 
-func handleFieldType(ftyp ast.Expr) (typname, cntr string, success bool) {
+func handleFieldType(ftyp ast.Expr, typeHint string) (typname, cntr string, success bool) {
 	var ok bool
 	switch ftyp := ftyp.(type) {
 	case *ast.Ident:
 		typname = ftyp.String()
 		if cntr, ok = atomTypeMap[typname]; ok {
+			cntr = fmt.Sprintf("schema.%s()", cntr)
+		} else if cntr, ok = atomTypeMap[typeHint]; typeHint != "" && ok {
 			cntr = fmt.Sprintf("schema.%s()", cntr)
 		} else {
 			cntr = typname + "Schema"
@@ -140,7 +151,7 @@ func handleFieldType(ftyp ast.Expr) (typname, cntr string, success bool) {
 		if key, ok := ftyp.Key.(*ast.Ident); !ok || key.String() != "string" {
 			goto ERROR
 		}
-		if _, vcntr, ok := handleFieldType(ftyp.Value); !ok {
+		if _, vcntr, ok := handleFieldType(ftyp.Value, ""); !ok {
 			goto ERROR
 		} else {
 			cntr = "schema.Map(" + vcntr + ")"
@@ -183,6 +194,14 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string, imports map
 		Printfln("return schema.Struct(prototype,")
 	for _, field := range typ.Fields.List {
 		cfg := getConfig(field.Tag)
+
+		throw := func() {
+			println("cannot handle field")
+			spew.Dump(field)
+			spew.Dump(cfg)
+			panic("")
+		}
+
 		if cfg == nil {
 			continue
 		}
@@ -192,12 +211,12 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string, imports map
 			fieldName = field.Names[0].Name
 		case 0:
 		default:
-			goto ERROR
+			throw()
 		}
 
-		typname, cntr, ok = handleFieldType(field.Type)
+		typname, cntr, ok = handleFieldType(field.Type, cfg.TypeHint)
 		if !ok {
-			goto ERROR
+			throw()
 		}
 
 		if fieldName == "" {
@@ -217,12 +236,13 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string, imports map
 			def = ".Default(" + parts[len(parts)-1] + ")"
 		}
 
-		printer.Printfln("schema.F(%q, &prototype.%s, %s%s),", cfg.Rename, fieldName, cntr, def)
+		ptr := "&prototype." + fieldName
+		if cfg.TypeHint != "" {
+			ptr = fmt.Sprintf("(*%s)(%s)", cfg.TypeHint, ptr)
+		}
+
+		printer.Printfln("schema.F(%q, %s, %s%s),", cfg.Rename, ptr, cntr, def)
 		continue
-	ERROR:
-		println("cannot handle field")
-		spew.Dump(field)
-		os.Exit(1)
 	}
 	printer.
 		Printfln(").DebugName(%q)", debugName).

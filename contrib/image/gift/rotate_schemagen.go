@@ -10,7 +10,7 @@ import (
 var rotateSchema = schema.StructFunc(func(prototype *rotate) *schema.StructBuilder[rotate] {
 	return schema.Struct(prototype,
 		schema.F("deg", &prototype.Deg, schema.Rat()),
-		schema.F("itpl", &prototype.Interpolation, schema.String().Default("lin")),
+		schema.F("itpl", (*string)(&prototype.Interpolation), schema.String().Default("lin")),
 	).DebugName("rotate")
 })
 
