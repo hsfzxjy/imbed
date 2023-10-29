@@ -158,4 +158,9 @@ func Register(r *transform.Registry) {
 	registerGaussianBlur(r)
 	registerGrayScale(r)
 	registerHue(r)
+	registerInvert(r)
+	registerPixelate(r)
+	registerSaturation(r)
+	registerSepia(r)
+	registerSigmoid(r)
 }
