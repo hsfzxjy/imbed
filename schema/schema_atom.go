@@ -15,7 +15,7 @@ type _AtomVTable[T comparable] struct {
 	scanFromFunc  func(r Scanner) (T, error)
 	encodeMsgFunc func(w *msgp.Writer, value T) error
 	visitFunc     func(v Visitor, value T, isDefault bool) error
-	equalFunc     func(a, b T) bool
+	cmpFunc       func(a, b T) int
 }
 
 type _Atom[T comparable] struct {
@@ -55,8 +55,8 @@ func (s *_Atom[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
 	value := (*(*T)(source))
 	var isDefault bool
 	if s.def.IsValid {
-		if s.equalFunc != nil {
-			isDefault = s.equalFunc(value, s.def.Value)
+		if s.cmpFunc != nil {
+			isDefault = s.cmpFunc(value, s.def.Value) == 0
 		} else {
 			isDefault = value == s.def.Value
 		}

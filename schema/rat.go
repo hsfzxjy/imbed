@@ -33,4 +33,5 @@ var _VTableRat = &_AtomVTable[*big.Rat]{
 		return w.WriteBytes(b)
 	},
 	visitFunc: Visitor.VisitRat,
+	cmpFunc:   (*big.Rat).Cmp,
 }
