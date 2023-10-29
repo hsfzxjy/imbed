@@ -14,7 +14,7 @@ import (
 
 //imbed:schemagen
 type resize struct {
-	applierHead[*resize]
+	apHead[*resize]
 	H int64 `imbed:"h,0"`
 	W int64 `imbed:"w,0"`
 
@@ -69,10 +69,6 @@ func (p *resize) Validate() error {
 		return fmt.Errorf("unknown Mode: %q", p.Mode)
 	}
 	return nil
-}
-
-func (p *resize) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return p, nil
 }
 
 func regsiterResize(r *transform.Registry) {

@@ -12,7 +12,7 @@ import (
 
 //imbed:schemagen
 type colorize struct {
-	applierHead[*colorize]
+	apHead[*colorize]
 	H *big.Rat `imbed:"h"`
 	S *big.Rat `imbed:"s"`
 	P *big.Rat `imbed:"p"`
@@ -23,10 +23,6 @@ func (c *colorize) filter() gift.Filter {
 	s, _ := c.S.Float32()
 	p, _ := c.P.Float32()
 	return gift.Colorize(h, s, p)
-}
-
-func (c *colorize) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return c, nil
 }
 
 func registerColorize(r *transform.Registry) {

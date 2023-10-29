@@ -12,17 +12,13 @@ import (
 
 //imbed:schemagen
 type gamma struct {
-	applierHead[*gamma]
+	apHead[*gamma]
 	Gamma *big.Rat `imbed:"g"`
 }
 
 func (g *gamma) filter() gift.Filter {
 	f, _ := g.Gamma.Float32()
 	return gift.Gamma(f)
-}
-
-func (g *gamma) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return g, nil
 }
 
 func registerGamma(r *transform.Registry) {

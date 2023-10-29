@@ -14,7 +14,7 @@ import (
 
 //imbed:schemagen
 type colorBalance struct {
-	applierHead[*colorBalance]
+	apHead[*colorBalance]
 	r *big.Rat `imbed:"r,@/util/rats!rats.R0"`
 	g *big.Rat `imbed:"g,@/util/rats!rats.R0"`
 	b *big.Rat `imbed:"b,@/util/rats!rats.R0"`
@@ -41,10 +41,6 @@ func (a *colorBalance) filter() gift.Filter {
 	g, _ := a.g.Float32()
 	b, _ := a.b.Float32()
 	return gift.ColorBalance(r, g, b)
-}
-
-func (a *colorBalance) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return a, nil
 }
 
 func registerColorBalance(r *transform.Registry) {

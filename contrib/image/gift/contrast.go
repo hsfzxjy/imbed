@@ -12,17 +12,13 @@ import (
 
 //imbed:schemagen
 type contrast struct {
-	applierHead[*contrast]
+	apHead[*contrast]
 	Percentage *big.Rat `imbed:"p"`
 }
 
 func (c *contrast) filter() gift.Filter {
 	p, _ := c.Percentage.Float32()
 	return gift.Contrast(p)
-}
-
-func (c *contrast) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return c, nil
 }
 
 func registerContrast(r *transform.Registry) {

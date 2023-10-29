@@ -10,15 +10,11 @@ import (
 
 //imbed:schemagen
 type grayScale struct {
-	applierHead[*grayScale]
+	apHead[*grayScale]
 }
 
 func (g *grayScale) filter() gift.Filter {
 	return gift.Grayscale()
-}
-
-func (g *grayScale) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return g, nil
 }
 
 func registerGrayScale(r *transform.Registry) {

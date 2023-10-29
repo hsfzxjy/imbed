@@ -14,7 +14,7 @@ import (
 
 //imbed:schemagen
 type brightness struct {
-	applierHead[*brightness]
+	apHead[*brightness]
 	Percentage *big.Rat `imbed:"p"`
 }
 
@@ -29,10 +29,6 @@ func (p *brightness) Validate() error {
 		return fmt.Errorf("percentage must be in [-100, 100], got %s", pc.FloatString(1))
 	}
 	return nil
-}
-
-func (p *brightness) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return p, nil
 }
 
 func registerBrightness(r *transform.Registry) {

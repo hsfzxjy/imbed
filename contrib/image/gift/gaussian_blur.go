@@ -13,7 +13,7 @@ import (
 
 //imbed:schemagen
 type gaussianBlur struct {
-	applierHead[*gaussianBlur]
+	apHead[*gaussianBlur]
 	Sigma *big.Rat `imbed:"s"`
 }
 
@@ -27,10 +27,6 @@ func (g *gaussianBlur) Validate() error {
 		return fmt.Errorf("sigma must be >0, got %s", g.Sigma.FloatString(1))
 	}
 	return nil
-}
-
-func (g *gaussianBlur) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return g, nil
 }
 
 func registerGaussianBlur(r *transform.Registry) {

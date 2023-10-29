@@ -14,7 +14,7 @@ import (
 
 //imbed:schemagen
 type rotate struct {
-	applierHead[*rotate]
+	apHead[*rotate]
 	Deg           *big.Rat `imbed:"deg"`
 	Interpolation string   `imbed:"itpl,\"lin\""`
 }
@@ -29,10 +29,6 @@ func (p *rotate) Validate() error {
 		return err
 	}
 	return nil
-}
-
-func (p *rotate) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return p, nil
 }
 
 func registerRotate(r *transform.Registry) {

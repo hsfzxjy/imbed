@@ -18,7 +18,7 @@ import (
 
 //imbed:schemagen
 type opacity struct {
-	applierHead[*opacity]
+	apHead[*opacity]
 	Percentage *big.Rat `imbed:"p"`
 }
 
@@ -45,10 +45,6 @@ func (p *opacity) Validate() error {
 		return fmt.Errorf("opacity must be in [0, 100], got %s", v.FloatString(1))
 	}
 	return nil
-}
-
-func (p *opacity) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return p, nil
 }
 
 func registerOpacity(r *transform.Registry) {
