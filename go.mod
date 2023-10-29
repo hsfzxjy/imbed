@@ -6,6 +6,7 @@ require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/disintegration/gift v1.2.1
 	github.com/docker/go-units v0.5.0
+	github.com/kolesa-team/go-webp v1.0.4
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/qiniu/open v0.9.0
 	github.com/spaolacci/murmur3 v1.1.0
@@ -18,7 +19,6 @@ require (
 )
 
 require (
-	github.com/kolesa-team/go-webp v1.0.4 // indirect
 	github.com/philhofer/fwd v1.1.2 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	golang.org/x/sys v0.12.0 // indirect
