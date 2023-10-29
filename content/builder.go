@@ -2,9 +2,14 @@ package content
 
 import (
 	"fmt"
+	"io"
+
 	"image/jpeg"
 	"image/png"
-	"io"
+
+	webpencoder "github.com/kolesa-team/go-webp/encoder"
+	"github.com/kolesa-team/go-webp/webp"
+	"golang.org/x/image/bmp"
 
 	"github.com/hsfzxjy/imbed/core/ref"
 )
@@ -79,6 +84,12 @@ func imageLoadFunc(image Image) loadFunc {
 			return jpeg.Encode(w, image.Image, &jpeg.Options{Quality: 100})
 		case "png":
 			return png.Encode(w, image.Image)
+		case "bmp":
+			return bmp.Encode(w, image.Image)
+		case "webp":
+			return webp.Encode(w, image.Image, &webpencoder.Options{
+				Lossless: true,
+			})
 		default:
 			return fmt.Errorf("unknown SourceFormat: %q", image.SourceFormat)
 		}
