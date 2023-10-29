@@ -13,40 +13,33 @@ import (
 //go:generate go run github.com/hsfzxjy/imbed/schema/gen
 
 //imbed:schemagen
-type rotateApplier struct {
-	applierHead[*rotateApplier]
-	rotateParams `imbed:""`
-}
-
-func (a *rotateApplier) filter() gift.Filter {
-	deg, _ := a.Deg.Float32()
-	return gift.Rotate(deg, color.Opaque, util.Unwrap(Interpolation(a.Interpolation)))
-}
-
-//imbed:schemagen
-type rotateParams struct {
+type rotate struct {
+	applierHead[*rotate]
 	Deg           *big.Rat `imbed:"deg"`
 	Interpolation string   `imbed:"itpl,\"lin\""`
 }
 
-func (p *rotateParams) Validate() error {
+func (a *rotate) filter() gift.Filter {
+	deg, _ := a.Deg.Float32()
+	return gift.Rotate(deg, color.Opaque, util.Unwrap(Interpolation(a.Interpolation)))
+}
+
+func (p *rotate) Validate() error {
 	if _, err := Interpolation(p.Interpolation); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (p *rotateParams) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return &rotateApplier{
-		rotateParams: *p,
-	}, nil
+func (p *rotate) BuildTransform(*schema.ZST) (transform.Applier, error) {
+	return p, nil
 }
 
 func registerRotate(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.rotate",
 		schema.ZSTSchema.Build(),
-		rotateParamsSchema.Build(),
+		rotateSchema.Build(),
 	).
 		Alias("rotate", "rot").
 		Category(Category)

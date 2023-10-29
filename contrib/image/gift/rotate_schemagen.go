@@ -7,23 +7,13 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-var rotateApplierSchema = schema.StructFunc(func(prototype *rotateApplier) *schema.StructBuilder[rotateApplier] {
-	return schema.Struct(prototype,
-		schema.F("rotateParams", &prototype.rotateParams, rotateParamsSchema),
-	).DebugName("rotateApplier")
-})
-
-func (x *rotateApplier) EncodeMsg(w *msgp.Writer) error {
-	return rotateApplierSchema.Build().EncodeMsg(w, x)
-}
-
-var rotateParamsSchema = schema.StructFunc(func(prototype *rotateParams) *schema.StructBuilder[rotateParams] {
+var rotateSchema = schema.StructFunc(func(prototype *rotate) *schema.StructBuilder[rotate] {
 	return schema.Struct(prototype,
 		schema.F("deg", &prototype.Deg, schema.Rat()),
 		schema.F("itpl", &prototype.Interpolation, schema.String().Default("lin")),
-	).DebugName("rotateParams")
+	).DebugName("rotate")
 })
 
-func (x *rotateParams) EncodeMsg(w *msgp.Writer) error {
-	return rotateParamsSchema.Build().EncodeMsg(w, x)
+func (x *rotate) EncodeMsg(w *msgp.Writer) error {
+	return rotateSchema.Build().EncodeMsg(w, x)
 }

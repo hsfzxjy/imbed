@@ -7,22 +7,12 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-var opacityApplierSchema = schema.StructFunc(func(prototype *opacityApplier) *schema.StructBuilder[opacityApplier] {
+var opacitySchema = schema.StructFunc(func(prototype *opacity) *schema.StructBuilder[opacity] {
 	return schema.Struct(prototype,
-		schema.F("alphaBit", &prototype.alphaBit, schema.Int()),
-	).DebugName("opacityApplier")
+		schema.F("p", &prototype.Percentage, schema.Rat()),
+	).DebugName("opacity")
 })
 
-func (x *opacityApplier) EncodeMsg(w *msgp.Writer) error {
-	return opacityApplierSchema.Build().EncodeMsg(w, x)
-}
-
-var opacityParamsSchema = schema.StructFunc(func(prototype *opacityParams) *schema.StructBuilder[opacityParams] {
-	return schema.Struct(prototype,
-		schema.F("v", &prototype.Value, schema.Rat()),
-	).DebugName("opacityParams")
-})
-
-func (x *opacityParams) EncodeMsg(w *msgp.Writer) error {
-	return opacityParamsSchema.Build().EncodeMsg(w, x)
+func (x *opacity) EncodeMsg(w *msgp.Writer) error {
+	return opacitySchema.Build().EncodeMsg(w, x)
 }

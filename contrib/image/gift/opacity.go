@@ -17,52 +17,45 @@ import (
 //go:generate go run github.com/hsfzxjy/imbed/schema/gen
 
 //imbed:schemagen
-type opacityApplier struct {
-	applierHead[*opacityApplier]
-	alphaBit int64 `imbed:""`
+type opacity struct {
+	applierHead[*opacity]
+	Percentage *big.Rat `imbed:"p"`
 }
 
-func (a *opacityApplier) filter() gift.Filter {
+func (a *opacity) filter() gift.Filter {
 	return a
 }
 
-func (a *opacityApplier) Draw(dst draw.Image, src image.Image, options *gift.Options) {
+func (a *opacity) Draw(dst draw.Image, src image.Image, options *gift.Options) {
+	f, _ := a.Percentage.Float64()
+	bit := math.Floor(f / 100 * 255)
 	// 0 is fully transparent and 255 is opaque.
-	alpha := uint8(a.alphaBit)
+	alpha := uint8(bit)
 	mask := image.NewUniform(color.Alpha{alpha})
 	draw.DrawMask(dst, dst.Bounds(), src, image.Point{}, mask, image.Point{}, draw.Over)
 }
 
-func (a *opacityApplier) Bounds(srcBounds image.Rectangle) image.Rectangle {
+func (a *opacity) Bounds(srcBounds image.Rectangle) image.Rectangle {
 	return image.Rect(0, 0, srcBounds.Dx(), srcBounds.Dy())
 }
 
-//imbed:schemagen
-type opacityParams struct {
-	Value *big.Rat `imbed:"v"`
-}
-
-func (p *opacityParams) Validate() error {
-	v := p.Value
+func (p *opacity) Validate() error {
+	v := p.Percentage
 	if v.Sign() < 0 || v.Cmp(rats.R100) > 0 {
 		return fmt.Errorf("opacity must be in [0, 100], got %s", v.FloatString(1))
 	}
 	return nil
 }
 
-func (p *opacityParams) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	f, _ := p.Value.Float64()
-	bit := math.Floor(f / 100 * 255)
-	return &opacityApplier{
-		alphaBit: int64(bit),
-	}, nil
+func (p *opacity) BuildTransform(*schema.ZST) (transform.Applier, error) {
+	return p, nil
 }
 
 func registerOpacity(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.opacity",
 		schema.ZSTSchema.Build(),
-		opacityParamsSchema.Build(),
+		opacitySchema.Build(),
 	).
 		Alias("opacity").
 		Category(Category)

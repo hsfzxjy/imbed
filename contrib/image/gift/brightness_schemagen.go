@@ -7,22 +7,12 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-var brightnessApplierSchema = schema.StructFunc(func(prototype *brightnessApplier) *schema.StructBuilder[brightnessApplier] {
-	return schema.Struct(prototype,
-		schema.F("percentage", &prototype.percentage, schema.Rat()),
-	).DebugName("brightnessApplier")
-})
-
-func (x *brightnessApplier) EncodeMsg(w *msgp.Writer) error {
-	return brightnessApplierSchema.Build().EncodeMsg(w, x)
-}
-
-var brightnessParamsSchema = schema.StructFunc(func(prototype *brightnessParams) *schema.StructBuilder[brightnessParams] {
+var brightnessSchema = schema.StructFunc(func(prototype *brightness) *schema.StructBuilder[brightness] {
 	return schema.Struct(prototype,
 		schema.F("p", &prototype.Percentage, schema.Rat()),
-	).DebugName("brightnessParams")
+	).DebugName("brightness")
 })
 
-func (x *brightnessParams) EncodeMsg(w *msgp.Writer) error {
-	return brightnessParamsSchema.Build().EncodeMsg(w, x)
+func (x *brightness) EncodeMsg(w *msgp.Writer) error {
+	return brightnessSchema.Build().EncodeMsg(w, x)
 }

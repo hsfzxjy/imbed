@@ -13,12 +13,18 @@ import (
 //go:generate go run github.com/hsfzxjy/imbed/schema/gen
 
 //imbed:schemagen
-type resizeApplier struct {
-	applierHead[*resizeApplier]
-	resizeParams `imbed:""`
+type resize struct {
+	applierHead[*resize]
+	H int64 `imbed:"h,0"`
+	W int64 `imbed:"w,0"`
+
+	Resampling string `imbed:"sample,\"cub\""`
+
+	Anchor string `imbed:"anchor,\"c\""`
+	Mode   string `imbed:"mode,\"default\""`
 }
 
-func (a *resizeApplier) filter() gift.Filter {
+func (a *resize) filter() gift.Filter {
 	switch a.Mode {
 	case "default":
 		return gift.Resize(
@@ -41,18 +47,7 @@ func (a *resizeApplier) filter() gift.Filter {
 	}
 }
 
-//imbed:schemagen
-type resizeParams struct {
-	H int64 `imbed:"h,0"`
-	W int64 `imbed:"w,0"`
-
-	Resampling string `imbed:"sample,\"cub\""`
-
-	Anchor string `imbed:"anchor,\"c\""`
-	Mode   string `imbed:"mode,\"default\""`
-}
-
-func (p *resizeParams) Validate() error {
+func (p *resize) Validate() error {
 	if p.H <= 0 && p.W <= 0 {
 		return errors.New("at least one of h and w should be positive integer (mode=default)")
 	}
@@ -76,17 +71,15 @@ func (p *resizeParams) Validate() error {
 	return nil
 }
 
-func (p *resizeParams) BuildTransform(*schema.ZST) (transform.Applier, error) {
-	return &resizeApplier{
-		resizeParams: *p,
-	}, nil
+func (p *resize) BuildTransform(*schema.ZST) (transform.Applier, error) {
+	return p, nil
 }
 
 func regsiterResize(r *transform.Registry) {
 	transform.RegisterIn(
 		r, "image.resize",
 		schema.ZSTSchema.Build(),
-		resizeParamsSchema.Build(),
+		resizeSchema.Build(),
 	).
 		Alias("resize").
 		Category(Category)

@@ -7,26 +7,16 @@ import (
 	"github.com/tinylib/msgp/msgp"
 )
 
-var resizeApplierSchema = schema.StructFunc(func(prototype *resizeApplier) *schema.StructBuilder[resizeApplier] {
-	return schema.Struct(prototype,
-		schema.F("resizeParams", &prototype.resizeParams, resizeParamsSchema),
-	).DebugName("resizeApplier")
-})
-
-func (x *resizeApplier) EncodeMsg(w *msgp.Writer) error {
-	return resizeApplierSchema.Build().EncodeMsg(w, x)
-}
-
-var resizeParamsSchema = schema.StructFunc(func(prototype *resizeParams) *schema.StructBuilder[resizeParams] {
+var resizeSchema = schema.StructFunc(func(prototype *resize) *schema.StructBuilder[resize] {
 	return schema.Struct(prototype,
 		schema.F("h", &prototype.H, schema.Int().Default(0)),
 		schema.F("w", &prototype.W, schema.Int().Default(0)),
 		schema.F("sample", &prototype.Resampling, schema.String().Default("cub")),
 		schema.F("anchor", &prototype.Anchor, schema.String().Default("c")),
 		schema.F("mode", &prototype.Mode, schema.String().Default("default")),
-	).DebugName("resizeParams")
+	).DebugName("resize")
 })
 
-func (x *resizeParams) EncodeMsg(w *msgp.Writer) error {
-	return resizeParamsSchema.Build().EncodeMsg(w, x)
+func (x *resize) EncodeMsg(w *msgp.Writer) error {
+	return resizeSchema.Build().EncodeMsg(w, x)
 }
