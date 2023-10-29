@@ -32,6 +32,8 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		} else {
 			copt = cfgf.Workspace()
 		}
+		scanner.Space()
+		scanner.Byte(':')
 		data, err := c.registry.ScanFrom(name, scanner)
 		if err != nil {
 			return nil, scanner.Error(err)
