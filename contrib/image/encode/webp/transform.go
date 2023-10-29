@@ -103,8 +103,8 @@ func (p *Params) Validate() error {
 		}
 	}
 	if p.Quality != -1 {
-		if p.Quality <= 0 || p.Quality > 200 {
-			return fmt.Errorf("quality must be in range [1, 200], got %d", p.Quality)
+		if p.Quality <= 0 || p.Quality > 110 {
+			return fmt.Errorf("quality must be in range [1, 110], got %d", p.Quality)
 		}
 	}
 	return nil
