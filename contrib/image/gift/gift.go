@@ -133,4 +133,6 @@ func Register(r *transform.Registry) {
 	regsiterResize(r)
 	registerRotate(r)
 	registerOpacity(r)
+	registerBrightness(r)
+	registerColorBalance(r)
 }
