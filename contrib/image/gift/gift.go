@@ -10,6 +10,7 @@ import (
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -33,6 +34,23 @@ func (ptr *applierHead[T]) Apply(app core.App, ass asset.Asset) (asset.Update, e
 	filter.Draw(dst, src.Image, nil)
 	src.Image = dst
 	return asset.UpdateContent(content.NewImage(src)), nil
+}
+
+// T must be a pointer type
+type paramsHead[T transform.Applier] struct{}
+
+func (ptr *paramsHead[T]) BuildTransform(*schema.ZST) (transform.Applier, error) {
+	applier := (*(*T)(unsafe.Pointer(&ptr)))
+	return applier, nil
+}
+
+// T must be a pointer type
+type apHead[T interface {
+	filterer
+	transform.Applier
+}] struct {
+	applierHead[T]
+	paramsHead[T]
 }
 
 func newImage(src image.Image, newBounds image.Rectangle) draw.Image {
@@ -135,4 +153,10 @@ func Register(r *transform.Registry) {
 	registerOpacity(r)
 	registerBrightness(r)
 	registerColorBalance(r)
+	registerColorize(r)
+	registerContrast(r)
+	registerGamma(r)
+	registerGaussianBlur(r)
+	registerGrayScale(r)
+	registerHue(r)
 }
