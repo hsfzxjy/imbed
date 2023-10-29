@@ -9,13 +9,17 @@ import (
 	"unicode/utf8"
 )
 
-type Parser struct {
-	buf     string
+type state struct {
 	i       int
 	lastErr struct {
 		error
 		span
 	}
+}
+
+type Parser struct {
+	buf string
+	state
 }
 
 func New(input []string) *Parser {
@@ -358,4 +362,12 @@ func (p *Parser) Rest() string {
 
 func (p *Parser) EOF() bool {
 	return p == nil || p.i == len(p.buf)
+}
+
+func (p *Parser) Snapshot() any {
+	return p.state
+}
+
+func (p *Parser) Reset(snapshot any) {
+	p.state = snapshot.(state)
 }

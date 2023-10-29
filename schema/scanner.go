@@ -21,6 +21,7 @@ type _ListScanner interface {
 
 type _StructScanner interface {
 	IterField(func(name string, field Scanner) error) error
+	UnnamedField() (fieldScanner Scanner)
 }
 
 type Scanner interface {
@@ -29,4 +30,6 @@ type Scanner interface {
 	_MapScanner
 	_ListScanner
 	Error(err error) error
+	Snapshot() any
+	Reset(snapshot any)
 }

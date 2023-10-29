@@ -72,6 +72,10 @@ func (s *_Atom[T]) setDefault(target unsafe.Pointer) *schemaError {
 	return nil
 }
 
+func (s *_Atom[T]) hasDefault() bool {
+	return s.def.IsValid
+}
+
 func (s *_Atom[T]) writeTypeInfo(w io.Writer) error {
 	_, err := w.Write([]byte(s.typeName))
 	return err

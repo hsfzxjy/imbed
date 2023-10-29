@@ -79,6 +79,10 @@ func (r anyScanner) IterField(f func(name string, field Scanner) error) error {
 	}
 }
 
+func (r anyScanner) UnnamedField() Scanner {
+	return nil
+}
+
 func (r anyScanner) IterKV(f func(key string, value Scanner) error) error {
 	switch v := r.value.(type) {
 	case map[string]any:
@@ -111,6 +115,13 @@ func (r anyScanner) MapSize() (int, error) {
 }
 
 func (r anyScanner) Error(e error) error { return e }
+
+func (anyScanner) Snapshot() any {
+	return nil
+}
+
+func (anyScanner) Reset(snapshot any) {
+}
 
 func _() { var _ Scanner = anyScanner{} }
 

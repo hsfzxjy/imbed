@@ -38,6 +38,7 @@ type genericSchema interface {
 	encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
 	visit(v Visitor, source unsafe.Pointer) *schemaError
 	setDefault(target unsafe.Pointer) *schemaError
+	hasDefault() bool
 	writeTypeInfo(w io.Writer) error
 }
 

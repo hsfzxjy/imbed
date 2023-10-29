@@ -77,6 +77,20 @@ func (p transScanner) IterField(f func(name string, r schema.Scanner) error) err
 	return nil
 }
 
+func (p transScanner) UnnamedField() schema.Scanner {
+	p.Space()
+	state := p.Snapshot()
+	defer p.Reset(state)
+	if _, ok := p.Ident(); !ok {
+		return p
+	}
+	p.Space()
+	if p.PeekByte() != '=' {
+		return p
+	}
+	return nil
+}
+
 func (p transScanner) Error(e error) error {
 	return p.Parser.Error(e)
 }

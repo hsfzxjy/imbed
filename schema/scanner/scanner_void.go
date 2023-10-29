@@ -28,6 +28,10 @@ func (Void) IterField(func(name string, field Scanner) error) error {
 	panic("unimplemented")
 }
 
+func (Void) UnnamedField() Scanner {
+	return nil
+}
+
 func (Void) ListSize() (int, error) {
 	panic("unimplemented")
 }

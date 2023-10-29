@@ -117,6 +117,10 @@ func (s *_Map[V]) setDefault(target unsafe.Pointer) *schemaError {
 	return nil
 }
 
+func (s *_Map[V]) hasDefault() bool {
+	return s.def != nil
+}
+
 func (s *_Map[V]) writeTypeInfo(w io.Writer) error {
 	_, err := w.Write([]byte("map[string]"))
 	if err != nil {

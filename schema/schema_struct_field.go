@@ -47,6 +47,10 @@ func (s *_StructField) setDefault(target unsafe.Pointer) *schemaError {
 		AppendPath(s.name)
 }
 
+func (s *_StructField) hasDefault() bool {
+	return s.elemSchema.hasDefault()
+}
+
 func (s *_StructField) writeTypeInfo(w io.Writer) error {
 	var buf = make([]byte, 0, len(s.name)+int(unsafe.Sizeof(uint64(0))))
 	buf = append(buf, s.name...)
