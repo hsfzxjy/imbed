@@ -142,7 +142,6 @@ func (composer) Compose(applier []transform.Applier) (transform.Applier, error) 
 	for _, a := range applier {
 		filters = append(filters, a.(filterer).filter())
 	}
-	println(filters)
 	return &composedApplier{GIFT: gift.New(filters...)}, nil
 }
 
