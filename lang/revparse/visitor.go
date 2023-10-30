@@ -37,6 +37,7 @@ func (v *visitor) VisitBool(x bool, isDefault bool) error {
 	} else {
 		s = "false"
 	}
+	v.writeField()
 	v.b.WriteString(s)
 	return nil
 }
@@ -67,6 +68,13 @@ func (v *visitor) VisitString(x string, isDefault bool) error {
 	v.writeField()
 	quoteString(v.b, x, '[')
 	return nil
+}
+
+func (v *visitor) VisitPtr(isNil, isDefault bool) (schema.Visitor, error) {
+	if isNil || isDefault {
+		return nil, nil
+	}
+	return v, nil
 }
 
 func (v *visitor) VisitStruct(size int) (sv schema.StructVisitor, elem schema.Visitor, err error) {

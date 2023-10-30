@@ -103,6 +103,10 @@ func (s *_List[E]) hasDefault() bool {
 	return s.def != nil
 }
 
+func (s *_List[E]) equal(a, b []E) bool {
+	return false
+}
+
 func (s *_List[E]) writeTypeInfo(w io.Writer) error {
 	_, err := w.Write([]byte("list"))
 	if err != nil {

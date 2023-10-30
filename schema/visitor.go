@@ -7,6 +7,7 @@ type Visitor interface {
 	VisitList(size int) (lv ListVisitor, elem Visitor, err error)
 	VisitMap(size int) (mv MapVisitor, elem Visitor, err error)
 	VisitStruct(size int) (sv StructVisitor, elem Visitor, err error)
+	VisitPtr(isNil, isDefault bool) (elem Visitor, err error)
 }
 
 type AtomVisitor interface {

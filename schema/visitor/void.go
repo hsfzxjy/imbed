@@ -8,6 +8,11 @@ import (
 
 type Void struct{}
 
+// VisitPtr implements schema.Visitor.
+func (Void) VisitPtr(isNil bool, isDefault bool) (elem schema.Visitor, err error) {
+	return nil, nil
+}
+
 // VisitStructBegin implements schema.StructVisitor.
 func (Void) VisitStructBegin(size int) error {
 	return nil

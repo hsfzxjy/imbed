@@ -76,6 +76,14 @@ func (s *_Atom[T]) hasDefault() bool {
 	return s.def.IsValid
 }
 
+func (s *_Atom[T]) equal(a, b T) bool {
+	if s.cmpFunc != nil {
+		return s.cmpFunc(a, b) == 0
+	} else {
+		return a == b
+	}
+}
+
 func (s *_Atom[T]) writeTypeInfo(w io.Writer) error {
 	_, err := w.Write([]byte(s.typeName))
 	return err

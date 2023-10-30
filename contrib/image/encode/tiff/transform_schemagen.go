@@ -20,6 +20,7 @@ func (x *Config) EncodeMsg(w *msgp.Writer) error {
 
 var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuilder[Params] {
 	return schema.Struct(prototype,
+		schema.F("pred", &prototype.Predictor, schema.Ptr(schema.Bool()).Default(nil)),
 		schema.F("c", (*string)(&prototype.Compression), schema.String().Default("")),
 	).DebugName("Params")
 })

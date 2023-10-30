@@ -29,6 +29,7 @@ type GenericSchema interface {
 
 type schema[T any] interface {
 	genericSchema
+	equal(a, b T) bool
 	_schema_stub(T)
 }
 

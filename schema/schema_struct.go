@@ -163,6 +163,10 @@ func (s *_Struct[T]) hasDefault() bool {
 	return s.hasDef
 }
 
+func (s *_Struct[T]) equal(a, b T) bool {
+	return false
+}
+
 func (s *_Struct[T]) writeTypeInfo(w io.Writer) error {
 	for _, f := range s.fields {
 		err := f.writeTypeInfo(w)

@@ -78,6 +78,7 @@ func (c *Config) Validate() error {
 
 //imbed:schemagen
 type Params struct {
+	Predictor   *bool           `imbed:"pred,nil"`
 	Compression CompressionType `imbed:"c!string,\"\""`
 }
 
@@ -91,7 +92,11 @@ func (p *Params) Validate() error {
 
 func (p *Params) BuildTransform(config *Config) (transform.Applier, error) {
 	applier := new(Applier)
-	applier.Predictor = config.Predictor
+	if p.Predictor == nil {
+		applier.Predictor = config.Predictor
+	} else {
+		applier.Predictor = *p.Predictor
+	}
 	if p.Compression != "" {
 		applier.Compression = p.Compression
 	} else {

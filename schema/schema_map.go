@@ -121,6 +121,10 @@ func (s *_Map[V]) hasDefault() bool {
 	return s.def != nil
 }
 
+func (s *_Map[V]) equal(a, b map[string]V) bool {
+	return false
+}
+
 func (s *_Map[V]) writeTypeInfo(w io.Writer) error {
 	_, err := w.Write([]byte("map[string]"))
 	if err != nil {

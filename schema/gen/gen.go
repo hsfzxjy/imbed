@@ -138,15 +138,22 @@ func handleFieldType(ftyp ast.Expr, typeHint string) (typname, cntr string, succ
 	case *ast.StarExpr:
 		var sel *ast.SelectorExpr
 		if sel, ok = ftyp.X.(*ast.SelectorExpr); !ok {
-			goto ERROR
+			goto DESCEND
 		}
 		if ident, ok := sel.X.(*ast.Ident); !ok || ident.String() != "big" {
-			goto ERROR
+			goto DESCEND
 		}
 		if sel.Sel.Name != "Rat" {
-			goto ERROR
+			goto DESCEND
 		}
 		cntr = "schema.Rat()"
+	DESCEND:
+		tname, c, ok := handleFieldType(ftyp.X, "")
+		if !ok {
+			goto ERROR
+		}
+		typname = "*" + tname
+		cntr = "schema.Ptr(" + c + ")"
 	case *ast.MapType:
 		if key, ok := ftyp.Key.(*ast.Ident); !ok || key.String() != "string" {
 			goto ERROR
