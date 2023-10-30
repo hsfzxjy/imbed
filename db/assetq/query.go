@@ -9,6 +9,7 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
+	"github.com/hsfzxjy/imbed/db/tagq"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
@@ -16,7 +17,32 @@ import (
 type Iterator = core.Iterator[*asset.AssetModel]
 type Query = internal.Runnable[Iterator]
 
-func simpleQuery(indexName []byte, needle ndl.Needle) Query {
+type Option func(h internal.H, model *asset.AssetModel) error
+
+func applyOptions(h internal.H, options []Option, model *asset.AssetModel) error {
+	for _, opt := range options {
+		if err := opt(h, model); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func WithTags() Option {
+	return func(h internal.H, model *asset.AssetModel) error {
+		if model.Tags != nil {
+			return nil
+		}
+		tags, err := tagq.ByOid(model.OID).RunR(h)
+		if err != nil {
+			return err
+		}
+		model.Tags = tags
+		return nil
+	}
+}
+
+func simpleQuery(indexName []byte, needle ndl.Needle, options []Option) Query {
 	return func(h internal.H) (Iterator, error) {
 		index := h.Bucket(indexName)
 		cursor, err := index.Cursor(needle.Bytes())
@@ -32,25 +58,28 @@ func simpleQuery(indexName []byte, needle ndl.Needle) Query {
 			if err != nil {
 				return nil, false
 			}
+			if applyOptions(h, options, a) != nil {
+				return nil, false
+			}
 			return a, true
 		})
 		return it, nil
 	}
 }
 
-func ByFID(needle ndl.Needle) Query {
-	return simpleQuery(bucketnames.INDEX_FID, needle)
+func ByFID(needle ndl.Needle, options ...Option) Query {
+	return simpleQuery(bucketnames.INDEX_FID, needle, options)
 }
 
-func ByFHash(needle ndl.Needle) Query {
-	return simpleQuery(bucketnames.INDEX_FHASH, needle)
+func ByFHash(needle ndl.Needle, options ...Option) Query {
+	return simpleQuery(bucketnames.INDEX_FHASH, needle, options)
 }
 
-func ByUrl(needle ndl.Needle) Query {
-	return simpleQuery(bucketnames.INDEX_URL, needle)
+func ByUrl(needle ndl.Needle, options ...Option) Query {
+	return simpleQuery(bucketnames.INDEX_URL, needle, options)
 }
 
-func ByOid(needle ndl.Needle) Query {
+func ByOid(needle ndl.Needle, options ...Option) Query {
 	return func(h internal.H) (Iterator, error) {
 		cursor, err := h.Bucket(bucketnames.FILES).Cursor(needle.Bytes())
 		if err != nil {
@@ -64,12 +93,15 @@ func ByOid(needle ndl.Needle) Query {
 			if err != nil {
 				return nil, false
 			}
+			if applyOptions(h, options, a) != nil {
+				return nil, false
+			}
 			return a, true
 		}), nil
 	}
 }
 
-func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
+func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash, options ...Option) Query {
 	return func(h internal.H) (Iterator, error) {
 		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
 		cursor, err := h.Bucket(bucketnames.INDEX_TRANSSEQ).
@@ -85,12 +117,15 @@ func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash) Query {
 			if err != nil {
 				return nil, false
 			}
+			if applyOptions(h, options, asset) != nil {
+				return nil, false
+			}
 			return asset, true
 		}), nil
 	}
 }
 
-func All() Query {
+func All(options ...Option) Query {
 	return func(h internal.H) (Iterator, error) {
 		cursor, err := h.Bucket(bucketnames.FILES).Cursor(nil)
 		if err != nil {
@@ -99,6 +134,9 @@ func All() Query {
 		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
 			a, err := asset.NewFromKV(kv.K, kv.V)
 			if err != nil {
+				return nil, false
+			}
+			if applyOptions(h, options, a) != nil {
 				return nil, false
 			}
 			return a, true

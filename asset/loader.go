@@ -19,15 +19,18 @@ func LoadFile(filepath string) ExternalLoader {
 	}
 }
 
-func FromDBModel(app core.App, model *db.AssetModel) StockLoader {
+func FromDBModel(app core.App, model *db.AssetModel, upstream Asset) StockLoader {
 	return func(db.Context) (StockAsset, error) {
-		return fromDBModel(app, model)
+		return fromDBModel(app, model, upstream)
 	}
 }
 
-func fromDBModel(app core.App, model *db.AssetModel) (*asset, error) {
+func fromDBModel(app core.App, model *db.AssetModel, upstream Asset) (*asset, error) {
 	a := new(asset)
 	a.model = model
+	if upstream != nil {
+		a.origin = upstream.(*asset)
+	}
 	filepath := app.FilePath(model.FID.Humanize())
 	a.primaryInfo = primaryInfo{
 		basename: model.FID.Basename(),
@@ -46,7 +49,7 @@ func FromQ(app core.App, query assetq.Query) StockLoader {
 		if err != nil {
 			return nil, err
 		}
-		return fromDBModel(app, model)
+		return fromDBModel(app, model, nil)
 	}
 }
 

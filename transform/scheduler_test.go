@@ -8,6 +8,7 @@ import (
 
 	"github.com/davecgh/go-spew/spew"
 	"github.com/hsfzxjy/imbed/asset"
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/stretchr/testify/require"
@@ -39,10 +40,14 @@ func (s TFListSeed) Build() TFList {
 		} else {
 			cat = "B"
 		}
+		var kind tag.Kind
+		if s.ForceTerminal&mask != 0 {
+			kind = tag.Normal
+		}
 		tfs[i] = &transform.Transform{
-			Category:      cat,
-			ForceTerminal: s.ForceTerminal&mask != 0,
-			Applier:       &Applier{cat, i},
+			Category: cat,
+			Tag:      tag.Spec{Kind: kind},
+			Applier:  &Applier{cat, i},
 		}
 	}
 	return tfs
@@ -55,7 +60,7 @@ func (l TFList) String() string {
 	for _, t := range l {
 		b.WriteString(string(t.Category))
 		b.WriteRune('\t')
-		if t.ForceTerminal {
+		if t.ForceTerminal() {
 			b.WriteString("ForceTerminal")
 		}
 		b.WriteString("\n")
@@ -83,7 +88,7 @@ func FuzzPartition(f *testing.F) {
 					tf := tfs[i]
 					require.Equalf(t, startCat, tf.Category, repr)
 					if i < span.End-1 {
-						require.Falsef(t, tf.ForceTerminal, repr)
+						require.Falsef(t, tf.ForceTerminal(), repr)
 					}
 				}
 			}
@@ -148,14 +153,14 @@ func (s ComposerMSeed) HasError(tfs TFList) bool {
 			B = 0
 			A++
 			maxA = max(A, maxA)
-			if t.ForceTerminal {
+			if t.ForceTerminal() {
 				reset()
 			}
 		case "B":
 			A = 0
 			B++
 			maxB = max(B, maxB)
-			if t.ForceTerminal {
+			if t.ForceTerminal() {
 				reset()
 			}
 		default:

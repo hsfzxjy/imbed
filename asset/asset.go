@@ -3,6 +3,7 @@ package asset
 import (
 	"sync"
 
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/db"
@@ -28,6 +29,8 @@ type asset struct {
 
 	primaryInfo
 	updatingInfo
+
+	tagSpecs []tag.Spec
 }
 
 func (a *asset) Model() *db.AssetModel {

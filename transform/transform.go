@@ -1,6 +1,9 @@
 package transform
 
-import "github.com/hsfzxjy/imbed/core/ref"
+import (
+	"github.com/hsfzxjy/imbed/asset/tag"
+	"github.com/hsfzxjy/imbed/core/ref"
+)
 
 type Transform struct {
 	Name string
@@ -9,5 +12,9 @@ type Transform struct {
 	Data   *Data
 	Config ref.EncodableObject
 
-	ForceTerminal bool
+	Tag tag.Spec
+}
+
+func (t *Transform) ForceTerminal() bool {
+	return t.Tag.Kind != tag.None
 }

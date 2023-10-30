@@ -23,11 +23,10 @@ func (b *Builder) Build(cp core.ConfigProvider) (*Transform, error) {
 		return nil, err
 	}
 	return &Transform{
-		Name:          b.name,
-		Applier:       applier,
-		Category:      b.category,
-		Data:          b.data,
-		Config:        newEncodable(b.configSchema.WrapAny(cfg)),
-		ForceTerminal: false,
+		Name:     b.name,
+		Applier:  applier,
+		Category: b.category,
+		Data:     b.data,
+		Config:   newEncodable(b.configSchema.WrapAny(cfg)),
 	}, nil
 }

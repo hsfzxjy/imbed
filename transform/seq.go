@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"slices"
 
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/tinylib/msgp/msgp"
 )
@@ -16,6 +17,10 @@ type transSeq struct {
 
 func (ts *transSeq) IsTerminal() bool {
 	return ts.End-ts.Start == 1 && ts.Seq[ts.Start].Category.IsTerminal()
+}
+
+func (ts *transSeq) TagSpec() tag.Spec {
+	return ts.Seq[ts.End-1].Tag
 }
 
 func (ts *transSeq) compute() {

@@ -26,7 +26,7 @@ type fuzzyExpr struct {
 	directive     string
 	expected      string
 	needleBuilder func(s string, prefix bool) (ndl.Needle, error)
-	queryBuilder  func(ndl.Needle) assetq.Query
+	queryBuilder  func(ndl.Needle, ...assetq.Option) assetq.Query
 }
 
 type fuzzyExprSet []*fuzzyExpr
@@ -58,5 +58,5 @@ func (f *fuzzyExpr) parse(c *Context) (assetq.Query, error) {
 	if err != nil {
 		return nil, c.parser.Error(err)
 	}
-	return f.queryBuilder(needle), nil
+	return f.queryBuilder(needle, assetq.WithTags()), nil
 }

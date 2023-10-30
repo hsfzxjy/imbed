@@ -138,6 +138,16 @@ INVALID:
 	return BucketNode{_NonLeafNode{&n.helper.invalid}}
 }
 
+func (n BucketNode) RawCursor() (*bbolt.Cursor, error) {
+	if n.IsBad() {
+		return nil, n.helper.err
+	}
+	if n.IsEmpty() {
+		return nil, bbolt.ErrBucketNotFound
+	}
+	return n.bucket.Cursor(), nil
+}
+
 func (n BucketNode) Cursor(seekTo []byte) (*Cursor, error) {
 	if n.IsBad() {
 		return nil, n.helper.err

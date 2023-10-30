@@ -1,6 +1,8 @@
 package asset
 
 import (
+	"strings"
+
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/formatter"
 )
@@ -68,6 +70,15 @@ var FmtFields = []*formatter.Field[StockAsset]{
 				return content.IllegalSize
 			}
 			return s
+		},
+	},
+	{
+		Name:   "tags",
+		Header: "TAGS",
+		Show:   true,
+		Getter: func(sa StockAsset) any {
+			tags := sa.Model().Tags
+			return strings.Join(tags, ", ")
 		},
 	},
 }

@@ -47,7 +47,7 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 			ExecIter(
 				os.Stdout,
 				iter.FilterMap(sortedIt, func(m *db.AssetModel) (asset.StockAsset, bool) {
-					a, _ := asset.FromDBModel(app, m)(ctx)
+					a, _ := asset.FromDBModel(app, m, nil)(ctx)
 					return a, true
 				}))
 	})

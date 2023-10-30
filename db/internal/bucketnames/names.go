@@ -9,5 +9,8 @@ var (
 	INDEX_CONFIG_HASHES = []byte("files_index_config_hashes")
 	INDEX_TIME          = []byte("files_index_time")
 
+	INDEX_OID_TAG = []byte("files_index_oid_tag")
+	INDEX_TAG_OID = []byte("files_index_tag_oid")
+
 	CONFIGS = []byte("configs")
 )

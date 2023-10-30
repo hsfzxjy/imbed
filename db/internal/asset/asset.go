@@ -16,6 +16,8 @@ type AssetModel struct {
 	FID         ref.FID
 	Url         string
 	ExtData     []byte
+
+	Tags []string
 }
 
 func (a *AssetModel) CompareCreated(other *AssetModel) int {

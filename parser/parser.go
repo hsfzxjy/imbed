@@ -184,6 +184,37 @@ func (p *Parser) Rat() (value *big.Rat, ok bool) {
 	return
 }
 
+func (p *Parser) Tag() (value string, ok bool) {
+	if p == nil {
+		return
+	}
+	p.ClearLastErr()
+	s := p.current()
+	var off int
+LOOP:
+	for off = 0; off < max(len(s), 128); off++ {
+		switch b := s[off]; {
+		case b == '-' || b == '.':
+		case 'a' <= b && b <= 'z':
+		case 'A' <= b && b <= 'Z':
+		case '0' <= b && b <= '9':
+		default:
+			break LOOP
+		}
+	}
+
+	p.setLastErrSpan(p.span(off))
+
+	if off == 0 {
+		p.setLastErrString("expect tag (e.g. 'foo.png-v1')")
+		return
+	}
+
+	value, ok = s[:off], true
+	p.advance(off)
+	return
+}
+
 func (p *Parser) Ident() (value string, ok bool) {
 	if p == nil {
 		return

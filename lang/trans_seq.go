@@ -3,6 +3,7 @@ package lang
 import (
 	"fmt"
 
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/transform"
@@ -44,6 +45,11 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		}
 		transforms = append(transforms, t)
 		scanner.Space()
+		spec, err := c.parseTagSpec()
+		if err != nil {
+			return nil, err
+		}
+		t.Tag = spec
 		if ok = scanner.Byte(','); !ok {
 			scanner.Space()
 			if !scanner.EOF() {
@@ -52,4 +58,32 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		}
 	}
 	return transform.Schedule(c.registry, transforms)
+}
+
+func (c *Context) parseTagSpec() (spec tag.Spec, err error) {
+	if c.parser.PeekByte() != '+' {
+		return
+	}
+	c.parser.Byte('+')
+	spec.Kind = tag.Normal
+	if c.parser.PeekByte() != '+' {
+		goto PARSE_TAG
+	}
+	c.parser.Byte('+')
+	spec.Kind = tag.Override
+	if c.parser.PeekByte() != '+' {
+		goto PARSE_TAG
+	}
+	c.parser.Byte('+')
+	spec.Kind = tag.Auto
+	return
+PARSE_TAG:
+	name, ok := c.parser.Tag()
+	if !ok {
+		spec.Kind = tag.None
+		err = c.parser.Error(err)
+		return
+	}
+	spec.Name = name
+	return
 }

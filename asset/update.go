@@ -3,6 +3,7 @@ package asset
 import (
 	"errors"
 
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/util"
 )
@@ -91,4 +92,13 @@ func ApplyUpdate(ia Asset, transform Transform, up Update) (Asset, error) {
 		return nil, err
 	}
 	return newAsset, nil
+}
+
+func Tag(ia Asset, spec tag.Spec) Asset {
+	if spec.Kind == tag.None {
+		return ia
+	}
+	a := ia.(*asset)
+	a.tagSpecs = append(a.tagSpecs, spec)
+	return a
 }

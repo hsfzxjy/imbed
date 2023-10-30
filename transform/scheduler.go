@@ -2,6 +2,7 @@ package transform
 
 import (
 	"github.com/hsfzxjy/imbed/asset"
+	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/db"
 )
 
@@ -55,6 +56,11 @@ func (s *step) Run(cache *assetCache, upstream asset.Asset, ret *[]asset.Asset) 
 			result = upstream
 		}
 	}
+	spec := s.TagSpec()
+	if spec.Kind == tag.Auto {
+		spec.Name = result.BaseName()
+	}
+	result = asset.Tag(result, spec)
 	if s.IsTerminal() && result != upstream {
 		*ret = append(*ret, result)
 	}
@@ -105,7 +111,7 @@ func partition(tfList []*Transform) []span {
 				spans[n].End = i
 				lastOpen = false
 			} else {
-				if t.ForceTerminal {
+				if t.ForceTerminal() {
 					spans[n].End = i + 1
 					lastOpen = false
 				}
@@ -114,7 +120,7 @@ func partition(tfList []*Transform) []span {
 		}
 		var end = 0
 		lastOpen = true
-		if cat.IsTerminal() || t.ForceTerminal {
+		if cat.IsTerminal() || t.ForceTerminal() {
 			end = i + 1
 			lastOpen = false
 		}

@@ -18,5 +18,5 @@ func (c *Context) ParseRun_QueryBody() (assetq.Query, error) {
 	if !c.parser.EOF() {
 		return nil, c.parser.Error(fmt.Errorf("invalid query"))
 	}
-	return assetq.All(), nil
+	return assetq.All(assetq.WithTags()), nil
 }

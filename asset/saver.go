@@ -9,6 +9,7 @@ import (
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
+	"github.com/hsfzxjy/imbed/db/tagq"
 	"github.com/hsfzxjy/imbed/util"
 )
 
@@ -71,13 +72,21 @@ func (a *asset) saveConfigs(ctx db.Context) ([]ref.Sha256Hash, error) {
 	return ret, nil
 }
 
-func (a *asset) save(ctx db.Context) (StockAsset, error) {
+func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 	var err error
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	if a.model != nil {
-		return a, nil
-	}
+	defer func() {
+		if a.model == nil {
+			return
+		}
+		tags, err := tagq.AddTags(a.model.OID, a.tagSpecs).RunRW(ctx)
+		if err != nil {
+			stock, retErr = nil, err
+			return
+		}
+		a.model.Tags = tags
+	}()
 	var originModel *db.AssetModel
 	if a.origin != nil {
 		_, err = a.origin.save(ctx)
@@ -85,6 +94,10 @@ func (a *asset) save(ctx db.Context) (StockAsset, error) {
 			return nil, err
 		}
 		originModel = a.origin.model
+	}
+
+	if a.model != nil {
+		return a, nil
 	}
 
 	fid, err := content.BuildFID(a.content, a.basename)
