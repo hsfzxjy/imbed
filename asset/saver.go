@@ -5,8 +5,10 @@ import (
 
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
+	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
+	"github.com/hsfzxjy/imbed/db/assetq"
 	"github.com/hsfzxjy/imbed/util"
 )
 
@@ -85,6 +87,11 @@ func (a *asset) save(ctx db.Context) (StockAsset, error) {
 		originModel = a.origin.model
 	}
 
+	fid, err := content.BuildFID(a.content, a.basename)
+	if err != nil {
+		return nil, err
+	}
+
 	var transSeq db.TransSeq
 	if a.transform != nil {
 		transSeq.ConfigHashes, err = a.saveConfigs(ctx)
@@ -99,11 +106,14 @@ func (a *asset) save(ctx db.Context) (StockAsset, error) {
 		if err != nil {
 			return nil, err
 		}
-	}
-
-	fid, err := content.BuildFID(a.content, a.basename)
-	if err != nil {
-		return nil, err
+	} else {
+		// this is an external asset, try not duplicate in DB
+		it, err := assetq.ByFID(ndl.RawFull(ref.AsRawString(fid))).RunR(ctx)
+		if err == nil && it.HasNext() {
+			model := it.Next()
+			a.model = model
+			return a, nil
+		}
 	}
 
 	model, err := db.AssetTemplate{

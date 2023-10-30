@@ -31,7 +31,11 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 	if err != nil {
 		return nil, err
 	}
-	stockAssets, err := asset.SaveAll(c.app.DB(), c.app, assets)
+	var stockAssets []asset.StockAsset
+	err = c.app.DB().RunRW(func(h db.Context) error {
+		stockAssets, err = asset.SaveAll(h, c.app, assets)
+		return err
+	})
 	if err != nil {
 		return nil, err
 	}
