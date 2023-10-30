@@ -14,7 +14,7 @@ var (
 		ndl.Hex, assetq.ByFHash}
 	fuzzyExprUrl = &fuzzyExpr{
 		"db.url@", "a URL string",
-		ndl.Hex, assetq.ByUrl}
+		ndl.Raw, assetq.ByUrl}
 	fuzzyExprs = fuzzyExprSet{
 		fuzzyExprOid,
 		fuzzyExprFHash,

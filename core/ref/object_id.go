@@ -2,6 +2,8 @@ package ref
 
 type sha256hash = Sha256Hash
 
+const OID_LEN = 256 / 8
+
 type OID struct {
 	sha256hash
 	_oid struct{}

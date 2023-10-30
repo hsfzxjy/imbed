@@ -66,10 +66,10 @@ func RawFull(str string) Needle {
 	return raw{str, bytes.Equal}
 }
 
-func Raw(str string, prefix bool) Needle {
+func Raw(str string, prefix bool) (Needle, error) {
 	if prefix {
-		return RawPrefix(str)
+		return RawPrefix(str), nil
 	} else {
-		return RawFull(str)
+		return RawFull(str), nil
 	}
 }

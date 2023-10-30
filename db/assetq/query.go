@@ -9,7 +9,6 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
-	"github.com/hsfzxjy/imbed/db/internal/helper"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
@@ -24,24 +23,18 @@ func simpleQuery(indexName []byte, needle ndl.Needle) Query {
 		if err != nil {
 			return nil, err
 		}
-		it := iter.FilterMap(cursor, func(kv util.KV) (*helper.Cursor, bool) {
-			if !needle.Match(kv.K) {
+		it := iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+			splitAt := len(kv.K) - ref.OID_LEN
+			if !needle.Match(kv.K[:splitAt]) {
 				return nil, false
 			}
-			cursor, err := index.Bucket(kv.K).Cursor(nil)
-			if err != nil {
-				return nil, false
-			}
-			return cursor, true
-		})
-		it2 := iter.FlatFilterMap(it, func(kv util.KV) (*asset.AssetModel, bool) {
-			a, err := asset.New(h, kv.K)
+			a, err := asset.New(h, kv.K[splitAt:])
 			if err != nil {
 				return nil, false
 			}
 			return a, true
 		})
-		return it2, nil
+		return it, nil
 	}
 }
 

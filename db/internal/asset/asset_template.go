@@ -22,6 +22,8 @@ type AssetTemplate struct {
 	ExtData  []byte
 }
 
+var oneBytes = []byte{1}
+
 func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 	model := &AssetModel{
 		OriginOID:   t.getOriginOID(),
@@ -49,29 +51,21 @@ func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 
 		b := h.Bucket(bucketnames.INDEX_CONFIG_HASHES)
 		for _, cfgHash := range t.TransSeq.ConfigHashes {
-			b.BucketOrCreate(ref.AsRaw(cfgHash)).
-				UpdateLeaf(ref.AsRaw(oid), []byte{1})
+			b.UpdateLeaf(ref.AsRaw(ref.NewPair(cfgHash, oid)), oneBytes)
 		}
 	}
 
 	h.Bucket(bucketnames.INDEX_TIME).
-		BucketOrCreate(ref.AsRaw(model.Created)).
-		UpdateLeaf(ref.AsRaw(oid), []byte{1})
+		UpdateLeaf(ref.AsRaw(ref.NewPair(model.Created, oid)), oneBytes)
 
 	if !model.FID.IsZero() {
-		h.Bucket(bucketnames.INDEX_FID).
-			BucketOrCreate(ref.AsRaw(model.FID)).
-			UpdateLeaf(ref.AsRaw(oid), []byte{1})
-
 		h.Bucket(bucketnames.INDEX_FHASH).
-			BucketOrCreate(ref.AsRaw(model.FID.Hash())).
-			UpdateLeaf(ref.AsRaw(oid), []byte{1})
+			UpdateLeaf(ref.AsRaw(ref.NewPair(model.FID.Hash(), oid)), oneBytes)
 	}
 
 	if model.Url != "" {
 		h.Bucket(bucketnames.INDEX_URL).
-			BucketOrCreate([]byte(model.Url)).
-			UpdateLeaf(ref.AsRaw(oid), []byte{1})
+			UpdateLeaf([]byte(model.Url+ref.AsRawString(oid)), oneBytes)
 	}
 
 	return model, nil
