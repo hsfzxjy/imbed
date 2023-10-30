@@ -59,6 +59,8 @@ func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 		UpdateLeaf(ref.AsRaw(ref.NewPair(model.Created, oid)), oneBytes)
 
 	if !model.FID.IsZero() {
+		h.Bucket(bucketnames.INDEX_FID).
+			UpdateLeaf(ref.AsRaw(ref.NewPair(model.FID, oid)), oneBytes)
 		h.Bucket(bucketnames.INDEX_FHASH).
 			UpdateLeaf(ref.AsRaw(ref.NewPair(model.FID.Hash(), oid)), oneBytes)
 	}
