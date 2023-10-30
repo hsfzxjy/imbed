@@ -56,7 +56,7 @@ func Open(app core.App) (Service, error) {
 func (s Service) RunR(f func(Context) error) error {
 	return s.runR(func(h H) error { return f(h) })
 }
-func (s Service) RunRW(f func(h H) error) error {
+func (s Service) RunRW(f func(h Context) error) error {
 	return s.runRW(func(h H) error { return f(h) })
 }
 func (s Service) DB() Service { return s }
