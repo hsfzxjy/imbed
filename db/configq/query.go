@@ -8,6 +8,7 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
+	"github.com/hsfzxjy/tipe"
 )
 
 type provider struct {
@@ -19,14 +20,14 @@ func (p provider) ProvideStockConfig(needle ndl.Needle) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	it := iter.FilterMap(cursor, func(kv util.KV) ([]byte, bool) {
+	it := iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[[]byte]) {
 		if needle.Match(kv.K) {
-			return kv.V, true
+			return tipe.Ok(kv.V)
 		} else {
-			return nil, false
+			return r.FillErr(iter.Stop)
 		}
 	})
-	return iter.One(it)
+	return iter.One(it).Tuple()
 }
 
 type configProvider struct {

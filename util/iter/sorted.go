@@ -4,15 +4,15 @@ import (
 	"cmp"
 	"slices"
 
-	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/tipe"
 )
 
 type cmpFunc[K any] func(k1, k2 K) int
 
-type sortedIt[T any, It core.Iterator[T]] struct {
+type sortedIt[T any, It Nexter[T]] struct {
 	it      It
 	cmpFunc cmpFunc[T]
-	sliceIt sliceIt[T]
+	sliceIt tipe.Result[*sliceIt[T]]
 }
 
 func (i *sortedIt[T, It]) eval() {
@@ -22,26 +22,39 @@ func (i *sortedIt[T, It]) eval() {
 	cmpFunc := i.cmpFunc
 	i.cmpFunc = nil
 	var s []T
-	for i.it.HasNext() {
-		s = append(s, i.it.Next())
+	for {
+		t := i.it.Next()
+		if Stopped(t) {
+			break
+		}
+		if t.IsErr() {
+			i.sliceIt = i.sliceIt.FillErr(t.UnwrapErr())
+			return
+		}
+		s = append(s, t.Unwrap())
 	}
 	slices.SortFunc(s, cmpFunc)
-	i.sliceIt.slice = s
+	i.sliceIt = i.sliceIt.Fill(&sliceIt[T]{slice: s})
 }
 
 func (i *sortedIt[T, It]) HasNext() bool {
 	i.eval()
-	return i.sliceIt.HasNext()
+	return !Stopped(i.sliceIt) && (i.sliceIt.IsErr() || i.sliceIt.Unwrap().HasNext())
 }
 
-func (i *sortedIt[T, It]) Next() (result T) {
+func (i *sortedIt[T, It]) Next() (result tipe.Result[T]) {
 	if !i.HasNext() {
+		return result.FillErr(Stop)
+	}
+	if i.sliceIt.IsErr() {
+		result = result.FillErr(i.sliceIt.UnwrapErr())
+		i.sliceIt = i.sliceIt.FillErr(Stop)
 		return
 	}
-	return i.sliceIt.Next()
+	return i.sliceIt.Unwrap().Next()
 }
 
-func SortedKeyFunc[T any, It core.Iterator[T], K cmp.Ordered](
+func SortedKeyFunc[T any, It Nexter[T], K cmp.Ordered](
 	it It,
 	keyFunc func(T) K,
 	reversed bool,
@@ -57,7 +70,7 @@ func SortedKeyFunc[T any, It core.Iterator[T], K cmp.Ordered](
 		}}
 }
 
-func Sorted[T any, It core.Iterator[T]](
+func Sorted[T any, It Nexter[T]](
 	it It,
 	cmpFunc cmpFunc[T],
 	reversed bool,

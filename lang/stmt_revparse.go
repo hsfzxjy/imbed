@@ -21,7 +21,11 @@ func (c *Context) ParseRun_RevParseBody() ([]string, error) {
 			return err
 		}
 		for it.HasNext() {
-			parsed, err := revparse.Solve(it.Next(), c.registry)
+			model := it.Next()
+			if model.IsErr() {
+				return err
+			}
+			parsed, err := revparse.Solve(model.Unwrap(), c.registry)
 			if err != nil {
 				return err
 			}

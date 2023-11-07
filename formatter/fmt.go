@@ -5,7 +5,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/imbed/util/iter"
 )
 
 type Stringer interface {
@@ -94,11 +94,15 @@ func New[T any](fields []*Field[T], tmpl string, humanized bool) *Formatter[T] {
 	return f
 }
 
-func (f *Formatter[T]) ExecIter(out io.Writer, it core.Iterator[T]) error {
+func (f *Formatter[T]) ExecIter(out io.Writer, it iter.Ator[T]) error {
 	encoder := f.builder.build(out)
 
 	for it.HasNext() {
-		err := encoder.encodeItem(it.Next())
+		item := it.Next()
+		if item.IsErr() {
+			return item.UnwrapErr()
+		}
+		err := encoder.encodeItem(item.Unwrap())
 		if err != nil {
 			return err
 		}

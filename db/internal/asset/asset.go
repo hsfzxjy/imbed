@@ -5,9 +5,11 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
 	"github.com/hsfzxjy/imbed/db/internal/helper"
+	"github.com/hsfzxjy/imbed/db/tagq"
 )
 
 type AssetModel struct {
+	Flag
 	OID       ref.OID
 	OriginOID ref.OID
 
@@ -24,26 +26,51 @@ func (a *AssetModel) CompareCreated(other *AssetModel) int {
 	return a.Created.Compare(other.Created)
 }
 
-func NewFromLeaf(n helper.LeafNode) (*AssetModel, error) {
-	a, err := decodeAsset(n.Data())
+type NewOpt func(h internal.H, model *AssetModel) error
+
+func applyOptions(h internal.H, options []NewOpt, model *AssetModel) (*AssetModel, error) {
+	for _, opt := range options {
+		if err := opt(h, model); err != nil {
+			return nil, err
+		}
+	}
+	return model, nil
+}
+
+func WithTags() NewOpt {
+	return func(h internal.H, model *AssetModel) error {
+		if model.Tags != nil {
+			return nil
+		}
+		tags, err := tagq.ByOid(model.OID).RunR(h)
+		if err != nil {
+			return err
+		}
+		model.Tags = tags
+		return nil
+	}
+}
+
+func NewFromLeaf(h internal.H, n helper.LeafNode, opts ...NewOpt) (*AssetModel, error) {
+	a, err := DecodeAsset(n.Data())
 	if err != nil {
 		return nil, err
 	}
 	a.OID = ref.FromRawString[ref.OID](n.NodeName())
-	return a, nil
+	return applyOptions(h, opts, a)
 }
 
-func New(h internal.H, oid []byte) (*AssetModel, error) {
-	return NewFromLeaf(h.Bucket(bucketnames.FILES).Leaf(oid))
+func New(h internal.H, oid []byte, opts ...NewOpt) (*AssetModel, error) {
+	return NewFromLeaf(h, h.Bucket(bucketnames.FILES).Leaf(oid))
 }
 
-func NewFromKV(k, v []byte) (*AssetModel, error) {
-	a, err := decodeAsset(v)
+func NewFromKV(h internal.H, k, v []byte, opts ...NewOpt) (*AssetModel, error) {
+	a, err := DecodeAsset(v)
 	if err != nil {
 		return nil, err
 	}
 	a.OID = ref.FromRaw[ref.OID](k)
-	return a, nil
+	return applyOptions(h, opts, a)
 }
 
 func (template AssetTemplate) Create() internal.Runnable[*AssetModel] {

@@ -1,11 +1,12 @@
 module github.com/hsfzxjy/imbed
 
-go 1.21.0
+go 1.21.3
 
 require (
 	github.com/davecgh/go-spew v1.1.1
 	github.com/disintegration/gift v1.2.1
 	github.com/docker/go-units v0.5.0
+	github.com/hsfzxjy/tipe v0.2.1
 	github.com/kolesa-team/go-webp v1.0.4
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/qiniu/open v0.9.0

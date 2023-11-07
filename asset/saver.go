@@ -124,7 +124,10 @@ func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 		it, err := assetq.ByFID(ndl.RawFull(ref.AsRawString(fid))).RunR(ctx)
 		if err == nil && it.HasNext() {
 			model := it.Next()
-			a.model = model
+			if model.IsErr() {
+				return nil, model.UnwrapErr()
+			}
+			a.model = model.Unwrap()
 			return a, nil
 		}
 	}

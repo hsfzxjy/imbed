@@ -1,28 +1,49 @@
 package iter
 
-import "github.com/hsfzxjy/imbed/core"
+import "github.com/hsfzxjy/tipe"
 
-type chainedIt[T any] struct {
-	its []core.Iterator[T]
+type chainIt[T any] struct {
+	first bool
+	its   []Nexter[T]
+	t     tipe.Result[T]
 }
 
-func (c *chainedIt[T]) HasNext() bool {
-	for len(c.its) > 0 {
-		if c.its[0].HasNext() {
-			return true
-		}
-		c.its = c.its[1:]
+func (i *chainIt[T]) HasNext() bool {
+	if i.first {
+		i.first = false
+		i.next()
 	}
-	return false
+	return len(i.its) > 0
 }
 
-func (c *chainedIt[T]) Next() (t T) {
-	if !c.HasNext() {
+func (i *chainIt[T]) next() {
+	if !i.HasNext() {
 		return
 	}
-	return c.its[0].Next()
+	for len(i.its) > 0 {
+		it := i.its[0]
+		t := it.Next()
+		if Stopped(t) {
+			i.its = i.its[1:]
+			continue
+		}
+		i.t = t
+		break
+	}
 }
 
-func Chain[T any](its ...core.Iterator[T]) *chainedIt[T] {
-	return &chainedIt[T]{its}
+func (i *chainIt[T]) Next() (t tipe.Result[T]) {
+	if !i.HasNext() {
+		return tipe.Err[T](Stop)
+	}
+	t = i.t
+	i.next()
+	return t
+}
+
+func Chain[T any](its ...Nexter[T]) *chainIt[T] {
+	return &chainIt[T]{
+		first: true,
+		its:   its,
+	}
 }

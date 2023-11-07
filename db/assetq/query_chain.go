@@ -3,13 +3,13 @@ package assetq
 import (
 	"slices"
 
-	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/util/iter"
+	"github.com/hsfzxjy/tipe"
 )
 
 func ChainForModel(targetModel *db.AssetModel, depth int) internal.Runnable[[]*asset.AssetModel] {
@@ -22,12 +22,16 @@ func ChainForModel(targetModel *db.AssetModel, depth int) internal.Runnable[[]*a
 		model := targetModel
 		for !model.OriginOID.IsZero() && depth > 0 {
 			needle := ndl.RawFull(ref.AsRawString(model.OriginOID))
-			origModel, err := iter.One2(ByOid(needle).RunR(h))
+			it, err := ByOid(needle).RunR(h)
 			if err != nil {
 				return nil, err
 			}
-			results = append(results, origModel)
-			model = origModel
+			origModel := iter.One(it)
+			if origModel.IsErr() {
+				return nil, origModel.UnwrapErr()
+			}
+			model = origModel.Unwrap()
+			results = append(results, model)
 			depth--
 		}
 		slices.Reverse(results)
@@ -35,18 +39,14 @@ func ChainForModel(targetModel *db.AssetModel, depth int) internal.Runnable[[]*a
 	}
 }
 
-func Chains(targetq Query, depth int) internal.Runnable[core.Iterator[[]*asset.AssetModel]] {
-	return func(h internal.H) (core.Iterator[[]*asset.AssetModel], error) {
+func Chains(targetq Query, depth int) internal.Runnable[iter.Ator[[]*Model]] {
+	return func(h internal.H) (iter.Ator[[]*Model], error) {
 		it, err := targetq.RunR(h)
 		if err != nil {
 			return nil, err
 		}
-		return iter.FilterMap(it, func(m *asset.AssetModel) ([]*asset.AssetModel, bool) {
-			chain, err := ChainForModel(m, depth).RunR(h)
-			if err != nil {
-				return nil, false
-			}
-			return chain, true
+		return iter.FilterMap(it, func(m *Model) (r tipe.Result[[]*Model]) {
+			return tipe.MakeR(ChainForModel(m, depth).RunR(h))
 		}), nil
 	}
 }

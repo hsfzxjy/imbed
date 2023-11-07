@@ -45,7 +45,7 @@ func FromQ(app core.App, query assetq.Query) StockLoader {
 		if err != nil {
 			return nil, err
 		}
-		model, err := iter.One(it)
+		model, err := iter.One(it).Tuple()
 		if err != nil {
 			return nil, err
 		}

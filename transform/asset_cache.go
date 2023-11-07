@@ -28,5 +28,8 @@ func (c *assetCache) Lookup(a asset.Asset, transform *transSeq) (asset.StockAsse
 		return nil, nil
 	}
 	model := it.Next()
-	return asset.FromDBModel(c.app, model, a)(nil)
+	if model.IsErr() {
+		return nil, model.UnwrapErr()
+	}
+	return asset.FromDBModel(c.app, model.Unwrap(), a)(nil)
 }

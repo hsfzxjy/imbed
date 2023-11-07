@@ -3,7 +3,7 @@ package iter
 import (
 	"errors"
 
-	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/tipe"
 )
 
 var (
@@ -11,22 +11,15 @@ var (
 	ErrTooMany = errors.New("iterator has length >= 2")
 )
 
-func One[T any, It core.Iterator[T]](it It) (T, error) {
-	var t, zero T
-	if !it.HasNext() {
-		return zero, ErrEmpty
+func One[T any, It Nexter[T]](it It) tipe.Result[T] {
+	t := it.Next()
+	if Stopped(t) {
+		return t.FillErr(ErrEmpty)
 	}
-	t = it.Next()
-	if it.HasNext() {
-		return zero, ErrTooMany
-	}
-	return t, nil
-}
 
-func One2[T any, It core.Iterator[T]](it It, err error) (T, error) {
-	var zero T
-	if err != nil {
-		return zero, err
+	if !Stopped(it.Next()) {
+		return t.FillErr(ErrTooMany)
 	}
-	return One(it)
+
+	return t
 }

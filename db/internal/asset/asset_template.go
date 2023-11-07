@@ -8,10 +8,18 @@ import (
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
 )
 
+type Flag uint8
+
+const (
+	HasOrigin Flag = 1 << iota
+	SupportsRemove
+)
+
 type TransSeq struct {
-	Raw          []byte
-	Hash         ref.Sha256Hash
-	ConfigHashes []ref.Sha256Hash
+	Raw            []byte
+	Hash           ref.Sha256Hash
+	ConfigHashes   []ref.Sha256Hash
+	SupportsRemove bool
 }
 
 type AssetTemplate struct {
@@ -25,7 +33,15 @@ type AssetTemplate struct {
 var oneBytes = []byte{1}
 
 func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
+	var flag Flag
+	if t.Origin != nil {
+		flag |= HasOrigin
+	}
+	if t.TransSeq.SupportsRemove {
+		flag |= SupportsRemove
+	}
 	model := &AssetModel{
+		Flag:        flag,
 		OriginOID:   t.getOriginOID(),
 		Created:     ref.NewTime(time.Now()),
 		TransSeqRaw: t.TransSeq.Raw,
@@ -33,10 +49,8 @@ func (t *AssetTemplate) doCreate(h internal.H) (*AssetModel, error) {
 		Url:         t.Url,
 		ExtData:     t.ExtData,
 	}
-	hash, encoded, err := ref.HashEncodeFunc2(encodeAsset, model)
-	if err != nil {
-		return nil, err
-	}
+	encoded := encodeAsset(model)
+	hash := ref.Sha256HashSum(encoded)
 	oid := ref.OIDFromSha256Hash(hash)
 	model.OID = oid
 

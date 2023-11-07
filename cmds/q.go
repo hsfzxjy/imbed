@@ -11,6 +11,7 @@ import (
 	"github.com/hsfzxjy/imbed/lang"
 	"github.com/hsfzxjy/imbed/parser"
 	"github.com/hsfzxjy/imbed/util/iter"
+	"github.com/hsfzxjy/tipe"
 )
 
 type QCommand struct {
@@ -46,9 +47,8 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 			New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw).
 			ExecIter(
 				os.Stdout,
-				iter.FilterMap(sortedIt, func(m *db.AssetModel) (asset.StockAsset, bool) {
-					a, _ := asset.FromDBModel(app, m, nil)(ctx)
-					return a, true
+				iter.FilterMap(sortedIt, func(m *db.AssetModel) (r tipe.Result[asset.StockAsset]) {
+					return tipe.MakeR(asset.FromDBModel(app, m, nil)(ctx))
 				}))
 	})
 }

@@ -2,6 +2,8 @@ package helper
 
 import (
 	"github.com/hsfzxjy/imbed/util"
+	"github.com/hsfzxjy/imbed/util/iter"
+	"github.com/hsfzxjy/tipe"
 	"go.etcd.io/bbolt"
 )
 
@@ -26,15 +28,11 @@ func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
 	}
 }
 
-func (c *Cursor) HasNext() bool {
-	return c != nil && c.current.K != nil
-}
-
-func (c *Cursor) Next() (result util.KV) {
-	if !c.HasNext() {
-		return
+func (c *Cursor) Next() (r tipe.Result[util.KV]) {
+	if c == nil || c.current.K == nil {
+		return r.FillErr(iter.Stop)
 	}
-	result = c.current
+	r.Fill(c.current)
 	c.current.K, c.current.V = c.cursor.Next()
-	return result
+	return r
 }

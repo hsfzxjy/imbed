@@ -3,44 +3,23 @@ package assetq
 import (
 	"bytes"
 
-	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"github.com/hsfzxjy/imbed/db/internal/asset"
 	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
-	"github.com/hsfzxjy/imbed/db/tagq"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
+	"github.com/hsfzxjy/tipe"
 )
 
-type Iterator = core.Iterator[*asset.AssetModel]
+type Model = asset.AssetModel
+type Iterator = iter.Ator[*Model]
 type Query = internal.Runnable[Iterator]
 
-type Option func(h internal.H, model *asset.AssetModel) error
+type Option = asset.NewOpt
 
-func applyOptions(h internal.H, options []Option, model *asset.AssetModel) error {
-	for _, opt := range options {
-		if err := opt(h, model); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func WithTags() Option {
-	return func(h internal.H, model *asset.AssetModel) error {
-		if model.Tags != nil {
-			return nil
-		}
-		tags, err := tagq.ByOid(model.OID).RunR(h)
-		if err != nil {
-			return err
-		}
-		model.Tags = tags
-		return nil
-	}
-}
+var WithTags = asset.WithTags
 
 func simpleQuery(indexName []byte, needle ndl.Needle, options []Option) Query {
 	return func(h internal.H) (Iterator, error) {
@@ -49,19 +28,12 @@ func simpleQuery(indexName []byte, needle ndl.Needle, options []Option) Query {
 		if err != nil {
 			return nil, err
 		}
-		it := iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+		it := iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
 			splitAt := len(kv.K) - ref.OID_LEN
 			if !needle.Match(kv.K[:splitAt]) {
-				return nil, false
+				return r.FillErr(iter.Stop)
 			}
-			a, err := asset.New(h, kv.K[splitAt:])
-			if err != nil {
-				return nil, false
-			}
-			if applyOptions(h, options, a) != nil {
-				return nil, false
-			}
-			return a, true
+			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
 		})
 		return it, nil
 	}
@@ -85,18 +57,11 @@ func ByOid(needle ndl.Needle, options ...Option) Query {
 		if err != nil {
 			return nil, err
 		}
-		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
 			if !needle.Match(kv.K) {
-				return nil, false
+				return r.FillErr(iter.Stop)
 			}
-			a, err := asset.NewFromKV(kv.K, kv.V)
-			if err != nil {
-				return nil, false
-			}
-			if applyOptions(h, options, a) != nil {
-				return nil, false
-			}
-			return a, true
+			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
 		}), nil
 	}
 }
@@ -109,18 +74,11 @@ func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash, options ..
 		if err != nil {
 			return nil, err
 		}
-		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
+		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*asset.AssetModel]) {
 			if !bytes.Equal(kv.K, pairBytes) {
-				return nil, false
+				return r.FillErr(iter.Stop)
 			}
-			asset, err := asset.New(h, kv.V)
-			if err != nil {
-				return nil, false
-			}
-			if applyOptions(h, options, asset) != nil {
-				return nil, false
-			}
-			return asset, true
+			return tipe.MakeR(asset.New(h, kv.V, options...))
 		}), nil
 	}
 }
@@ -131,15 +89,8 @@ func All(options ...Option) Query {
 		if err != nil {
 			return nil, err
 		}
-		return iter.FilterMap(cursor, func(kv util.KV) (*asset.AssetModel, bool) {
-			a, err := asset.NewFromKV(kv.K, kv.V)
-			if err != nil {
-				return nil, false
-			}
-			if applyOptions(h, options, a) != nil {
-				return nil, false
-			}
-			return a, true
+		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
+			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
 		}), nil
 	}
 }
