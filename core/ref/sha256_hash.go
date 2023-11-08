@@ -9,8 +9,8 @@ import (
 )
 
 type Sha256Hash struct {
-	raw          string
 	_sha256_hash struct{}
+	raw          string
 }
 
 func (h sha256hash) IsZero() bool      { return h.raw == "" }

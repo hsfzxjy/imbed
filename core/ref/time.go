@@ -7,8 +7,8 @@ import (
 )
 
 type Time struct {
-	time  time.Time
 	_time struct{}
+	time  time.Time
 }
 
 func (t Time) Std() time.Time { return t.time }

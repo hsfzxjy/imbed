@@ -9,8 +9,8 @@ import (
 // Layout:
 // basename (var bytes) + murmur3hash (16 bytes)
 type FID struct {
-	raw  string
 	_fid struct{}
+	raw  string
 }
 
 func (id FID) IsZero() bool {

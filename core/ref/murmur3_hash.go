@@ -10,8 +10,8 @@ import (
 )
 
 type Murmur3Hash struct {
-	raw           string
 	_murmur3_hash struct{}
+	raw           string
 }
 
 func (h Murmur3Hash) IsZero() bool  { return h.raw == "" }

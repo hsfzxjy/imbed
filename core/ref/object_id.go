@@ -5,8 +5,8 @@ type sha256hash = Sha256Hash
 const OID_LEN = 256 / 8
 
 type OID struct {
-	sha256hash
 	_oid struct{}
+	sha256hash
 }
 
 func OIDFromSha256Hash(h sha256hash) OID { return OID{sha256hash: h} }
