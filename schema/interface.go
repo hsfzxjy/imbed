@@ -9,22 +9,9 @@ import (
 
 type Schema[T any] interface {
 	ScanFrom(r Scanner) (T, error)
-
 	DecodeMsg(r *fastbuf.R) (T, error)
 	EncodeMsg(w *fastbuf.W, source T)
 	Visit(v Visitor, source T) error
-	New() T
-	GenericSchema
-}
-
-type GenericSchema interface {
-	genericSchema
-	ScanFromAny(r Scanner) (any, error)
-	DecodeMsgAny(r *fastbuf.R) (any, error)
-	EncodeMsgAny(w *fastbuf.W, source any)
-	VisitAny(v Visitor, source any) error
-	NewAny() any
-	WrapAny(data any) GenericValue
 }
 
 type schema[T any] interface {

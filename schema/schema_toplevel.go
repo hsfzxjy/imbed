@@ -2,7 +2,6 @@ package schema
 
 import (
 	"errors"
-	"fmt"
 	"unsafe"
 
 	"github.com/hsfzxjy/imbed/util/fastbuf"
@@ -20,8 +19,6 @@ func new_Toplevel[S any](schema *_Struct[S]) *_TopLevel[S] {
 	}
 }
 
-func (s *_TopLevel[S]) New() *S             { return new(S) }
-func (s *_TopLevel[S]) NewAny() any         { return new(S) }
 func (s *_TopLevel[S]) Struct() *_Struct[S] { return s._Struct }
 
 func (s *_TopLevel[S]) ScanFrom(r Scanner) (*S, error) {
@@ -42,10 +39,6 @@ RETURN:
 	return target, nil
 }
 
-func (s *_TopLevel[S]) ScanFromAny(r Scanner) (any, error) {
-	return s.ScanFrom(r)
-}
-
 func (s *_TopLevel[S]) DecodeMsg(r *fastbuf.R) (*S, error) {
 	var target = new(S)
 	var sig sig
@@ -64,37 +57,13 @@ func (s *_TopLevel[S]) DecodeMsg(r *fastbuf.R) (*S, error) {
 	return target, nil
 }
 
-func (s *_TopLevel[S]) DecodeMsgAny(r *fastbuf.R) (any, error) {
-	return s.DecodeMsg(r)
-}
-
 func (s *_TopLevel[S]) EncodeMsg(w *fastbuf.W, source *S) {
 	w.AppendRaw(s.sig[:])
 	s.encodeMsg(w, unsafe.Pointer(source))
 }
 
-func (s *_TopLevel[S]) EncodeMsgAny(w *fastbuf.W, source any) {
-	v, ok := source.(*S)
-	if !ok {
-		panic(fmt.Errorf("expect %T, got %T", (*S)(nil), source))
-	}
-	s.EncodeMsg(w, v)
-}
-
 func (s *_TopLevel[S]) Visit(v Visitor, source *S) error {
 	return s.visit(v, unsafe.Pointer(source)).SetOp("Visit").AsError()
-}
-
-func (s *_TopLevel[S]) VisitAny(v Visitor, source any) error {
-	data, ok := source.(*S)
-	if !ok {
-		return fmt.Errorf("expect %T, got %T", (*S)(nil), source)
-	}
-	return s.Visit(v, data)
-}
-
-func (s *_TopLevel[S]) WrapAny(data any) GenericValue {
-	return Wrap[*S](s, data.(*S))
 }
 
 func _() {
