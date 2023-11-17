@@ -6,7 +6,7 @@ import (
 
 type registrar[C any, P ParamFor[C]] struct {
 	registry *Registry
-	*metadata
+	metadata *metadata[C, P]
 }
 
 func RegisterIn[C any, P ParamFor[C]](
@@ -14,10 +14,9 @@ func RegisterIn[C any, P ParamFor[C]](
 	name string,
 	configSchema schema.Schema[C],
 	paramsSchema schema.Schema[P]) registrar[C, P] {
-	m := new(metadata)
+	m := new(metadata[C, P])
 	m.Registry = registry
 	m.name = name
-	m.constraint = _constraint[C, P]{}
 	m.configSchema = configSchema
 	m.paramsSchema = paramsSchema
 	r := registrar[C, P]{registry, m}
@@ -26,7 +25,7 @@ func RegisterIn[C any, P ParamFor[C]](
 }
 
 func (r registrar[C, P]) Alias(aliases ...string) registrar[C, P] {
-	r.aliases = append(r.aliases, aliases...)
+	r.metadata.aliases = append(r.metadata.aliases, aliases...)
 	for _, alias := range aliases {
 		r.registerToName(alias)
 	}
@@ -34,7 +33,7 @@ func (r registrar[C, P]) Alias(aliases ...string) registrar[C, P] {
 }
 
 func (r registrar[C, P]) Category(cat Category) registrar[C, P] {
-	r.category = cat
+	r.metadata.category = cat
 	return r
 }
 

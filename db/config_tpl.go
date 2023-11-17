@@ -3,7 +3,6 @@ package db
 import (
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/core/ref/lazy"
-	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type ConfigTpl struct {
@@ -24,17 +23,22 @@ func (c ConfigTpl) create(tx *Tx) (*ConfigModel, error) {
 		if err != nil {
 			return nil, err
 		}
-		return newConfigModel(oid, tx.CONFIGS().Get(vOid))
-	}
-	oid, err := findAvailOID(tx.CONFIGS())
-	if err != nil {
-		return nil, err
+		return DecodeConfigModel(oid, tx.CONFIGS().Get(vOid))
 	}
 	data, err := c.O.GetData()
 	if err != nil {
 		return nil, err
 	}
-	err = tx.CONFIGS().Put(oid.Raw(), fastbuf.Concat(sha.Raw(), data))
+	oid, err := findAvailOID(tx.CONFIGS())
+	if err != nil {
+		return nil, err
+	}
+	model := &ConfigModel{
+		OID:  oid,
+		SHA:  SHA(sha),
+		Data: data,
+	}
+	err = tx.CONFIGS().Put(oid.Raw(), encodeConfigModel(model))
 	if err != nil {
 		return nil, err
 	}
@@ -42,9 +46,5 @@ func (c ConfigTpl) create(tx *Tx) (*ConfigModel, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ConfigModel{
-		OID:  oid,
-		SHA:  SHA(sha),
-		Data: data,
-	}, nil
+	return model, nil
 }

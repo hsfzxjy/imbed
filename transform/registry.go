@@ -10,13 +10,13 @@ import (
 )
 
 type Registry struct {
-	metadataTable map[string]*metadata
+	metadataTable map[string]Metadata
 	composerTable map[Category]Composer
 }
 
 func NewRegistry() *Registry {
 	return &Registry{
-		map[string]*metadata{},
+		make(map[string]Metadata, 32),
 		map[Category]Composer{},
 	}
 }
@@ -29,44 +29,23 @@ func (r *Registry) RegisterComposer(cat Category, composer Composer) *Registry {
 	return r
 }
 
-func (r *Registry) ScanFrom(name string, scanner schema.Scanner, copt cfgf.Opt) (*view, error) {
+func (r *Registry) ScanFrom(name string, scanner schema.Scanner, copt cfgf.Opt) (View, error) {
 	m, ok := r.metadataTable[name]
 	if !ok {
 		return nil, fmt.Errorf("no transform named %q", name)
 	}
-	params, err := m.paramsSchema.ScanFromAny(scanner)
-	if err != nil {
-		return nil, err
-	}
-	return &view{
-		md:         m,
-		params:     params,
-		cfgFactory: copt(name, m.configSchema),
-	}, nil
+	return m.scanFrom(scanner, copt)
 }
 
-func (r *Registry) DecodeMsg(stepData db.Step) (*view, error) {
+func (r *Registry) DecodeMsg(stepData db.Step) (View, error) {
 	var reader = fastbuf.R{Buf: stepData.Data}
 	name, err := reader.ReadString()
 	if err != nil {
 		return nil, err
 	}
-	md, ok := r.Lookup(name)
+	md, ok := r.metadataTable[name]
 	if !ok {
 		return nil, fmt.Errorf("no transform named %q", name)
 	}
-	params, err := md.paramsSchema.DecodeMsgAny(&reader)
-	if err != nil {
-		return nil, err
-	}
-	return &view{
-		md:         md,
-		params:     params,
-		cfgFactory: cfgf.OID(stepData.ConfigOID)(name, md.configSchema),
-	}, nil
-}
-
-func (r *Registry) Lookup(name string) (*metadata, bool) {
-	m, ok := r.metadataTable[name]
-	return m, ok
+	return md.decodeMsg(&reader, stepData.ConfigOID)
 }

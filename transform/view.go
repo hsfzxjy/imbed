@@ -1,7 +1,6 @@
 package transform
 
 import (
-	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/core/ref/lazy"
 	"github.com/hsfzxjy/imbed/db"
@@ -10,30 +9,64 @@ import (
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
-type view struct {
-	md         *metadata
-	params     any
-	cfgFactory cfgf.Factory
+type view[C any, P ParamFor[C]] struct {
+	md     *metadata[C, P]
+	params P
+	cfgOpt cfgf.Opt
 }
 
-func (r *view) Name() string {
+func (r *view[C, P]) Name() string {
 	return r.md.name
 }
 
-func (r *view) ConfigHash(ctx db.Context) ref.Sha256 {
-	return r.cfgFactory.ConfigHash(ctx)
+func (r *view[C, P]) ConfigHash(ctx db.Context) ref.Sha256 {
+	return r.cfgOpt.ConfigHash(ctx)
 }
 
-func (r *view) VisitParams(v schema.Visitor) error {
-	return r.md.paramsSchema.VisitAny(v, r.params)
+func (r *view[C, P]) VisitParams(v schema.Visitor) error {
+	return r.md.paramsSchema.Visit(v, r.params)
 }
 
-func (r *view) Build(cp core.ConfigProvider) (*Transform, error) {
-	cfg, err := r.cfgFactory.CreateConfig(cp)
+func (r *view[C, P]) buildConfig(cp ConfigProvider) (C, db.ConfigTpl, error) {
+	var cfg C
+	var tpl db.ConfigTpl
+	if r.cfgOpt.FromDB() {
+		cfgModel, err := r.cfgOpt.QueryModel(cp)
+		if err != nil {
+			return cfg, tpl, err
+		}
+		if cfgModel != nil {
+			var reader = fastbuf.R{Buf: cfgModel.Data}
+			cfg, err = r.md.configSchema.DecodeMsg(&reader)
+			if err != nil {
+				return cfg, tpl, err
+			}
+		}
+		tpl = db.ConfigTpl{O: cfgModel}
+	} else {
+		scanner, err := cp.WorkspaceConfigScanner(r.md.name)
+		if err != nil {
+			return cfg, tpl, err
+		}
+		cfg, err = r.md.configSchema.ScanFrom(scanner)
+		if err != nil {
+			return cfg, tpl, err
+		}
+		tpl = db.ConfigTpl{O: lazy.DataFunc(func() []byte {
+			var w fastbuf.W
+			r.md.configSchema.EncodeMsg(&w, cfg)
+			return w.Result()
+		})}
+	}
+	return cfg, tpl, nil
+}
+
+func (r *view[C, P]) Build(cp ConfigProvider) (*Transform, error) {
+	cfg, cfgTpl, err := r.buildConfig(cp)
 	if err != nil {
 		return nil, err
 	}
-	applier, err := r.md.buildApplier(r.params, cfg)
+	applier, err := r.params.BuildTransform(cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -42,17 +75,11 @@ func (r *view) Build(cp core.ConfigProvider) (*Transform, error) {
 		Applier:  applier,
 		Category: r.md.category,
 		model: db.StepTpl{
-			Config: db.ConfigTpl{
-				O: lazy.DataFunc(func() []byte {
-					var w fastbuf.W
-					r.md.configSchema.EncodeMsgAny(&w, cfg)
-					return w.Result()
-				}),
-			},
+			Config: cfgTpl,
 			Params: lazy.DataFuncSHAFunc(func() []byte {
 				var w fastbuf.W
 				w.WriteString(r.md.name)
-				r.md.paramsSchema.EncodeMsgAny(&w, r.params)
+				r.md.paramsSchema.EncodeMsg(&w, r.params)
 				return w.Result()
 			}, func() ref.Sha256 {
 				var w fastbuf.W

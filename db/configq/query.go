@@ -1,9 +1,6 @@
 package configq
 
 import (
-	"fmt"
-
-	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
@@ -12,46 +9,42 @@ import (
 	"github.com/hsfzxjy/tipe"
 )
 
+type Provider interface {
+	DBConfigBySHANeedle(needle ndl.Needle) (*db.ConfigModel, error)
+	DBConfigByOID(oid ref.OID) (*db.ConfigModel, error)
+}
+
 type provider struct {
 	*db.Tx
 }
 
-func (p provider) ProvideStockConfig(needle ndl.Needle) ([]byte, error) {
+func (p provider) DBConfigBySHANeedle(needle ndl.Needle) (*db.ConfigModel, error) {
 	cursor := db.NewCursor(p.C_SHA__OID().Cursor(), needle.Bytes())
-	it := iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[[]byte]) {
+	it := iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*db.ConfigModel]) {
 		if !needle.Match(kv.K) {
 			return r.FillErr(iter.Stop)
 		}
-		data := p.Tx.CONFIGS().Get(kv.V)
-		_, err, rest := ref.FromRaw[ref.Sha256](data)
-		return tipe.MakeR(rest, err)
+		oid, err := ref.FromRawExact[ref.OID](kv.V)
+		if err != nil {
+			return r.FillErr(err)
+		}
+		return tipe.MakeR(p.DBConfigByOID(oid))
 	})
 	return iter.One(it).Tuple()
 }
 
-func (p provider) ProvideConfigByOID(oid ref.OID) ([]byte, error) {
-	return nil, nil
+func (p provider) DBConfigByOID(oid ref.OID) (*db.ConfigModel, error) {
+	encoded := p.Tx.CONFIGS().Get(oid.Raw())
+	return db.DecodeConfigModel(oid, encoded)
 }
 
-type configProvider struct {
-	provider
-	core.App
-}
-
-func NewProvider(tx *db.Tx, app core.App) core.ConfigProvider {
-	return configProvider{
-		provider: provider{tx},
-		App:      app,
-	}
+func NewProvider(tx *db.Tx) provider {
+	return provider{tx}
 }
 
 func SHAByOID(oid ref.OID) db.Task[ref.Sha256] {
 	return func(tx *db.Tx) (ref.Sha256, error) {
-		data := tx.CONFIGS().Get(oid.Raw())
-		if data == nil {
-			return ref.Sha256{}, fmt.Errorf("config not found with oid=%s", oid.FmtString())
-		}
-		sha, err, _ := ref.FromRaw[ref.Sha256](data)
-		return sha, err
+		encoded := tx.CONFIGS().Get(oid.Raw())
+		return db.DecodeConfigModelSHA(encoded)
 	}
 }

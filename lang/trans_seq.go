@@ -4,13 +4,12 @@ import (
 	"fmt"
 
 	"github.com/hsfzxjy/imbed/asset/tag"
-	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/transform"
 	cfgf "github.com/hsfzxjy/imbed/transform/configfactory"
 )
 
-func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error) {
+func (c *Context) parseTransSeq(cp *configProvider) (*transform.Graph, error) {
 	var transforms []*transform.Transform
 	scanner := transScanner{Parser: c.parser}
 	for !scanner.EOF() {
@@ -29,7 +28,7 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 			if err != nil {
 				return nil, scanner.Error(fmt.Errorf("invalid config SHA %q: %w", hex, err))
 			}
-			copt = cfgf.Needle(needle)
+			copt = cfgf.SHANeedle(needle)
 		} else {
 			copt = cfgf.Workspace()
 		}

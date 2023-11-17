@@ -6,76 +6,69 @@ import (
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/configq"
-	"github.com/hsfzxjy/imbed/schema"
-	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
-type Factory interface {
-	ConfigHash(ctx db.Context) ref.Sha256
-	CreateConfig(cp core.ConfigProvider) (any, error)
+type configProvider interface {
+	configq.Provider
+	core.WorkspaceConfigProvider
 }
 
-type Opt func(name string, schema schema.GenericSchema) Factory
+type Opt interface {
+	ConfigHash(ctx db.Context) ref.Sha256
+	FromDB() bool
+	QueryModel(cp configProvider) (*db.ConfigModel, error)
+}
 
 func Workspace() Opt {
-	return func(name string, schema schema.GenericSchema) Factory {
-		return &fromWorkspace{name, schema}
-	}
+	return fromWorkspace{}
 }
 
-type fromWorkspace struct {
-	name string
-	schema.GenericSchema
-}
+type fromWorkspace struct{}
 
-func (b *fromWorkspace) ConfigHash(ctx db.Context) (zero ref.Sha256) {
+func (b fromWorkspace) ConfigHash(ctx db.Context) (zero ref.Sha256) {
 	return
 }
 
-func (b *fromWorkspace) CreateConfig(cp core.ConfigProvider) (result any, err error) {
-	cfgR, err := cp.ProvideWorkspaceConfig(b.name)
-	if err != nil {
-		return
-	}
-	return b.GenericSchema.ScanFromAny(cfgR)
+func (b fromWorkspace) FromDB() bool {
+	return false
 }
 
-func Needle(needle ndl.Needle) Opt {
-	return func(name string, schema schema.GenericSchema) Factory {
-		return &withNeedle{schema, needle}
-	}
+func (b fromWorkspace) QueryModel(cp configProvider) (*db.ConfigModel, error) {
+	panic("not implemented")
+}
+
+func SHANeedle(needle ndl.Needle) Opt {
+	return withNeedle{needle}
 }
 
 type withNeedle struct {
-	schema.GenericSchema
 	needle ndl.Needle
 }
 
-func (b *withNeedle) ConfigHash(ctx db.Context) (zero ref.Sha256) {
+func (b withNeedle) ConfigHash(ctx db.Context) (zero ref.Sha256) {
 	return
 }
 
-func (b *withNeedle) CreateConfig(cp core.ConfigProvider) (result any, err error) {
-	buf, err := cp.ProvideStockConfig(b.needle)
-	if err != nil {
-		return
-	}
-	cfgR := fastbuf.R{Buf: buf}
-	return b.GenericSchema.DecodeMsgAny(&cfgR)
+func (b withNeedle) FromDB() bool {
+	return true
+}
+
+func (b withNeedle) QueryModel(cp configProvider) (*db.ConfigModel, error) {
+	return cp.DBConfigBySHANeedle(b.needle)
 }
 
 func OID(oid ref.OID) Opt {
-	return func(name string, schema schema.GenericSchema) Factory {
-		return &withOID{schema, oid}
-	}
+	return withOID{oid}
 }
 
 type withOID struct {
-	schema.GenericSchema
 	oid ref.OID
 }
 
-func (b *withOID) ConfigHash(ctx db.Context) ref.Sha256 {
+func (b withOID) ConfigHash(ctx db.Context) ref.Sha256 {
+	if ctx == nil {
+		return ref.Sha256{}
+	}
 	sha, err := configq.SHAByOID(b.oid).RunR(ctx)
 	if err != nil {
 		return ref.Sha256{}
@@ -83,11 +76,10 @@ func (b *withOID) ConfigHash(ctx db.Context) ref.Sha256 {
 	return sha
 }
 
-func (b *withOID) CreateConfig(cp core.ConfigProvider) (result any, err error) {
-	buf, err := cp.ProvideConfigByOID(b.oid)
-	if err != nil {
-		return
-	}
-	cfgR := fastbuf.R{Buf: buf}
-	return b.GenericSchema.DecodeMsgAny(&cfgR)
+func (b withOID) FromDB() bool {
+	return true
+}
+
+func (b withOID) QueryModel(cp configProvider) (*db.ConfigModel, error) {
+	return cp.DBConfigByOID(b.oid)
 }

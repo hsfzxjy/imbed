@@ -3,15 +3,11 @@ package core
 import (
 	"net/url"
 
-	ndl "github.com/hsfzxjy/imbed/core/needle"
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 )
 
-type ConfigProvider interface {
-	ProvideWorkspaceConfig(key string) (schema.Scanner, error)
-	ProvideStockConfig(ndl.Needle) ([]byte, error)
-	ProvideConfigByOID(ref.OID) ([]byte, error)
+type WorkspaceConfigProvider interface {
+	WorkspaceConfigScanner(key string) (schema.Scanner, error)
 }
 
 type App interface {
@@ -23,7 +19,7 @@ type App interface {
 	Mode() Mode
 	BuildMode() BuildMode
 
-	ProvideWorkspaceConfig(key string) (schema.Scanner, error)
+	WorkspaceConfigProvider
 	ProxyFunc() func(reqURL *url.URL) (*url.URL, error)
 }
 
