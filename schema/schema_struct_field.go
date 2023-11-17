@@ -5,6 +5,7 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -17,10 +18,10 @@ type _StructField struct {
 func (*_StructField) _fieldSchema_stub() {}
 func (s *_StructField) Name() string     { return s.name }
 
-func (s *_StructField) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
-	return s.elemSchema.
-		scanFrom(r, unsafe.Add(target, s.offset)).
-		AppendPath(s.name)
+func (s *_StructField) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
+	pos, err := s.elemSchema.
+		scanFrom(r, unsafe.Add(target, s.offset))
+	return pos, err.AppendPath(s.name)
 }
 
 func (s *_StructField) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {

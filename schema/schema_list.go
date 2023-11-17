@@ -4,6 +4,7 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -29,25 +30,28 @@ func (s *_List[E]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_List[E]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
+func (s *_List[E]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
 	var ret []E
-	size, err := r.ListSize()
+	size, listPos, err := r.ListSize()
 	if err != nil {
-		return newError(err)
+		return listPos, newError(err)
 	}
 	ret = make([]E, size)
+	var elemPos pos.P
 	err = r.IterElem(func(i int, r Scanner) error {
-		err := s.elemSchema.scanFrom(r, unsafe.Pointer(&ret[i]))
+		p, err := s.elemSchema.scanFrom(r, unsafe.Pointer(&ret[i]))
 		if err != nil {
 			err.AppendIndex(i)
 		}
+		elemPos = p
+		listPos = listPos.Add(p)
 		return err.AsError()
 	})
 	if err != nil {
-		return newError(err)
+		return elemPos, newError(err)
 	}
 	*(*[]E)(target) = ret
-	return nil
+	return listPos, nil
 }
 
 func (s *_List[E]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {

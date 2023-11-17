@@ -54,7 +54,7 @@ func (ss stepSet) Run(cache *assetCache, upstream asset.Asset, ret *[]asset.Asse
 	for _, step := range ss {
 		err := step.Run(cache, upstream, ret)
 		if err != nil {
-			return err
+			return step.pos.WrapError(err)
 		}
 	}
 	return nil

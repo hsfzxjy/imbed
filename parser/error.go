@@ -2,93 +2,116 @@ package parser
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
 	"strings"
 )
 
 type span struct{ start, end int }
 
-func (p *Parser) ClearLastErr() {
-	p.lastErr.error = nil
-	p.lastErr.span = span{-1, -1}
-}
-
-func (p *Parser) setLastErr(err error) {
-	p.lastErr.error = err
-}
-
-func (p *Parser) setLastErrString(msg string) {
-	p.lastErr.error = errors.New(msg)
-}
-
-func (p *Parser) setLastErrSpan(span span) {
-	p.lastErr.span = span
-}
-
-func (p *Parser) Error(err error) error {
-	var perr *parserError
-	if errors.As(err, &perr) {
-		return err
-	}
-	sp := p.lastErr.span
-	if sp.start < 0 {
-		sp = span{p.i, p.i + 1}
-	}
-	if sp.start == sp.end {
-		sp.end++
-	}
-	return &parserError{p.buf, err, p.lastErr.error, sp}
-}
-
-func (p *Parser) ErrorString(msg string) error {
-	return p.Error(errors.New(msg))
-}
-
-type parserError struct {
-	buf        string
-	err1, err2 error
-	span
-}
-
-func (e *parserError) Error() string {
+func (p *Parser) fmtFunc(str string, start, end uint32) string {
 	var b strings.Builder
-	var err1String, err2String string
-	if e.err1 != nil {
-		err1String = e.err1.Error()
-	}
-	if e.err2 != nil {
-		err2String = e.err2.Error()
-	}
-	b.Grow(len(err1String) + len(err2String) + len(e.buf)*2 + 10)
-	b.WriteString(err1String)
-	if err2String != "" {
-		if err1String != "" {
-			b.WriteString(": ")
-		}
-		b.WriteString(err2String)
-	}
+	b.Grow(len(str) + len(p.buf)*2 + 10)
+	b.WriteString(str)
 	b.WriteString("\n\t| ")
-	b.WriteString(e.buf)
+	b.WriteString(p.buf)
 	b.WriteString("\n\t| ")
-	var i int
-	for i = 0; i < e.start; i++ {
+	var i uint32
+	for i = 0; i < start; i++ {
 		b.WriteRune(' ')
 	}
-	for ; i < e.end; i++ {
+	if end <= start {
+		end = start + 1
+	}
+	for ; i < end; i++ {
 		b.WriteRune('^')
 	}
 	return b.String()
 }
 
-func (e *parserError) Unwrap() []error {
-	var errs = make([]error, 0, 2)
-	if e.err1 != nil {
-		errs = append(errs, e.err1)
+type parseError struct {
+	tag parseErrorTag
+
+	byteBased   byte
+	stringBased string
+	raw         error
+}
+
+type parseErrorTag uint8
+
+const (
+	parseErrorNil parseErrorTag = iota
+	parseErrorByte
+	parseErrorAnyByte
+	parseErrorTerm
+	parseErrorNum
+	parseErrorMsg
+	parseErrorUnclosedString
+)
+
+func (p *parseError) Get() error {
+	switch p.tag {
+	case parseErrorByte:
+		return byteError(p.byteBased)
+	case parseErrorAnyByte:
+		return anyByteError(p.stringBased)
+	case parseErrorTerm:
+		return termError(p.stringBased)
+	case parseErrorNum:
+		return numError{err: p.raw}
+	case parseErrorMsg:
+		return errorMsg(p.stringBased)
+	case parseErrorUnclosedString:
+		return unclosedStringError(p.byteBased)
+	default:
+		return nil
 	}
-	if e.err2 != nil {
-		errs = append(errs, e.err2)
-	}
-	return errs
+}
+
+func (p *parseError) SetByteError(err byteError) {
+	p.tag = parseErrorByte
+	p.byteBased = byte(err)
+}
+
+func (p *parseError) SetAnyByteError(err anyByteError) {
+	p.tag = parseErrorAnyByte
+	p.stringBased = string(err)
+}
+
+func (p *parseError) SetTermError(err termError) {
+	p.tag = parseErrorTerm
+	p.stringBased = string(err)
+}
+
+func (p *parseError) SetNumError(err error) {
+	p.tag = parseErrorNum
+	p.raw = err
+}
+
+func (p *parseError) SetMsgError(msg string) {
+	p.tag = parseErrorMsg
+	p.stringBased = string(msg)
+}
+
+func (p *parseError) SetUnclosedStringError(ch byte) {
+	p.tag = parseErrorUnclosedString
+	p.byteBased = ch
+}
+
+func (p *parseError) Clear() {
+	p.tag = parseErrorNil
+}
+
+type errorMsg string
+
+func (e errorMsg) Error() string {
+	return string(e)
+}
+
+type unclosedStringError byte
+
+func (e unclosedStringError) Error() string {
+	return "expect " + strconv.QuoteRune(rune(e)) + " to close string"
 }
 
 type byteError byte
@@ -128,4 +151,22 @@ func (e numError) Error() string {
 	} else {
 		return e.err.Error()
 	}
+}
+
+func (p *Parser) Error(err error) error {
+	if err == nil {
+		return p.lastErr.Get()
+	}
+	return errors.Join(err, p.lastErr.Get())
+}
+
+func (p *Parser) ErrorString(msg string) error {
+	err := p.lastErr.Get()
+	if msg == "" {
+		return err
+	}
+	if err == nil {
+		return errors.New(msg)
+	}
+	return fmt.Errorf("%s: %w", msg, err)
 }

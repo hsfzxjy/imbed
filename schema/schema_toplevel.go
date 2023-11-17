@@ -4,6 +4,7 @@ import (
 	"errors"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -21,9 +22,9 @@ func new_Toplevel[S any](schema *_Struct[S]) *_TopLevel[S] {
 
 func (s *_TopLevel[S]) Struct() *_Struct[S] { return s._Struct }
 
-func (s *_TopLevel[S]) ScanFrom(r Scanner) (*S, error) {
+func (s *_TopLevel[S]) ScanFrom(r Scanner) (*S, pos.P, error) {
 	var target = new(S)
-	err := s.scanFrom(r, unsafe.Pointer(target))
+	pos, err := s.scanFrom(r, unsafe.Pointer(target))
 
 	if err != nil && errors.Is(err.AsError(), ErrRequired) {
 		err2 := s.setDefault(unsafe.Pointer(target))
@@ -34,9 +35,9 @@ func (s *_TopLevel[S]) ScanFrom(r Scanner) (*S, error) {
 	}
 RETURN:
 	if err != nil {
-		return nil, err.SetOp("ScanFrom").AsError()
+		return nil, pos, err.SetOp("ScanFrom").AsError()
 	}
-	return target, nil
+	return target, pos, nil
 }
 
 func (s *_TopLevel[S]) DecodeMsg(r *fastbuf.R) (*S, error) {

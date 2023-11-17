@@ -9,6 +9,7 @@ import (
 
 	"sync"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	ref "github.com/hsfzxjy/imbed/core/ref"
 )
 
@@ -17,6 +18,7 @@ type content struct {
 	sizer  Sizer
 	buf    []byte
 	hash   ref.Murmur3
+	pos    pos.P
 
 	computed      atomic.Bool
 	computedBuf   []byte
@@ -68,7 +70,7 @@ func (c *content) load() {
 			err    error
 		)
 		defer func() {
-			c.computedError = err
+			c.computedError = c.pos.WrapError(err)
 			c.computed.Store(true)
 		}()
 		if c.loader == nil {

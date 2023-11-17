@@ -20,12 +20,12 @@ func Test_Parser_Int64(t *testing.T) {
 	test := func(input string) {
 		p := parser.NewString(input)
 		p.Space()
-		x, ok := p.Int64()
+		x, pos, ok := p.Int64()
 		fmt.Fprintln(&out, "===")
 		if ok {
 			fmt.Fprintf(&out, "%d\n", x)
 		} else {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" 1234444444444444444")
@@ -51,12 +51,12 @@ func Test_Parser_Rat(t *testing.T) {
 	test := func(input string) {
 		p := parser.NewString(input)
 		p.Space()
-		x, ok := p.Rat()
+		x, pos, ok := p.Rat()
 		fmt.Fprintln(&out, "===")
 		if ok {
 			fmt.Fprintf(&out, "%s\n", x.RatString())
 		} else {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" 1234/4321")
@@ -96,12 +96,12 @@ func Test_Parser_String(t *testing.T) {
 	test := func(input string) {
 		p := parser.NewString(input)
 		p.Space()
-		x, ok := p.String(" ,")
+		x, pos, ok := p.String(" ,")
 		fmt.Fprintln(&out, "===")
 		if ok {
 			fmt.Fprintf(&out, "%s\n", x)
 		} else {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" a-b,")
@@ -119,7 +119,7 @@ a-b
 ===
  a'[]
 ===
-foo: expect ']', string unclosed
+foo: expect ']' to close string
 	|  [ a'\[\]
 	|  ^^^^^^^^
 ===
@@ -139,12 +139,12 @@ func Test_Parser_Bool(t *testing.T) {
 	test := func(input string) {
 		p := parser.NewString(input)
 		p.Space()
-		x, ok := p.Bool()
+		x, pos, ok := p.Bool()
 		fmt.Fprintln(&out, "===")
 		if ok {
 			fmt.Fprintf(&out, "%v\n", x)
 		} else {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" true")
@@ -168,10 +168,10 @@ func Test_Parser_Byte(t *testing.T) {
 	test := func(input string, b byte) {
 		p := parser.NewString(input)
 		p.Space()
-		ok := p.Byte(b)
+		pos, ok := p.Byte(b)
 		fmt.Fprintln(&out, "===")
 		if !ok {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" =", '=')
@@ -196,12 +196,12 @@ func Test_Parser_AnyByte(t *testing.T) {
 	test := func(input string, charset string) {
 		p := parser.NewString(input)
 		p.Space()
-		b, ok := p.AnyByte(charset)
+		b, pos, ok := p.AnyByte(charset)
 		fmt.Fprintln(&out, "===")
 		if ok {
 			fmt.Fprintf(&out, "%c\n", rune(b))
 		} else {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" =a", "=")
@@ -225,10 +225,10 @@ func Test_Parser_Term(t *testing.T) {
 	test := func(input string, term string) {
 		p := parser.NewString(input)
 		p.Space()
-		ok := p.Term(term)
+		pos, ok := p.Term(term)
 		fmt.Fprintln(&out, "===")
 		if !ok {
-			fmt.Fprintln(&out, p.ErrorString("foo").Error())
+			fmt.Fprintln(&out, pos.FmtError(p.ErrorString("foo")))
 		}
 	}
 	test(" oid", "oid")

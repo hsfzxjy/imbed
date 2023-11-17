@@ -4,6 +4,7 @@ import (
 	"sync"
 
 	"github.com/hsfzxjy/imbed/asset/tag"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/db"
 )
 
@@ -12,6 +13,7 @@ type step struct {
 	atoms        []*stepAtom
 	Appliers     []Applier
 	Next         stepSet
+	pos          pos.P
 
 	model     db.StepListTpl
 	modelOnce sync.Once

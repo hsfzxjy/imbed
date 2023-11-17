@@ -5,16 +5,17 @@ import (
 
 	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
 	"github.com/hsfzxjy/imbed/util/iter"
 )
 
-func LoadFile(filepath string) ExternalLoader {
+func LoadFile(filepath string, pos pos.P) ExternalLoader {
 	return func() (Asset, error) {
 		a := new(asset)
 		a.basename = path.Base(filepath)
-		a.content = content.New(content.WithFilePath(filepath))
+		a.content = content.New(content.WithFilePath(filepath), content.WithPos(pos))
 		return a, nil
 	}
 }

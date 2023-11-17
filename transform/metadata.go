@@ -19,14 +19,15 @@ type metadata[C any, P ParamFor[C]] struct {
 }
 
 func (m *metadata[C, P]) scanFrom(scanner schema.Scanner, copt cfgf.Opt) (View, error) {
-	params, err := m.paramsSchema.ScanFrom(scanner)
+	params, pos, err := m.paramsSchema.ScanFrom(scanner)
 	if err != nil {
-		return nil, err
+		return nil, pos.WrapError(err)
 	}
 	return &view[C, P]{
-		md:     m,
-		params: params,
-		cfgOpt: copt,
+		md:        m,
+		paramsPos: pos,
+		params:    params,
+		cfgOpt:    copt,
 	}, nil
 }
 

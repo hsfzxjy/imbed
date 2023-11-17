@@ -13,11 +13,11 @@ func (c *Context) parseAsset() (asset.Loader, error) {
 		return asset.FromQ(c.app, q), nil
 	}
 	c.parser.Term("file@")
-	filename, ok := c.parser.String("")
+	filename, pos, ok := c.parser.String("")
 	if !ok {
-		return nil, c.parser.ErrorString("illegal file name")
+		return nil, pos.WrapErrorString("illegal file name")
 	}
-	return asset.LoadFile(filename), nil
+	return asset.LoadFile(filename, pos), nil
 }
 
 func (c *Context) parseDBAsset() (asset.StockLoader, error) {

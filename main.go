@@ -8,6 +8,7 @@ import (
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/cmds"
 	"github.com/hsfzxjy/imbed/contrib"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/spf13/pflag"
 )
@@ -26,7 +27,7 @@ func main() {
 		case errors.Is(err, pflag.ErrHelp):
 
 		default:
-			fmt.Fprintf(app.Stderr, "fatal: %s\n", err)
+			fmt.Fprintf(app.Stderr, "fatal: %s\n", pos.FmtError(err))
 		}
 		os.Exit(2)
 	}

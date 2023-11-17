@@ -2,6 +2,7 @@ package lang
 
 import (
 	ndl "github.com/hsfzxjy/imbed/core/needle"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/db/assetq"
 )
 
@@ -25,7 +26,7 @@ var (
 type fuzzyExpr struct {
 	directive     string
 	expected      string
-	needleBuilder func(s string, prefix bool) (ndl.Needle, error)
+	needleBuilder func(s string, prefix bool, pos pos.P) (ndl.Needle, error)
 	queryBuilder  func(ndl.Needle, ...assetq.Option) assetq.Query
 }
 
@@ -45,18 +46,17 @@ func (s fuzzyExprSet) parse(c *Context) (assetq.Query, error) {
 }
 
 func (f *fuzzyExpr) parse(c *Context) (assetq.Query, error) {
-	if !c.parser.Term(f.directive) {
-		c.parser.ClearLastErr()
+	if _, ok := c.parser.Term(f.directive); !ok {
 		return nil, nil
 	}
-	exact := c.parser.Byte('=')
-	value, ok := c.parser.String("")
+	_, exact := c.parser.Byte('=')
+	value, pos, ok := c.parser.String("")
 	if !ok {
-		return nil, c.parser.Error(nil)
+		return nil, pos.WrapError(c.parser.Error(nil))
 	}
-	needle, err := f.needleBuilder(value, !exact)
+	needle, err := f.needleBuilder(value, !exact, pos)
 	if err != nil {
-		return nil, c.parser.Error(err)
+		return nil, pos.WrapError(err)
 	}
 	return f.queryBuilder(needle, assetq.WithTags()), nil
 }

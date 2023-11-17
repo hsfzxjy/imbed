@@ -11,10 +11,17 @@ import (
 	"github.com/kolesa-team/go-webp/webp"
 	"golang.org/x/image/bmp"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/core/ref"
 )
 
 type ContentOption func(*content)
+
+func WithPos(pos pos.P) ContentOption {
+	return func(c *content) {
+		c.pos = pos
+	}
+}
 
 func WithLoader(l Loader) ContentOption {
 	return func(c *content) {

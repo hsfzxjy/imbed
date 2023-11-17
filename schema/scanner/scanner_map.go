@@ -1,5 +1,7 @@
 package schemascanner
 
+import "github.com/hsfzxjy/imbed/core/pos"
+
 type mapScanner[V any] struct {
 	m map[string]V
 	Void
@@ -19,4 +21,4 @@ func (m mapScanner[V]) IterKV(f func(string, Scanner) error) error {
 	return nil
 }
 
-func (m mapScanner[V]) MapSize() (int, error) { return len(m.m), nil }
+func (m mapScanner[V]) MapSize() (int, pos.P, error) { return len(m.m), pos.P{}, nil }

@@ -1,33 +1,38 @@
 package parser
 
 import (
-	"fmt"
 	"math/big"
 	"strconv"
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/hsfzxjy/imbed/core/pos"
 )
 
 type state struct {
 	i       int
-	lastErr struct {
-		error
-		span
-	}
+	lastErr parseError
 }
 
 type Parser struct {
 	buf string
 	state
+	posSource pos.Source
 }
 
 func New(input []string) *Parser {
-	buf := strings.Join(input, " ")
-	return &Parser{buf: buf}
+	return NewString(strings.Join(input, " "))
 }
+
 func NewString(input string) *Parser {
-	return &Parser{buf: input}
+	p := &Parser{buf: input}
+	p.posSource.FmtFunc = p.fmtFunc
+	return p
+}
+
+func (p *Parser) Pos(off int) pos.P {
+	return pos.New(&p.posSource, uint32(p.i), uint32(p.i+off))
 }
 
 func (p *Parser) advance(off int) {
@@ -41,10 +46,6 @@ func (p *Parser) current() string {
 	return p.buf[p.i:]
 }
 
-func (p *Parser) span(off int) span {
-	return span{p.i, p.i + off}
-}
-
 func (p *Parser) PeekByte() byte {
 	if p.EOF() {
 		return 0
@@ -52,57 +53,64 @@ func (p *Parser) PeekByte() byte {
 	return p.buf[p.i]
 }
 
-func (p *Parser) Byte(b byte) (ok bool) {
+func (p *Parser) Byte(b byte) (pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	p.lastErr.Clear()
+	pos = p.Pos(0)
 	if s := p.current(); s != "" && s[0] == b {
+		pos.ExtendEnd(1)
 		p.advance(1)
 		ok = true
 	} else {
-		p.setLastErr(byteError(b))
+		p.lastErr.SetByteError(byteError(b))
 	}
 	return
 }
 
-func (p *Parser) Term(term string) (ok bool) {
+func (p *Parser) Term(term string) (pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	p.lastErr.Clear()
+	pos = p.Pos(0)
 	if s := p.current(); s != "" && strings.HasPrefix(s, term) {
+		pos.ExtendEnd(len(term))
 		p.advance(len(term))
 		ok = true
 	} else {
-		p.setLastErr(termError(term))
+		p.lastErr.SetTermError(termError(term))
 	}
 	return
 }
 
-func (p *Parser) AnyByte(charset string) (matched byte, ok bool) {
+func (p *Parser) AnyByte(charset string) (matched byte, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	p.lastErr.Clear()
+	pos = p.Pos(0)
 	if s := p.current(); s != "" {
 		if b := s[0]; strings.IndexByte(charset, b) >= 0 {
+			pos = p.Pos(1)
 			p.advance(1)
 			matched, ok = b, true
 			return
 		}
 	}
-	p.setLastErr(anyByteError(charset))
+	p.lastErr.SetAnyByteError(anyByteError(charset))
 	return
 }
 
-func (p *Parser) Space() {
+func (p *Parser) Space() (pos pos.P) {
 	if p == nil {
 		return
 	}
+	pos = p.Pos(0)
 	buf := p.buf
 	i := p.i
-	p.ClearLastErr()
+	p.lastErr.Clear()
 LOOP:
 	for i < len(buf) {
 		r, size := utf8.DecodeRuneInString(buf[i:])
@@ -113,15 +121,18 @@ LOOP:
 			break LOOP
 		}
 		i += size
+		pos.ExtendEnd(size)
 	}
 	p.i = i
+	return
 }
 
-func (p *Parser) Int64() (value int64, ok bool) {
+func (p *Parser) Int64() (value int64, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	p.lastErr.Clear()
+	pos = p.Pos(0)
 	s := p.current()
 	var off int
 LOOP:
@@ -133,25 +144,26 @@ LOOP:
 			break LOOP
 		}
 	}
-	p.setLastErrSpan(p.span(off))
+	pos.ExtendEnd(off)
 	if off == 0 {
-		p.setLastErrString("expect 64-bit integer (e.g. '42')")
+		p.lastErr.SetMsgError("expect 64-bit integer (e.g. '42')")
 		return
 	}
 	if x, err := strconv.ParseInt(s[:off], 10, 64); err == nil {
 		value, ok = x, true
 		p.advance(off)
 	} else {
-		p.setLastErr(numError{err})
+		p.lastErr.SetNumError(err)
 	}
 	return
 }
 
-func (p *Parser) Rat() (value *big.Rat, ok bool) {
+func (p *Parser) Rat() (value *big.Rat, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	pos = p.Pos(0)
+	p.lastErr.Clear()
 	s := p.current()
 	var off int
 	if off < len(s) && s[off] == '-' {
@@ -170,25 +182,26 @@ func (p *Parser) Rat() (value *big.Rat, ok bool) {
 			break
 		}
 	}
-	p.setLastErrSpan(p.span(off))
+	pos.ExtendEnd(off)
 	if off == 0 {
-		p.setLastErrString("expect rational number (e.g. '3/5', '3.14')")
+		p.lastErr.SetMsgError("expect rational number (e.g. '3/5', '3.14')")
 		return
 	}
 	if rat, good := new(big.Rat).SetString(s[:off]); good {
 		value, ok = rat, true
 		p.advance(off)
 	} else {
-		p.setLastErrString("illegal rational number")
+		p.lastErr.SetMsgError("illegal rational number")
 	}
 	return
 }
 
-func (p *Parser) Tag() (value string, ok bool) {
+func (p *Parser) Tag() (value string, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	pos = p.Pos(0)
+	p.lastErr.Clear()
 	s := p.current()
 	var off int
 LOOP:
@@ -203,10 +216,9 @@ LOOP:
 		}
 	}
 
-	p.setLastErrSpan(p.span(off))
-
+	pos.ExtendEnd(off)
 	if off == 0 {
-		p.setLastErrString("expect tag (e.g. 'foo.png-v1')")
+		p.lastErr.SetMsgError("expect tag (e.g. 'foo.png-v1')")
 		return
 	}
 
@@ -215,11 +227,12 @@ LOOP:
 	return
 }
 
-func (p *Parser) Ident() (value string, ok bool) {
+func (p *Parser) Ident() (value string, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	pos = p.Pos(0)
+	p.lastErr.Clear()
 	s := p.current()
 	var off int
 LOOP:
@@ -234,10 +247,9 @@ LOOP:
 		}
 	}
 
-	p.setLastErrSpan(p.span(off))
-
+	pos.ExtendEnd(off)
 	if off == 0 {
-		p.setLastErrString("expect identifier (e.g. 'foo.bar')")
+		p.lastErr.SetMsgError("expect identifier (e.g. 'foo.bar')")
 		return
 	}
 
@@ -250,14 +262,15 @@ LOOP:
 // the beginning.
 // Unquoted string stops when encountering white spaces or any rune
 // in stopRunes.
-func (p *Parser) String(stopRunes string) (value string, ok bool) {
+func (p *Parser) String(stopRunes string) (value string, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	pos = p.Pos(0)
+	p.lastErr.Clear()
 	s := p.current()
 	if len(s) == 0 {
-		p.setLastErrString("expect string")
+		p.lastErr.SetMsgError("expect string")
 		return
 	}
 	switch s[0] {
@@ -272,7 +285,7 @@ func (p *Parser) String(stopRunes string) (value string, ok bool) {
 	}
 }
 
-func (p *Parser) quotedString(closing rune) (value string, ok bool) {
+func (p *Parser) quotedString(closing rune) (value string, pos pos.P, ok bool) {
 	s := p.current()
 	var (
 		off      int = 1
@@ -326,9 +339,9 @@ LOOP:
 			}
 		}
 	}
-	p.setLastErrSpan(p.span(off))
+	pos = p.Pos(off)
 	if !closed {
-		p.setLastErr(fmt.Errorf("expect %q, string unclosed", closing))
+		p.lastErr.SetUnclosedStringError(byte(closing))
 		return
 	}
 	value, ok = b.String(), true
@@ -336,7 +349,8 @@ LOOP:
 	return
 }
 
-func (p *Parser) unquotedString(stopRunes string) (value string, ok bool) {
+func (p *Parser) unquotedString(stopRunes string) (value string, pos pos.P, ok bool) {
+	pos = p.Pos(0)
 	s := p.current()
 	var off int
 LOOP:
@@ -353,9 +367,9 @@ LOOP:
 			off += size
 		}
 	}
-	p.setLastErrSpan(p.span(off))
+	pos.ExtendEnd(off)
 	if off == 0 {
-		p.setLastErrString("expect string")
+		p.lastErr.SetMsgError("expect string")
 		return
 	}
 	value, ok = s[:off], true
@@ -363,32 +377,25 @@ LOOP:
 	return
 }
 
-func (p *Parser) Bool() (value, ok bool) {
+func (p *Parser) Bool() (value bool, pos pos.P, ok bool) {
 	if p == nil {
 		return
 	}
-	p.ClearLastErr()
+	p.lastErr.Clear()
+	pos = p.Pos(0)
 	s := p.current()
 	if len(s) >= 4 && s[:4] == "true" {
 		value, ok = true, true
-		p.setLastErrSpan(p.span(4))
+		pos.ExtendEnd(4)
 		p.advance(4)
 	} else if len(s) >= 5 && s[:5] == "false" {
 		value, ok = false, true
-		p.setLastErrSpan(p.span(5))
+		pos.ExtendEnd(5)
 		p.advance(5)
 	} else {
-		p.setLastErrString("expect 'true' or 'false'")
+		p.lastErr.SetMsgError("expect 'true' or 'false'")
 	}
 	return
-}
-
-func (p *Parser) Rest() string {
-	p.ClearLastErr()
-	result := p.current()
-	p.setLastErrSpan(p.span(len(p.buf)))
-	p.i = len(p.buf)
-	return result
 }
 
 func (p *Parser) EOF() bool {

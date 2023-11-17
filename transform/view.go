@@ -1,6 +1,7 @@
 package transform
 
 import (
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/core/ref/lazy"
 	"github.com/hsfzxjy/imbed/db"
@@ -10,9 +11,10 @@ import (
 )
 
 type view[C any, P ParamFor[C]] struct {
-	md     *metadata[C, P]
-	params P
-	cfgOpt cfgf.Opt
+	md        *metadata[C, P]
+	params    P
+	paramsPos pos.P
+	cfgOpt    cfgf.Opt
 }
 
 func (r *view[C, P]) Name() string {
@@ -48,9 +50,10 @@ func (r *view[C, P]) buildConfig(cp ConfigProvider) (C, db.ConfigTpl, error) {
 		if err != nil {
 			return cfg, tpl, err
 		}
-		cfg, err = r.md.configSchema.ScanFrom(scanner)
+		var pos pos.P
+		cfg, pos, err = r.md.configSchema.ScanFrom(scanner)
 		if err != nil {
-			return cfg, tpl, err
+			return cfg, tpl, pos.WrapError(err)
 		}
 		tpl = db.ConfigTpl{O: lazy.DataFunc(func() []byte {
 			var w fastbuf.W
@@ -71,9 +74,10 @@ func (r *view[C, P]) Build(cp ConfigProvider) (*stepAtom, error) {
 		return nil, err
 	}
 	return &stepAtom{
-		Name:     r.md.name,
-		Applier:  applier,
-		Category: r.md.category,
+		Name:      r.md.name,
+		Applier:   applier,
+		Category:  r.md.category,
+		paramsPos: r.paramsPos,
 		model: db.StepTpl{
 			Config: cfgTpl,
 			Params: lazy.DataFuncSHAFunc(func() []byte {

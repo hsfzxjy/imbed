@@ -4,6 +4,7 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -34,27 +35,30 @@ func (s *_Map[V]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Map[V]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
-	n, err := r.MapSize()
+func (s *_Map[V]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
+	n, mapPos, err := r.MapSize()
 	if err != nil {
-		return newError(err)
+		return mapPos, newError(err)
 	}
 	size := int(n)
 	ret := make(map[string]V, size)
+	var elemPos pos.P
 	err = r.IterKV(func(key string, r Scanner) error {
 		var value V
-		err := s.valueSchema.scanFrom(r, unsafe.Pointer(&value))
+		p, err := s.valueSchema.scanFrom(r, unsafe.Pointer(&value))
 		if err != nil {
 			return err.AppendPath(key).AsError()
 		}
+		elemPos = p
+		mapPos = mapPos.Add(p)
 		ret[key] = value
 		return nil
 	})
 	if err != nil {
-		return newError(err)
+		return elemPos, newError(err)
 	}
 	*(*map[string]V)(target) = ret
-	return nil
+	return mapPos, nil
 }
 
 func (s *_Map[V]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {

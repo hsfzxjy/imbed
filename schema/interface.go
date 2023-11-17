@@ -4,11 +4,12 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type Schema[T any] interface {
-	ScanFrom(r Scanner) (T, error)
+	ScanFrom(r Scanner) (T, pos.P, error)
 	DecodeMsg(r *fastbuf.R) (T, error)
 	EncodeMsg(w *fastbuf.W, source T)
 	Visit(v Visitor, source T) error
@@ -21,7 +22,7 @@ type schema[T any] interface {
 }
 
 type genericSchema interface {
-	scanFrom(r Scanner, target unsafe.Pointer) *schemaError
+	scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError)
 	decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError
 	encodeMsg(w *fastbuf.W, source unsafe.Pointer)
 	visit(v Visitor, source unsafe.Pointer) *schemaError

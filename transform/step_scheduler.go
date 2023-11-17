@@ -26,8 +26,10 @@ type schedulerState struct {
 }
 
 func (ss *schedulerState) saveStep(span span, appliers []Applier) {
+	range_ := ss.Sal.rangeSpan(span)
 	step := &step{
-		atoms:        ss.Sal.Range(span),
+		atoms:        range_,
+		pos:          range_.getPos(),
 		globalOffset: span.Start,
 		Appliers:     appliers,
 	}
@@ -53,6 +55,7 @@ func (ss *schedulerState) extendLastNT(span span, appliers []Applier) {
 	lastNT := ss.lastNT
 	lastNT.Appliers = append(lastNT.Appliers, appliers...)
 	lastNT.atoms = lastNT.atoms[:len(lastNT.atoms)+span.Len()]
+	lastNT.pos = lastNT.pos.Add(ss.Sal.rangeSpan(span).getPos())
 }
 
 type scheduler struct {
@@ -119,7 +122,7 @@ func (s scheduler) Assemble() (stepSet, error) {
 
 func (s *scheduler) resolveAppliers(span span) ([]Applier, error) {
 	var ret = make([]Applier, 0, span.Len())
-	for _, t := range s.Sal.Range(span) {
+	for _, t := range s.Sal.rangeSpan(span) {
 		ret = append(ret, t.Applier)
 	}
 	if span.Len() > 1 {

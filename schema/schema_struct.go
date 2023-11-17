@@ -8,6 +8,7 @@ import (
 	"sync"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -51,13 +52,15 @@ func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
 	}
 }
 
-func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
+func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
 	var seen = map[string]struct{}{}
 	var normalScan = true
+	var err *schemaError
+	var structPos pos.P
 	if s.mainField != nil {
 		mainScanner := r.UnnamedField()
 		if mainScanner != nil {
-			err := s.mainField.scanFrom(mainScanner, target)
+			structPos, err = s.mainField.scanFrom(mainScanner, target)
 			if err == nil {
 				normalScan = false
 				seen[s.mainField.Name()] = struct{}{}
@@ -65,12 +68,14 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 		}
 	}
 	if normalScan {
-		err := r.IterField(func(name string, r Scanner) error {
+		var fieldPos pos.P
+		err := r.IterField(func(name string, r Scanner, namePos pos.P) error {
 			f, ok := s.m[name]
 			if !ok {
 				return unexpectedField(name)
 			}
-			err := f.scanFrom(r, target)
+			fieldPos, err = f.scanFrom(r, target)
+			structPos = structPos.Add(fieldPos)
 			if err != nil {
 				if !errors.Is(err.AsError(), ErrRequired) {
 					return err.AsError()
@@ -81,14 +86,14 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 			return nil
 		})
 		if err != nil {
-			return newError(err).AppendPath(s.name)
+			return fieldPos, newError(err).AppendPath(s.name)
 		}
 	}
 	for _, f := range s.fields {
 		if _, ok := seen[f.Name()]; !ok {
 			err := f.setDefault(target)
 			if err != nil {
-				return err.AppendPath(s.name)
+				return structPos, err.AppendPath(s.name)
 			}
 		}
 	}
@@ -97,11 +102,11 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 		if ok {
 			err := validator.Validate()
 			if err != nil {
-				return newError(validation(err)).AppendPath(s.name)
+				return structPos, newError(validation(err)).AppendPath(s.name)
 			}
 		}
 	}
-	return nil
+	return structPos, nil
 }
 
 func (s *_Struct[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {

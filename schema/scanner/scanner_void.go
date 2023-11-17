@@ -1,18 +1,22 @@
 package schemascanner
 
-import "math/big"
+import (
+	"math/big"
+
+	"github.com/hsfzxjy/imbed/core/pos"
+)
 
 type Void struct{}
 
-func (Void) Bool() (bool, error) {
+func (Void) Bool() (bool, pos.P, error) {
 	panic("unimplemented")
 }
 
-func (Void) Rat() (*big.Rat, error) {
+func (Void) Rat() (*big.Rat, pos.P, error) {
 	panic("unimplemented")
 }
 
-func (Void) Int64() (int64, error) {
+func (Void) Int64() (int64, pos.P, error) {
 	panic("unimplemented")
 }
 
@@ -24,7 +28,7 @@ func (Void) IterKV(func(key string, value Scanner) error) error {
 	panic("unimplemented")
 }
 
-func (Void) IterField(func(name string, field Scanner) error) error {
+func (Void) IterField(func(name string, field Scanner, pos pos.P) error) error {
 	panic("unimplemented")
 }
 
@@ -32,15 +36,15 @@ func (Void) UnnamedField() Scanner {
 	return nil
 }
 
-func (Void) ListSize() (int, error) {
+func (Void) ListSize() (int, pos.P, error) {
 	panic("unimplemented")
 }
 
-func (Void) MapSize() (int, error) {
+func (Void) MapSize() (int, pos.P, error) {
 	panic("unimplemented")
 }
 
-func (Void) String() (string, error) {
+func (Void) String() (string, pos.P, error) {
 	panic("unimplemented")
 }
 

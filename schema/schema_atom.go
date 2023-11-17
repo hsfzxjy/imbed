@@ -6,13 +6,14 @@ import (
 	"math/big"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _AtomVTable[T comparable] struct {
 	typeName      string
 	decodeMsgFunc func(r *fastbuf.R) (T, error)
-	scanFromFunc  func(r Scanner) (T, error)
+	scanFromFunc  func(r Scanner) (T, pos.P, error)
 	encodeMsgFunc func(w *fastbuf.W, value T) *fastbuf.W
 	visitFunc     func(v Visitor, value T, isDefault bool) error
 	cmpFunc       func(a, b T) int
@@ -32,19 +33,19 @@ func (s *_Atom[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Atom[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
-	val, err := s.scanFromFunc(r)
+func (s *_Atom[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
+	val, pos, err := s.scanFromFunc(r)
 	if err != nil {
 		if !errors.Is(err, ErrRequired) {
-			return newError(err)
+			return pos, newError(err)
 		}
 		if !s.def.IsValid {
-			return newError(ErrRequired)
+			return pos, newError(ErrRequired)
 		}
 		val = s.def.Value
 	}
 	*(*T)(target) = val
-	return nil
+	return pos, nil
 }
 
 func (s *_Atom[T]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {

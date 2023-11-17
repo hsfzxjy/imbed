@@ -31,7 +31,7 @@ func ExampleNew() {
 		schema.F("str", &x.string, schema.String())).
 		DebugName("X")
 	sch := schema.New(s)
-	x, err := sch.ScanFrom(schemascanner.Any(map[string]any{
+	x, _, err := sch.ScanFrom(schemascanner.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
 		"m":     map[string]any{"a": int64(1)},

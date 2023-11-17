@@ -4,6 +4,7 @@ import (
 	"io"
 	"unsafe"
 
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
@@ -32,17 +33,17 @@ func (s *_Ptr[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Ptr[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
+func (s *_Ptr[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaError) {
 	holder := new(T)
-	err := s.elemSchema.scanFrom(r, unsafe.Pointer(holder))
+	pos, err := s.elemSchema.scanFrom(r, unsafe.Pointer(holder))
 	if err != nil {
 		err = s.setDefault(unsafe.Pointer(&holder))
 		if err != nil {
-			return err
+			return pos, err
 		}
 	}
 	*(**T)(target) = holder
-	return nil
+	return pos, nil
 }
 
 func (s *_Ptr[T]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {

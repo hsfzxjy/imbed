@@ -5,6 +5,7 @@ import (
 
 	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
 	"github.com/hsfzxjy/imbed/util"
@@ -75,7 +76,7 @@ func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 		transSeq = a.transform.Model()
 	} else {
 		// this is an external asset, try not duplicate in DB
-		it, err := assetq.ByFHash(ndl.RawFull(fhash.RawString())).RunR(ctx)
+		it, err := assetq.ByFHash(ndl.RawFull(fhash.RawString(), pos.P{})).RunR(ctx)
 		if err == nil && it.HasNext() {
 			model := it.Next()
 			if model.IsErr() {
