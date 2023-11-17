@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var gaussianBlurSchema = schema.StructFunc(func(prototype *gaussianBlur) *schema.StructBuilder[gaussianBlur] {
@@ -13,6 +13,6 @@ var gaussianBlurSchema = schema.StructFunc(func(prototype *gaussianBlur) *schema
 	).DebugName("gaussianBlur")
 })
 
-func (x *gaussianBlur) EncodeMsg(w *msgp.Writer) error {
-	return gaussianBlurSchema.Build().EncodeMsg(w, x)
+func (x *gaussianBlur) EncodeMsg(w *fastbuf.W) {
+	gaussianBlurSchema.Build().EncodeMsg(w, x)
 }

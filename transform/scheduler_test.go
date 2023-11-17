@@ -11,8 +11,8 @@ import (
 	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/transform"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 	"github.com/stretchr/testify/require"
-	"github.com/tinylib/msgp/msgp"
 )
 
 type Applier struct {
@@ -21,7 +21,7 @@ type Applier struct {
 }
 
 func (Applier) Apply(core.App, asset.Asset) (asset.Update, error) { return nil, nil }
-func (Applier) EncodeMsg(*msgp.Writer) error                      { return nil }
+func (Applier) EncodeMsg(*fastbuf.W)                              {}
 
 type TFListSeed struct {
 	Size, IsTerminal, ABCat, ForceTerminal uint64

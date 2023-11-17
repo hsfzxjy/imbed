@@ -1,27 +1,24 @@
 package revparse
 
 import (
-	"bytes"
 	"strings"
 
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/transform"
-	"github.com/tinylib/msgp/msgp"
 )
 
-func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error) {
+func Solve(ctx db.Context, models []*db.AssetModel, registry *transform.Registry) (string, error) {
 	var builder strings.Builder
 	first := true
 	for i, model := range models {
 		if i == 0 {
-			builder.WriteString("db.oid@")
-			builder.WriteString(model.OID.FmtHumanize())
+			builder.WriteString("sha@")
+			builder.WriteString(model.SHA.FmtHumanize())
 			builder.WriteString(" ")
 		}
-		buf := bytes.NewBuffer(model.TransSeqRaw)
-		r := msgp.NewReader(buf)
-		for buf.Len() > 0 || r.Buffered() > 0 {
-			t, err := registry.DecodeMsg(r)
+		decoded := model.StepListData.Decode()
+		for _, x := range decoded {
+			view, err := registry.DecodeMsg(x)
 			if err != nil {
 				return "", err
 			}
@@ -29,11 +26,11 @@ func Solve(models []*db.AssetModel, registry *transform.Registry) (string, error
 				builder.WriteString(", ")
 			}
 			first = false
-			builder.WriteString(t.Metadata().Name())
+			builder.WriteString(view.Name())
 			builder.WriteByte('@')
 			v := NewVisitor(&builder)
-			builder.WriteString(t.ConfigHash().FmtHumanize())
-			err = t.Visit(v)
+			builder.WriteString(view.ConfigHash(ctx).FmtHumanize())
+			err = view.VisitParams(v)
 			if err != nil {
 				return "", err
 			}

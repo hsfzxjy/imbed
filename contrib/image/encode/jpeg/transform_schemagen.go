@@ -4,7 +4,7 @@ package jpeg
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var ApplierSchema = schema.StructFunc(func(prototype *Applier) *schema.StructBuilder[Applier] {
@@ -13,8 +13,8 @@ var ApplierSchema = schema.StructFunc(func(prototype *Applier) *schema.StructBui
 	).DebugName("Applier")
 })
 
-func (x *Applier) EncodeMsg(w *msgp.Writer) error {
-	return ApplierSchema.Build().EncodeMsg(w, x)
+func (x *Applier) EncodeMsg(w *fastbuf.W) {
+	ApplierSchema.Build().EncodeMsg(w, x)
 }
 
 var ConfigSchema = schema.StructFunc(func(prototype *Config) *schema.StructBuilder[Config] {
@@ -23,8 +23,8 @@ var ConfigSchema = schema.StructFunc(func(prototype *Config) *schema.StructBuild
 	).DebugName("image.encode.jpeg#Config")
 })
 
-func (x *Config) EncodeMsg(w *msgp.Writer) error {
-	return ConfigSchema.Build().EncodeMsg(w, x)
+func (x *Config) EncodeMsg(w *fastbuf.W) {
+	ConfigSchema.Build().EncodeMsg(w, x)
 }
 
 var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuilder[Params] {
@@ -33,6 +33,6 @@ var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuild
 	).DebugName("image.encode.jpeg#Params")
 })
 
-func (x *Params) EncodeMsg(w *msgp.Writer) error {
-	return ParamsSchema.Build().EncodeMsg(w, x)
+func (x *Params) EncodeMsg(w *fastbuf.W) {
+	ParamsSchema.Build().EncodeMsg(w, x)
 }

@@ -6,14 +6,14 @@ import (
 	"math/big"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _AtomVTable[T comparable] struct {
 	typeName      string
-	decodeMsgFunc func(r *msgp.Reader) (T, error)
+	decodeMsgFunc func(r *fastbuf.R) (T, error)
 	scanFromFunc  func(r Scanner) (T, error)
-	encodeMsgFunc func(w *msgp.Writer, value T) error
+	encodeMsgFunc func(w *fastbuf.W, value T) *fastbuf.W
 	visitFunc     func(v Visitor, value T, isDefault bool) error
 	cmpFunc       func(a, b T) int
 }
@@ -23,7 +23,7 @@ type _Atom[T comparable] struct {
 	*_AtomVTable[T]
 }
 
-func (s *_Atom[T]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
+func (s *_Atom[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	val, err := s.decodeMsgFunc(r)
 	if err != nil {
 		return newError(err)
@@ -47,8 +47,8 @@ func (s *_Atom[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Atom[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
-	return newError(s.encodeMsgFunc(w, (*(*T)(source))))
+func (s *_Atom[T]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
+	s.encodeMsgFunc(w, (*(*T)(source)))
 }
 
 func (s *_Atom[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {
@@ -95,9 +95,9 @@ type _Int = _Atom[int64]
 
 var _VTableInt = &_AtomVTable[int64]{
 	typeName:      "int64",
-	decodeMsgFunc: (*msgp.Reader).ReadInt64,
+	decodeMsgFunc: (*fastbuf.R).ReadInt64,
 	scanFromFunc:  (Scanner).Int64,
-	encodeMsgFunc: (*msgp.Writer).WriteInt64,
+	encodeMsgFunc: (*fastbuf.W).WriteInt64,
 	visitFunc:     Visitor.VisitInt64,
 }
 
@@ -107,9 +107,9 @@ type _String = _Atom[string]
 
 var _VTableString = &_AtomVTable[string]{
 	typeName:      "string",
-	decodeMsgFunc: (*msgp.Reader).ReadString,
+	decodeMsgFunc: (*fastbuf.R).ReadString,
 	scanFromFunc:  (Scanner).String,
-	encodeMsgFunc: (*msgp.Writer).WriteString,
+	encodeMsgFunc: (*fastbuf.W).WriteString,
 	visitFunc:     Visitor.VisitString,
 }
 
@@ -119,9 +119,9 @@ type _Bool = _Atom[bool]
 
 var _VTableBool = &_AtomVTable[bool]{
 	typeName:      "bool",
-	decodeMsgFunc: (*msgp.Reader).ReadBool,
+	decodeMsgFunc: (*fastbuf.R).ReadBool,
 	scanFromFunc:  (Scanner).Bool,
-	encodeMsgFunc: (*msgp.Writer).WriteBool,
+	encodeMsgFunc: (*fastbuf.W).WriteBool,
 	visitFunc:     Visitor.VisitBool,
 }
 

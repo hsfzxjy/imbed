@@ -40,6 +40,9 @@ func matchSchemagen(cg *ast.CommentGroup) (string, bool) {
 func main() {
 	fset := token.NewFileSet()
 	filename := os.Getenv("GOFILE")
+	dir, err := os.Getwd()
+	check(err)
+	println(filename, dir)
 	f, err := parser.ParseFile(fset, filename, nil, parser.ParseComments)
 	check(err)
 	var printer Printer
@@ -147,6 +150,8 @@ func handleFieldType(ftyp ast.Expr, typeHint string) (typname, cntr string, succ
 			goto DESCEND
 		}
 		cntr = "schema.Rat()"
+		success = true
+		return
 	DESCEND:
 		tname, c, ok := handleFieldType(ftyp.X, "")
 		if !ok {
@@ -195,7 +200,7 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string, imports map
 		return
 	}
 	imports["github.com/hsfzxjy/imbed/schema"] = struct{}{}
-	imports["github.com/tinylib/msgp/msgp"] = struct{}{}
+	imports["github.com/hsfzxjy/imbed/util/fastbuf"] = struct{}{}
 	printer.
 		Printfln("var %[1]sSchema = schema.StructFunc(func(prototype *%[1]s) *schema.StructBuilder[%[1]s] {", name).
 		Printfln("return schema.Struct(prototype,")
@@ -254,8 +259,8 @@ func handleDecl(printer *Printer, gd *ast.GenDecl, debugName string, imports map
 	printer.
 		Printfln(").DebugName(%q)", debugName).
 		Printfln("})\n").
-		Printfln("func (x*%s)EncodeMsg(w *msgp.Writer)error{", name).
-		Printfln("return %sSchema.Build().EncodeMsg(w, x)", name).
+		Printfln("func (x*%s)EncodeMsg(w *fastbuf.W) {", name).
+		Printfln("%sSchema.Build().EncodeMsg(w, x)", name).
 		Printfln("}\n")
 }
 

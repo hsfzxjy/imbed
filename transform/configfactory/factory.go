@@ -1,17 +1,17 @@
 package cfgf
 
 import (
-	"bytes"
-
 	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/db"
+	"github.com/hsfzxjy/imbed/db/configq"
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type Factory interface {
-	ConfigHash() ref.Sha256Hash
+	ConfigHash(ctx db.Context) ref.Sha256
 	CreateConfig(cp core.ConfigProvider) (any, error)
 }
 
@@ -28,7 +28,7 @@ type fromWorkspace struct {
 	schema.GenericSchema
 }
 
-func (b *fromWorkspace) ConfigHash() (zero ref.Sha256Hash) {
+func (b *fromWorkspace) ConfigHash(ctx db.Context) (zero ref.Sha256) {
 	return
 }
 
@@ -51,7 +51,7 @@ type withNeedle struct {
 	needle ndl.Needle
 }
 
-func (b *withNeedle) ConfigHash() (zero ref.Sha256Hash) {
+func (b *withNeedle) ConfigHash(ctx db.Context) (zero ref.Sha256) {
 	return
 }
 
@@ -60,30 +60,34 @@ func (b *withNeedle) CreateConfig(cp core.ConfigProvider) (result any, err error
 	if err != nil {
 		return
 	}
-	cfgR := msgp.NewReader(bytes.NewReader(buf))
-	return b.GenericSchema.DecodeMsgAny(cfgR)
+	cfgR := fastbuf.R{Buf: buf}
+	return b.GenericSchema.DecodeMsgAny(&cfgR)
 }
 
-func Hash(hash ref.Sha256Hash) Opt {
+func OID(oid ref.OID) Opt {
 	return func(name string, schema schema.GenericSchema) Factory {
-		return &withHash{schema, hash}
+		return &withOID{schema, oid}
 	}
 }
 
-type withHash struct {
+type withOID struct {
 	schema.GenericSchema
-	hash ref.Sha256Hash
+	oid ref.OID
 }
 
-func (b *withHash) ConfigHash() ref.Sha256Hash {
-	return b.hash
+func (b *withOID) ConfigHash(ctx db.Context) ref.Sha256 {
+	sha, err := configq.SHAByOID(b.oid).RunR(ctx)
+	if err != nil {
+		return ref.Sha256{}
+	}
+	return sha
 }
 
-func (b *withHash) CreateConfig(cp core.ConfigProvider) (result any, err error) {
-	buf, err := cp.ProvideStockConfig(ndl.RawFull(ref.AsRawString(b.hash)))
+func (b *withOID) CreateConfig(cp core.ConfigProvider) (result any, err error) {
+	buf, err := cp.ProvideConfigByOID(b.oid)
 	if err != nil {
 		return
 	}
-	cfgR := msgp.NewReader(bytes.NewReader(buf))
-	return b.GenericSchema.DecodeMsgAny(cfgR)
+	cfgR := fastbuf.R{Buf: buf}
+	return b.GenericSchema.DecodeMsgAny(&cfgR)
 }

@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var brightnessSchema = schema.StructFunc(func(prototype *brightness) *schema.StructBuilder[brightness] {
@@ -13,6 +13,6 @@ var brightnessSchema = schema.StructFunc(func(prototype *brightness) *schema.Str
 	).DebugName("brightness")
 })
 
-func (x *brightness) EncodeMsg(w *msgp.Writer) error {
-	return brightnessSchema.Build().EncodeMsg(w, x)
+func (x *brightness) EncodeMsg(w *fastbuf.W) {
+	brightnessSchema.Build().EncodeMsg(w, x)
 }

@@ -1,8 +1,6 @@
 package cmds
 
 import (
-	"os"
-
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
@@ -33,7 +31,7 @@ func (c AddCommand) Run(app *app.App, command app.CommandSpec) error {
 		return err
 	}
 	fmter := formatter.New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw)
-	err = fmter.Exec(os.Stdout, assets)
+	err = fmter.Exec(app.Stdout(), assets)
 	if err != nil {
 		return err
 	}

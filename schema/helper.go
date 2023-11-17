@@ -1,39 +1,24 @@
 package schema
 
 import (
-	"bytes"
-
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
-func EncodeBytes[S any](schema Schema[S], value S) ([]byte, error) {
-	var buf bytes.Buffer
-	var w = msgp.NewWriter(&buf)
-	err := schema.EncodeMsg(w, value)
-	if err != nil {
-		return nil, err
-	}
-	if err = w.Flush(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+func EncodeBytes[S any](schema Schema[S], value S) []byte {
+	var w fastbuf.W
+	schema.EncodeMsg(&w, value)
+	return w.Result()
 }
 
-func EncodeBytesAny(schema GenericSchema, value any) ([]byte, error) {
-	var buf bytes.Buffer
-	var w = msgp.NewWriter(&buf)
-	err := schema.EncodeMsgAny(w, value)
-	if err != nil {
-		return nil, err
-	}
-	if err = w.Flush(); err != nil {
-		return nil, err
-	}
-	return buf.Bytes(), nil
+func EncodeBytesAny(schema GenericSchema, value any) []byte {
+	var w fastbuf.W
+	schema.EncodeMsgAny(&w, value)
+	return w.Result()
 }
 
 type GenericValue interface {
-	EncodeMsg(w *msgp.Writer) error
+	EncodeMsg(w *fastbuf.W)
+	EncodeBytes() []byte
 	Visit(visitor Visitor) error
 }
 
@@ -47,12 +32,18 @@ type Wrapped[T any] struct {
 	data   T
 }
 
-func (v *Wrapped[T]) EncodeMsg(w *msgp.Writer) error {
-	return v.schema.EncodeMsg(w, v.data)
+func (v *Wrapped[T]) EncodeMsg(w *fastbuf.W) {
+	v.schema.EncodeMsg(w, v.data)
 }
 
 func (v *Wrapped[T]) Visit(visitor Visitor) error {
 	return v.schema.Visit(visitor, v.data)
+}
+
+func (v *Wrapped[T]) EncodeBytes() []byte {
+	var b fastbuf.W
+	v.schema.EncodeMsg(&b, v.data)
+	return b.Result()
 }
 
 func (v *Wrapped[T]) Get() T {

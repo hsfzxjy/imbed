@@ -4,7 +4,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _List[E any] struct {
@@ -12,9 +12,9 @@ type _List[E any] struct {
 	elemSchema schema[E]
 }
 
-func (s *_List[E]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
+func (s *_List[E]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	var ret []E
-	size, err := r.ReadArrayHeader()
+	size, err := r.ReadInt64()
 	if err != nil {
 		return newError(err)
 	}
@@ -50,19 +50,12 @@ func (s *_List[E]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_List[E]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
+func (s *_List[E]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
 	value := *(*[]E)(source)
-	err := w.WriteArrayHeader(uint32(len(value)))
-	if err != nil {
-		return newError(err)
+	w.WriteInt64(int64(len(value)))
+	for i := range value {
+		s.elemSchema.encodeMsg(w, unsafe.Pointer(&value[i]))
 	}
-	for i := 0; i < len(value); i++ {
-		err := s.elemSchema.encodeMsg(w, unsafe.Pointer(&value[i]))
-		if err != nil {
-			return err.AppendIndex(i)
-		}
-	}
-	return nil
 }
 
 func (s *_List[E]) visit(v Visitor, source unsafe.Pointer) *schemaError {

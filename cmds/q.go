@@ -1,8 +1,6 @@
 package cmds
 
 import (
-	"os"
-
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/asset"
 	"github.com/hsfzxjy/imbed/core"
@@ -36,8 +34,8 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 		return err
 	}
 
-	return app.DB().RunR(func(ctx db.Context) error {
-		it, err := query.RunR(ctx)
+	return app.DB().RunR(func(tx *db.Tx) error {
+		it, err := query.RunR(tx)
 		if err != nil {
 			return err
 		}
@@ -46,9 +44,9 @@ func (c QCommand) Run(app *app.App, command app.CommandSpec) error {
 		return formatter.
 			New(asset.FmtFields, c.fmt.Format, !c.fmt.Raw).
 			ExecIter(
-				os.Stdout,
+				app.Stdout(),
 				iter.FilterMap(sortedIt, func(m *db.AssetModel) (r tipe.Result[asset.StockAsset]) {
-					return tipe.MakeR(asset.FromDBModel(app, m, nil)(ctx))
+					return tipe.MakeR(asset.FromDBModel(app, m, nil)(tx))
 				}))
 	})
 }

@@ -1,4 +1,4 @@
-package helper
+package db
 
 import (
 	"github.com/hsfzxjy/imbed/util"
@@ -12,7 +12,7 @@ type Cursor struct {
 	cursor  *bbolt.Cursor
 }
 
-func newCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
+func NewCursor(cursor *bbolt.Cursor, seekTo []byte) *Cursor {
 	var k, v []byte
 	if seekTo != nil {
 		k, v = cursor.Seek(seekTo)
@@ -32,7 +32,7 @@ func (c *Cursor) Next() (r tipe.Result[util.KV]) {
 	if c == nil || c.current.K == nil {
 		return r.FillErr(iter.Stop)
 	}
-	r.Fill(c.current)
+	cur := c.current
 	c.current.K, c.current.V = c.cursor.Next()
-	return r
+	return tipe.Ok(cur)
 }

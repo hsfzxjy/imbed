@@ -4,8 +4,8 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 	"github.com/hsfzxjy/imbed/util/rats"
-	"github.com/tinylib/msgp/msgp"
 )
 
 var colorBalanceSchema = schema.StructFunc(func(prototype *colorBalance) *schema.StructBuilder[colorBalance] {
@@ -16,6 +16,6 @@ var colorBalanceSchema = schema.StructFunc(func(prototype *colorBalance) *schema
 	).DebugName("colorBalance")
 })
 
-func (x *colorBalance) EncodeMsg(w *msgp.Writer) error {
-	return colorBalanceSchema.Build().EncodeMsg(w, x)
+func (x *colorBalance) EncodeMsg(w *fastbuf.W) {
+	colorBalanceSchema.Build().EncodeMsg(w, x)
 }

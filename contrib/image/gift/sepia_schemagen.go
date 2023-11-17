@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var sepiaSchema = schema.StructFunc(func(prototype *sepia) *schema.StructBuilder[sepia] {
@@ -13,6 +13,6 @@ var sepiaSchema = schema.StructFunc(func(prototype *sepia) *schema.StructBuilder
 	).DebugName("sepia")
 })
 
-func (x *sepia) EncodeMsg(w *msgp.Writer) error {
-	return sepiaSchema.Build().EncodeMsg(w, x)
+func (x *sepia) EncodeMsg(w *fastbuf.W) {
+	sepiaSchema.Build().EncodeMsg(w, x)
 }

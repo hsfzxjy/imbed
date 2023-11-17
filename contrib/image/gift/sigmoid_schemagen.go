@@ -4,8 +4,8 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 	"github.com/hsfzxjy/imbed/util/rats"
-	"github.com/tinylib/msgp/msgp"
 )
 
 var sigmoidSchema = schema.StructFunc(func(prototype *sigmoid) *schema.StructBuilder[sigmoid] {
@@ -15,6 +15,6 @@ var sigmoidSchema = schema.StructFunc(func(prototype *sigmoid) *schema.StructBui
 	).DebugName("sigmoid")
 })
 
-func (x *sigmoid) EncodeMsg(w *msgp.Writer) error {
-	return sigmoidSchema.Build().EncodeMsg(w, x)
+func (x *sigmoid) EncodeMsg(w *fastbuf.W) {
+	sigmoidSchema.Build().EncodeMsg(w, x)
 }

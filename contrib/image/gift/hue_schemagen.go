@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var hueSchema = schema.StructFunc(func(prototype *hue) *schema.StructBuilder[hue] {
@@ -13,6 +13,6 @@ var hueSchema = schema.StructFunc(func(prototype *hue) *schema.StructBuilder[hue
 	).DebugName("hue")
 })
 
-func (x *hue) EncodeMsg(w *msgp.Writer) error {
-	return hueSchema.Build().EncodeMsg(w, x)
+func (x *hue) EncodeMsg(w *fastbuf.W) {
+	hueSchema.Build().EncodeMsg(w, x)
 }

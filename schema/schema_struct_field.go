@@ -5,7 +5,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _StructField struct {
@@ -23,16 +23,15 @@ func (s *_StructField) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 		AppendPath(s.name)
 }
 
-func (s *_StructField) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
+func (s *_StructField) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	return s.elemSchema.
 		decodeMsg(r, unsafe.Add(target, s.offset)).
 		AppendPath(s.name)
 }
 
-func (s *_StructField) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
-	return s.elemSchema.
-		encodeMsg(w, unsafe.Add(source, s.offset)).
-		AppendPath(s.name)
+func (s *_StructField) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
+	s.elemSchema.
+		encodeMsg(w, unsafe.Add(source, s.offset))
 }
 
 func (s *_StructField) visit(v Visitor, source unsafe.Pointer) *schemaError {

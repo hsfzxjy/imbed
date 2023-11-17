@@ -12,7 +12,6 @@ import (
 	"net/url"
 
 	"github.com/hsfzxjy/imbed/asset"
-	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
@@ -43,11 +42,12 @@ func (u *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 		return nil, err
 	}
 
-	fid, err := content.BuildFID(a.Content(), a.BaseName())
+	fhash, err := a.Content().GetHash()
 	if err != nil {
 		return nil, err
 	}
-	err = formData.WriteField("name", fid.Humanize())
+	filename := fhash.WithName(a.BaseName())
+	err = formData.WriteField("name", filename)
 	if err != nil {
 		return nil, err
 	}

@@ -2,7 +2,7 @@ package transform
 
 import (
 	"github.com/hsfzxjy/imbed/asset"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type ParamFor[C any] interface {
@@ -11,7 +11,7 @@ type ParamFor[C any] interface {
 
 type Applier interface {
 	asset.Applier
-	EncodeMsg(w *msgp.Writer) error
+	EncodeMsg(w *fastbuf.W)
 }
 
 type Composer interface {

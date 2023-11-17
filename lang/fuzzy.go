@@ -7,13 +7,13 @@ import (
 
 var (
 	fuzzyExprOid = &fuzzyExpr{
-		"db.oid@", "a hex string with length <= 64",
-		ndl.Hex, assetq.ByOid}
+		"sha@", "a hex string with length <= 64",
+		ndl.Hex, assetq.BySHA}
 	fuzzyExprFHash = &fuzzyExpr{
-		"db.fhash@", "a hex string with length <= 32",
+		"fhash@", "a hex string with length <= 32",
 		ndl.Hex, assetq.ByFHash}
 	fuzzyExprUrl = &fuzzyExpr{
-		"db.url@", "a URL string",
+		"url@", "a URL string",
 		ndl.Raw, assetq.ByUrl}
 	fuzzyExprs = fuzzyExprSet{
 		fuzzyExprOid,

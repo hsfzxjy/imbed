@@ -2,70 +2,82 @@ package ref
 
 import (
 	"io"
-	"strings"
+	"strconv"
 	"unsafe"
+
+	"github.com/hsfzxjy/imbed/formatter"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 const HUMANIZED_WIDTH = 12
 
 type Ref interface {
 	comparable
-	getInternalString() string
-	Len() int
-}
+	formatter.Humanizer
+	formatter.Stringer
 
-func (fid FID) getInternalString() string { return fid.raw }
-
-func (h Murmur3Hash) getInternalString() string { return h.raw }
-
-func (h Sha256Hash) getInternalString() string {
-	return h.raw
-}
-
-func Compare[T Ref](a, b T) int {
-	return strings.Compare(a.getInternalString(), b.getInternalString())
-}
-
-func IsEqual[T Ref](a, b T) bool {
-	return a.getInternalString() == b.getInternalString()
+	Sizeof() int
+	IsZero() bool
+	Raw() []byte
+	RawString() string
 }
 
 type fromRaw[T any] interface {
 	Ref
-	fromBytes([]byte) (T, []byte)
+	fromRaw([]byte) (T, error)
 }
 
-func FromRaw[T fromRaw[T]](p []byte) T {
+type errSizeMismatch struct{ expected, actual int }
+
+func (e errSizeMismatch) Error() string {
+	return "ref.FromRaw: input size mismatched: expected " + strconv.Itoa(e.expected) + ", actual " + strconv.Itoa(e.actual)
+}
+
+func FromRaw[T fromRaw[T]](p []byte) (T, error, []byte) {
 	var v T
-	v, p = v.fromBytes(p)
-	return v
+	if len(p) < v.Sizeof() {
+		return v, errSizeMismatch{expected: v.Sizeof(), actual: len(p)}, p
+	}
+	v, err := v.fromRaw(p[:v.Sizeof()])
+	return v, err, p[v.Sizeof():]
 }
 
-func FromRawString[T fromRaw[T]](p string) T {
+func FromRawString[T fromRaw[T]](p string) (T, error, string) {
+	v, err, rest := FromRaw[T](unsafe.Slice(unsafe.StringData(p), len(p)))
+	return v, err, unsafe.String(unsafe.SliceData(rest), len(rest))
+}
+
+func FromRawExact[T fromRaw[T]](p []byte) (T, error) {
+	v, err, rest := FromRaw[T](p)
+	if err == nil && len(rest) != 0 {
+		err = errSizeMismatch{expected: v.Sizeof(), actual: len(p)}
+	}
+	return v, err
+}
+
+func FromRawStringExact[T fromRaw[T]](p string) (T, error) {
+	v, err, rest := FromRawString[T](p)
+	if err == nil && rest != "" {
+		err = errSizeMismatch{expected: v.Sizeof(), actual: len(p)}
+	}
+	return v, err
+}
+
+func FromReader[T fromRaw[T]](r io.Reader) (T, error) {
 	var v T
-	v, _ = v.fromBytes(unsafe.Slice(unsafe.StringData(p), len(p)))
-	return v
-}
-
-func AsRaw[T Ref](v T) []byte {
-	s := v.getInternalString()
-	return unsafe.Slice(unsafe.StringData(s), len(s))
-}
-
-func AsRawString[T Ref](v T) string {
-	return v.getInternalString()
-}
-
-func FromReader[T interface {
-	fromRaw[T]
-	expectedSize() int
-}](r io.Reader) (T, error) {
-	var v T
-	var buf = make([]byte, v.expectedSize())
+	var buf = make([]byte, v.Sizeof())
 	_, err := io.ReadFull(r, buf)
 	if err != nil {
 		return v, err
 	}
-	v, _ = v.fromBytes(buf)
-	return v, nil
+	return v.fromRaw(buf)
+}
+
+func FromFastbuf[T fromRaw[T]](r *fastbuf.R) (T, error) {
+	var v T
+	buf, err := r.ReadRaw(v.Sizeof())
+	if err != nil {
+		return v, err
+	}
+	return v.fromRaw(buf)
 }

@@ -2,14 +2,11 @@ package asset
 
 import (
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/db"
 )
 
 type Transform interface {
-	// Name() string
-	// Applier
-	ref.EncodableObject
-	AssociatedConfigs() []ref.EncodableObject
+	Model() db.StepListTpl
 }
 
 type Applier interface {

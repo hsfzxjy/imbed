@@ -8,7 +8,7 @@ import (
 	"sync"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _Struct[T any] struct {
@@ -104,7 +104,7 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Struct[T]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
+func (s *_Struct[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	for _, f := range s.fields {
 		err := f.decodeMsg(r, target)
 		if err != nil {
@@ -114,14 +114,10 @@ func (s *_Struct[T]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaErr
 	return nil
 }
 
-func (s *_Struct[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
+func (s *_Struct[T]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
 	for _, f := range s.fields {
-		err := f.encodeMsg(w, source)
-		if err != nil {
-			return err.AppendPath(s.name)
-		}
+		f.encodeMsg(w, source)
 	}
-	return nil
 }
 
 func (s *_Struct[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {

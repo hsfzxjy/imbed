@@ -31,7 +31,7 @@ func (c RevCommand) Run(app *app.App, command app.CommandSpec) error {
 		return err
 	}
 	for _, s := range result {
-		fmt.Println(s)
+		fmt.Fprintln(app.Stdout(), s)
 	}
 	return nil
 }

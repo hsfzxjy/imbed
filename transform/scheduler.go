@@ -146,7 +146,6 @@ func assemble(composerm map[Category]Composer, tfList []*Transform) (root stepSe
 		if !isTerminal {
 			lastNT = step
 		}
-		step.Compute = step.compute
 	}
 	for _, span := range spans {
 		if span.IsTerminal() {

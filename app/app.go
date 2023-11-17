@@ -3,7 +3,9 @@ package app
 import (
 	"errors"
 	"fmt"
+	"io"
 	"net/url"
+	"os"
 	"path"
 	"sync"
 
@@ -15,6 +17,11 @@ import (
 	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/spf13/pflag"
+)
+
+var (
+	Stdout io.Writer = os.Stdout
+	Stderr io.Writer = os.Stderr
 )
 
 type App struct {
@@ -87,6 +94,14 @@ func ParseAndRun(cmdArgs []string, specs Commands, registry *transform.Registry)
 	}
 
 	return fmt.Errorf("no command %s", cmd)
+}
+
+func (s *App) Stdout() io.Writer {
+	return Stdout
+}
+
+func (s *App) Stderr() io.Writer {
+	return Stderr
 }
 
 func (s *App) Registry() *transform.Registry {

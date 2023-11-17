@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var rotateSchema = schema.StructFunc(func(prototype *rotate) *schema.StructBuilder[rotate] {
@@ -14,6 +14,6 @@ var rotateSchema = schema.StructFunc(func(prototype *rotate) *schema.StructBuild
 	).DebugName("rotate")
 })
 
-func (x *rotate) EncodeMsg(w *msgp.Writer) error {
-	return rotateSchema.Build().EncodeMsg(w, x)
+func (x *rotate) EncodeMsg(w *fastbuf.W) {
+	rotateSchema.Build().EncodeMsg(w, x)
 }

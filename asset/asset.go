@@ -50,7 +50,7 @@ func (a *asset) BaseName() string {
 	defer a.mu.RUnlock()
 
 	if a.model != nil {
-		return a.model.FID.Basename()
+		return a.model.Basename
 	}
 
 	return a.basename

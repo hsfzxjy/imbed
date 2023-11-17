@@ -46,7 +46,7 @@ func WithLoadFunc(f loadFunc) ContentOption {
 	return WithLoader(f)
 }
 
-func WithHash(hash ref.Murmur3Hash) ContentOption {
+func WithHash(hash ref.Murmur3) ContentOption {
 	return func(c *content) {
 		c.hash = hash
 	}

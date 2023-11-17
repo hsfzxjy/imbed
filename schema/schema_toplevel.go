@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _TopLevel[S any] struct {
@@ -46,10 +46,10 @@ func (s *_TopLevel[S]) ScanFromAny(r Scanner) (any, error) {
 	return s.ScanFrom(r)
 }
 
-func (s *_TopLevel[S]) DecodeMsg(r *msgp.Reader) (*S, error) {
+func (s *_TopLevel[S]) DecodeMsg(r *fastbuf.R) (*S, error) {
 	var target = new(S)
 	var sig sig
-	_, err := r.ReadFull(sig[:])
+	err := r.ReadFull(sig[:])
 	if err != nil {
 		return nil, newError(err).SetOp("DecodeMsg").AsError()
 	}
@@ -64,24 +64,21 @@ func (s *_TopLevel[S]) DecodeMsg(r *msgp.Reader) (*S, error) {
 	return target, nil
 }
 
-func (s *_TopLevel[S]) DecodeMsgAny(r *msgp.Reader) (any, error) {
+func (s *_TopLevel[S]) DecodeMsgAny(r *fastbuf.R) (any, error) {
 	return s.DecodeMsg(r)
 }
 
-func (s *_TopLevel[S]) EncodeMsg(w *msgp.Writer, source *S) error {
-	err := w.Append(s.sig[:]...)
-	if err != nil {
-		return newError(err).SetOp("EncodeMsg").AsError()
-	}
-	return s.encodeMsg(w, unsafe.Pointer(source)).SetOp("EncodeMsg").AsError()
+func (s *_TopLevel[S]) EncodeMsg(w *fastbuf.W, source *S) {
+	w.AppendRaw(s.sig[:])
+	s.encodeMsg(w, unsafe.Pointer(source))
 }
 
-func (s *_TopLevel[S]) EncodeMsgAny(w *msgp.Writer, source any) error {
+func (s *_TopLevel[S]) EncodeMsgAny(w *fastbuf.W, source any) {
 	v, ok := source.(*S)
 	if !ok {
-		return fmt.Errorf("expect %T, got %T", (*S)(nil), source)
+		panic(fmt.Errorf("expect %T, got %T", (*S)(nil), source))
 	}
-	return s.EncodeMsg(w, v)
+	s.EncodeMsg(w, v)
 }
 
 func (s *_TopLevel[S]) Visit(v Visitor, source *S) error {

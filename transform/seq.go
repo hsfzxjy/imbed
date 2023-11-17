@@ -1,18 +1,17 @@
 package transform
 
 import (
-	"bytes"
-	"slices"
+	"sync"
 
 	"github.com/hsfzxjy/imbed/asset/tag"
-	"github.com/hsfzxjy/imbed/core/ref"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/db"
 )
 
 type transSeq struct {
 	Seq        []*Transform
 	Start, End int
-	encodable
+	model      db.StepListTpl
+	modelOnce  sync.Once
 }
 
 func (ts *transSeq) IsTerminal() bool {
@@ -23,73 +22,16 @@ func (ts *transSeq) TagSpec() tag.Spec {
 	return ts.Seq[ts.End-1].Tag
 }
 
-func (ts *transSeq) compute() {
-	var (
-		buf     bytes.Buffer
-		w       *msgp.Writer
-		encoded []byte
-		hash    ref.Sha256Hash
-		err     error
-	)
-	w = msgp.NewWriter(&buf)
-
-	// compute encoded
-	for _, t := range ts.Seq[ts.Start:ts.End] {
-		var configHash ref.Sha256Hash
-		configHash, err = t.Config.GetSha256Hash()
-		if err != nil {
-			goto ERROR
+func (ts *transSeq) Model() db.StepListTpl {
+	ts.modelOnce.Do(func() {
+		if ts.model != nil {
+			return
 		}
-
-		err = w.Append(ref.AsRaw(configHash)...)
-		if err != nil {
-			goto ERROR
+		list := make([]*db.StepTpl, ts.End-ts.Start)
+		for i := ts.Start; i < ts.End; i++ {
+			list[i-ts.Start] = &ts.Seq[i].model
 		}
-		err = w.WriteString(t.Name)
-		if err != nil {
-			goto ERROR
-		}
-		err = t.Data.EncodeMsg(w)
-		if err != nil {
-			goto ERROR
-		}
-	}
-	err = w.Flush()
-	if err != nil {
-		goto ERROR
-	}
-	encoded = slices.Clone(buf.Bytes())
-
-	// compute hash
-	buf.Reset()
-
-	for _, t := range ts.Seq {
-		err = w.WriteString(t.Name)
-		if err != nil {
-			goto ERROR
-		}
-		err = t.Applier.EncodeMsg(w)
-		if err != nil {
-			goto ERROR
-		}
-	}
-	err = w.Flush()
-	if err != nil {
-		goto ERROR
-	}
-	hash = ref.Sha256HashSum(buf.Bytes())
-
-	ts.encoded, ts.hash = encoded, hash
-	return
-
-ERROR:
-	ts.encodeError = err
-}
-
-func (ts *transSeq) AssociatedConfigs() []ref.EncodableObject {
-	var ret = make([]ref.EncodableObject, 0, len(ts.Seq))
-	for _, t := range ts.Seq {
-		ret = append(ret, t.Config)
-	}
-	return ret
+		ts.model = db.NewStepListTpl(list, ts.Seq[ts.Start].IsTerminal())
+	})
+	return ts.model
 }

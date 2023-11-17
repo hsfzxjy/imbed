@@ -4,13 +4,13 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var grayScaleSchema = schema.StructFunc(func(prototype *grayScale) *schema.StructBuilder[grayScale] {
 	return schema.Struct(prototype).DebugName("grayScale")
 })
 
-func (x *grayScale) EncodeMsg(w *msgp.Writer) error {
-	return grayScaleSchema.Build().EncodeMsg(w, x)
+func (x *grayScale) EncodeMsg(w *fastbuf.W) {
+	grayScaleSchema.Build().EncodeMsg(w, x)
 }

@@ -5,92 +5,74 @@ import (
 
 	ndl "github.com/hsfzxjy/imbed/core/needle"
 	"github.com/hsfzxjy/imbed/core/ref"
-	"github.com/hsfzxjy/imbed/db/internal"
-	"github.com/hsfzxjy/imbed/db/internal/asset"
-	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
+	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/util"
 	"github.com/hsfzxjy/imbed/util/iter"
 	"github.com/hsfzxjy/tipe"
+	"go.etcd.io/bbolt"
 )
 
-type Model = asset.AssetModel
+type Model = db.AssetModel
 type Iterator = iter.Ator[*Model]
-type Query = internal.Runnable[Iterator]
+type Query = db.Task[Iterator]
 
-type Option = asset.NewOpt
+type Option = db.AssetOpt
 
-var WithTags = asset.WithTags
+var WithTags = db.WithTags
 
-func simpleQuery(indexName []byte, needle ndl.Needle, options []Option) Query {
-	return func(h internal.H) (Iterator, error) {
-		index := h.Bucket(indexName)
-		cursor, err := index.Cursor(needle.Bytes())
-		if err != nil {
-			return nil, err
-		}
+func simpleQuery(indexFunc func(*db.Tx) *bbolt.Bucket, needle ndl.Needle, options []Option) Query {
+	return func(tx *db.Tx) (Iterator, error) {
+		bucIndex := indexFunc(tx)
+		cursor := db.NewCursor(bucIndex.Cursor(), needle.Bytes())
 		it := iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
-			splitAt := len(kv.K) - ref.OID_LEN
+			splitAt := len(kv.K) - ref.OID{}.Sizeof()
 			if !needle.Match(kv.K[:splitAt]) {
 				return r.FillErr(iter.Stop)
 			}
-			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
+			return tipe.MakeR(db.NewFromKV(tx, kv.K, kv.V, options...))
 		})
 		return it, nil
 	}
 }
 
-func ByFID(needle ndl.Needle, options ...Option) Query {
-	return simpleQuery(bucketnames.INDEX_FID, needle, options)
-}
-
 func ByFHash(needle ndl.Needle, options ...Option) Query {
-	return simpleQuery(bucketnames.INDEX_FHASH, needle, options)
+	return simpleQuery((*db.Tx).F_FHASH_OID, needle, options)
 }
 
 func ByUrl(needle ndl.Needle, options ...Option) Query {
-	return simpleQuery(bucketnames.INDEX_URL, needle, options)
+	return simpleQuery((*db.Tx).F_URL_OID, needle, options)
 }
 
-func ByOid(needle ndl.Needle, options ...Option) Query {
-	return func(h internal.H) (Iterator, error) {
-		cursor, err := h.Bucket(bucketnames.FILES).Cursor(needle.Bytes())
-		if err != nil {
-			return nil, err
-		}
+func BySHA(needle ndl.Needle, options ...Option) Query {
+	return func(tx *db.Tx) (Iterator, error) {
+		cursor := db.NewCursor(tx.F_SHA__OID().Cursor(), needle.Bytes())
 		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
 			if !needle.Match(kv.K) {
 				return r.FillErr(iter.Stop)
 			}
-			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
+			return tipe.MakeR(db.New(tx, kv.V, options...))
 		}), nil
 	}
 }
 
-func ByDependency(fhash ref.Murmur3Hash, transSeqHash ref.Sha256Hash, options ...Option) Query {
-	return func(h internal.H) (Iterator, error) {
-		pairBytes := ref.AsRaw(ref.NewPair(fhash, transSeqHash))
-		cursor, err := h.Bucket(bucketnames.INDEX_TRANSSEQ).
-			Cursor(pairBytes)
-		if err != nil {
-			return nil, err
-		}
-		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*asset.AssetModel]) {
-			if !bytes.Equal(kv.K, pairBytes) {
+func ByDependency(fhash ref.Murmur3, transSeq db.StepListTpl, options ...Option) Query {
+	return func(tx *db.Tx) (Iterator, error) {
+		key := ref.NewPair(fhash, transSeq.MustSHA()).Sum().Raw()
+		cursor := db.NewCursor(tx.F_FHASH_TSSHA__OID().Cursor(), key)
+		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*db.AssetModel]) {
+			if !bytes.Equal(kv.K, key) {
 				return r.FillErr(iter.Stop)
 			}
-			return tipe.MakeR(asset.New(h, kv.V, options...))
+			return tipe.MakeR(db.New(tx, kv.V, options...))
 		}), nil
 	}
 }
 
 func All(options ...Option) Query {
-	return func(h internal.H) (Iterator, error) {
-		cursor, err := h.Bucket(bucketnames.FILES).Cursor(nil)
-		if err != nil {
-			return nil, err
-		}
+	return func(tx *db.Tx) (Iterator, error) {
+		cursor := db.NewCursor(tx.FILES().Cursor(), nil)
 		return iter.FilterMap(cursor, func(kv util.KV) (r tipe.Result[*Model]) {
-			return tipe.MakeR(asset.NewFromKV(h, kv.K, kv.V, options...))
+			return tipe.MakeR(db.NewFromKV(tx, kv.K, kv.V, options...))
 		}), nil
 	}
 }

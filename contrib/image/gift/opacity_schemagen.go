@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var opacitySchema = schema.StructFunc(func(prototype *opacity) *schema.StructBuilder[opacity] {
@@ -13,6 +13,6 @@ var opacitySchema = schema.StructFunc(func(prototype *opacity) *schema.StructBui
 	).DebugName("opacity")
 })
 
-func (x *opacity) EncodeMsg(w *msgp.Writer) error {
-	return opacitySchema.Build().EncodeMsg(w, x)
+func (x *opacity) EncodeMsg(w *fastbuf.W) {
+	opacitySchema.Build().EncodeMsg(w, x)
 }

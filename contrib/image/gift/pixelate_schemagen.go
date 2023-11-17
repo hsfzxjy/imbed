@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var pixelateSchema = schema.StructFunc(func(prototype *pixelate) *schema.StructBuilder[pixelate] {
@@ -13,6 +13,6 @@ var pixelateSchema = schema.StructFunc(func(prototype *pixelate) *schema.StructB
 	).DebugName("pixelate")
 })
 
-func (x *pixelate) EncodeMsg(w *msgp.Writer) error {
-	return pixelateSchema.Build().EncodeMsg(w, x)
+func (x *pixelate) EncodeMsg(w *fastbuf.W) {
+	pixelateSchema.Build().EncodeMsg(w, x)
 }

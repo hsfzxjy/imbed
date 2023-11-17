@@ -12,17 +12,17 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 		return nil, err
 	}
 	var assets []asset.Asset
-	err = c.app.DB().RunR(func(h db.Context) error {
-		cfg := configq.NewProvider(h, c.app)
+	err = c.app.DB().RunR(func(tx *db.Tx) error {
+		cfg := configq.NewProvider(tx, c.app)
 		graph, err := c.parseTransSeq(cfg)
 		if err != nil {
 			return err
 		}
-		initialAsset, err := initialLoader.Do(h)
+		initialAsset, err := initialLoader.Do(tx)
 		if err != nil {
 			return err
 		}
-		assets, err = graph.Run(h, c.app, initialAsset)
+		assets, err = graph.Run(tx, c.app, initialAsset)
 		if err != nil {
 			return err
 		}
@@ -32,8 +32,8 @@ func (c *Context) ParseRun_AddBody() ([]asset.StockAsset, error) {
 		return nil, err
 	}
 	var stockAssets []asset.StockAsset
-	err = c.app.DB().RunRW(func(h db.Context) error {
-		stockAssets, err = asset.SaveAll(h, c.app, assets)
+	err = c.app.DB().RunRW(func(tx *db.Tx) error {
+		stockAssets, err = asset.SaveAll(tx, c.app, assets)
 		return err
 	})
 	if err != nil {

@@ -3,10 +3,10 @@ package transform
 import (
 	"fmt"
 
-	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/schema"
 	cfgf "github.com/hsfzxjy/imbed/transform/configfactory"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type Registry struct {
@@ -29,7 +29,7 @@ func (r *Registry) RegisterComposer(cat Category, composer Composer) *Registry {
 	return r
 }
 
-func (r *Registry) ScanFrom(name string, scanner schema.Scanner) (*Data, error) {
+func (r *Registry) ScanFrom(name string, scanner schema.Scanner, copt cfgf.Opt) (*view, error) {
 	m, ok := r.metadataTable[name]
 	if !ok {
 		return nil, fmt.Errorf("no transform named %q", name)
@@ -38,29 +38,31 @@ func (r *Registry) ScanFrom(name string, scanner schema.Scanner) (*Data, error) 
 	if err != nil {
 		return nil, err
 	}
-	return &Data{m, params}, nil
+	return &view{
+		md:         m,
+		params:     params,
+		cfgFactory: copt(name, m.configSchema),
+	}, nil
 }
 
-func (r *Registry) DecodeMsg(reader *msgp.Reader) (*Builder, error) {
-	cfgHash, err := ref.FromReader[ref.Sha256Hash](reader)
-	if err != nil {
-		return nil, err
-	}
+func (r *Registry) DecodeMsg(stepData db.Step) (*view, error) {
+	var reader = fastbuf.R{Buf: stepData.Data}
 	name, err := reader.ReadString()
 	if err != nil {
 		return nil, err
 	}
-	metadata, ok := r.Lookup(name)
+	md, ok := r.Lookup(name)
 	if !ok {
 		return nil, fmt.Errorf("no transform named %q", name)
 	}
-	params, err := metadata.paramsSchema.DecodeMsgAny(reader)
+	params, err := md.paramsSchema.DecodeMsgAny(&reader)
 	if err != nil {
 		return nil, err
 	}
-	return &Builder{
-		&Data{metadata, params},
-		metadata.ConfigFactory(cfgf.Hash(cfgHash)),
+	return &view{
+		md:         md,
+		params:     params,
+		cfgFactory: cfgf.OID(stepData.ConfigOID)(name, md.configSchema),
 	}, nil
 }
 

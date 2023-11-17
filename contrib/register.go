@@ -7,7 +7,6 @@ import (
 	"github.com/hsfzxjy/imbed/contrib/image"
 	"github.com/hsfzxjy/imbed/contrib/upload"
 	"github.com/hsfzxjy/imbed/core"
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
@@ -27,8 +26,8 @@ func (openApplier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
 		return nil, err
 	}
 
-	fid := ref.FIDFromParts(a.BaseName(), hash)
-	filename := path.Join(app.TmpDir(), fid.Humanize())
+	fid := hash.WithName(a.BaseName())
+	filename := path.Join(app.TmpDir(), fid)
 	_, err = util.SafeWriteFile(r, filename)
 	return nil, open.Run(filename)
 }

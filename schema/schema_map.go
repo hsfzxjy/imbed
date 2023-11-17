@@ -4,7 +4,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _Map[V any] struct {
@@ -12,8 +12,8 @@ type _Map[V any] struct {
 	valueSchema schema[V]
 }
 
-func (s *_Map[V]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
-	n, err := r.ReadMapHeader()
+func (s *_Map[V]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
+	n, err := r.ReadInt64()
 	if err != nil {
 		return newError(err)
 	}
@@ -57,25 +57,13 @@ func (s *_Map[V]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Map[V]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
+func (s *_Map[V]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
 	m := *(*map[string]V)(source)
-	err := w.WriteMapHeader(uint32(len(m)))
-	if err != nil {
-		return newError(err)
-	}
+	w.WriteInt64(int64(len(m)))
 	for key, value := range m {
-		err := w.WriteString(key)
-		if err != nil {
-			return newError(err).AppendPath(key)
-		}
-		{
-			err := s.valueSchema.encodeMsg(w, unsafe.Pointer(&value))
-			if err != nil {
-				return err.AppendPath(key)
-			}
-		}
+		w.WriteString(key)
+		s.valueSchema.encodeMsg(w, unsafe.Pointer(&value))
 	}
-	return nil
 }
 
 func (s *_Map[V]) visit(v Visitor, source unsafe.Pointer) *schemaError {

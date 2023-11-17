@@ -6,7 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/hsfzxjy/imbed/asset"
-	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
@@ -20,11 +19,11 @@ type Applier struct {
 }
 
 func (t *Applier) Apply(app core.App, a asset.Asset) (asset.Update, error) {
-	fid, err := content.BuildFID(a.Content(), a.BaseName())
+	fhash, err := a.Content().GetHash()
 	if err != nil {
 		return nil, err
 	}
-	filename := fid.Humanize()
+	filename := fhash.WithName(a.BaseName())
 	filepath := path.Join(t.Path, filename)
 	r, err := a.Content().BytesReader()
 	if err != nil {

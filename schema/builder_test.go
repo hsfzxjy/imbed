@@ -1,13 +1,12 @@
 package schema_test
 
 import (
-	"bytes"
 	"fmt"
 	"math/big"
 
 	"github.com/hsfzxjy/imbed/schema"
 	schemascanner "github.com/hsfzxjy/imbed/schema/scanner"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type X struct {
@@ -44,15 +43,10 @@ func ExampleNew() {
 	}
 	fmt.Printf("%#v\n", x)
 
-	var buf bytes.Buffer
-	w := msgp.NewWriter(&buf)
-	err = sch.EncodeMsg(w, x)
-	if err != nil {
-		panic(err)
-	}
-	w.Flush()
-	r := msgp.NewReader(&buf)
-	x, err = sch.DecodeMsg(r)
+	var w fastbuf.W
+	sch.EncodeMsg(&w, x)
+	r := fastbuf.R{Buf: w.Result()}
+	x, err = sch.DecodeMsg(&r)
 	if err != nil {
 		panic(err)
 	}

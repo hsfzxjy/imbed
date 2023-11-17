@@ -7,6 +7,7 @@ import (
 	"os"
 	"path"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/hsfzxjy/imbed/app"
@@ -21,12 +22,12 @@ import (
 
 type file struct {
 	Path string
-	Hash ref.Murmur3Hash
+	Hash ref.Murmur3
 }
 
 func (f file) UploadedPath() string {
 	dir, base := path.Split(f.Path)
-	return path.Join(dir, ref.FIDFromParts(base, f.Hash).Humanize())
+	return path.Join(dir, f.Hash.WithName(base))
 }
 
 type context struct {
@@ -34,7 +35,7 @@ type context struct {
 	WorkDir string
 }
 
-func (c context) GenImage(seed int64) file {
+func (c *context) GenImage(seed int64) file {
 	im := image.NewRGBA(image.Rect(0, 0, 256, 256))
 	rng := rand.New(rand.NewSource(seed))
 	rng.Read(im.Pix)
@@ -43,11 +44,54 @@ func (c context) GenImage(seed int64) file {
 	defer f.Close()
 	util.Check(jpeg.Encode(f, im, &jpeg.Options{Quality: 100}))
 	util.Check2(f.Seek(0, 0))
-	hash := util.Unwrap(ref.Murmur3HashFromReader(f))
+	hash := util.Unwrap(ref.Murmur3FromReader(f))
 	return file{filename, hash}
 }
 
-func (c context) Run(args ...string) error {
+type resultTable struct {
+	*runResult
+	content string
+	table   map[string][]string
+}
+
+func (t *resultTable) AssertLines(expected int) *resultTable {
+	assertLines(t.t, t.content, expected)
+	return t
+}
+
+func (t *resultTable) Cell(name string, idx int, f func(string)) *resultTable {
+	f(t.table[name][idx])
+	return t
+}
+
+func newResultTable(result *runResult, output string) *resultTable {
+	lines := strings.Split(strings.TrimRight(output, "\n"), "\n")
+	headers := strings.Fields(lines[0])
+	table := make(map[string][]string)
+	for _, line := range lines[1:] {
+		fields := strings.Fields(line)
+		for i, header := range headers {
+			table[header] = append(table[header], fields[i])
+		}
+	}
+	return &resultTable{result, output, table}
+}
+
+type runResult struct {
+	*context
+	Stdout, Stderr string
+}
+
+func (r *runResult) Then(f func(r *runResult)) *runResult {
+	f(r)
+	return r
+}
+
+func (r *runResult) Table() *resultTable {
+	return newResultTable(r, r.Stdout)
+}
+
+func (c *context) Run(args ...string) (result *runResult, err error) {
 	registry := transform.NewRegistry()
 	contrib.Register(registry)
 	commands := app.Commands{}.
@@ -57,30 +101,55 @@ func (c context) Run(args ...string) error {
 		Register(cmds.RevCommand{}.Spec())
 	args = append(args, "-d", c.WorkDir)
 	args = append([]string{"imbed"}, args...)
-	return app.ParseAndRun(args, commands, registry)
+
+	oldStdout, oldStderr := app.Stdout, app.Stderr
+	stdout := &strings.Builder{}
+	stderr := &strings.Builder{}
+
+	defer func() {
+		app.Stdout, app.Stderr = oldStdout, oldStderr
+		result = &runResult{
+			c,
+			stdout.String(),
+			stderr.String(),
+		}
+		if err != nil {
+			println("-- ERROR --")
+			println(err.Error())
+		}
+		println("-- STDOUT --")
+		print(result.Stdout)
+		println("-- STDERR --")
+		print(result.Stderr)
+	}()
+
+	app.Stdout = stdout
+	app.Stderr = stderr
+	println("!!$", strings.Join(args, " "))
+	return nil, app.ParseAndRun(args, commands, registry)
 }
 
-func (c context) RunMust(args ...string) context {
-	err := c.Run(args...)
+func (c *context) RunMust(args ...string) *runResult {
+	res, err := c.Run(args...)
 	require.ErrorIs(c.t, nil, err)
-	return c
+	return res
 }
 
-func (c context) Path(parts ...string) string {
+func (c *context) Path(parts ...string) string {
 	parts = append([]string{c.WorkDir}, parts...)
 	return path.Join(parts...)
 }
 
-func setup(t *testing.T) context {
+func setup(t *testing.T) *context {
 	workDir := t.TempDir()
-	return context{WorkDir: workDir, t: t}
+
+	return &context{WorkDir: workDir, t: t}
 }
 
 func Test_Init(t *testing.T) {
 	ctx := setup(t)
 
-	err := ctx.Run("init")
-	assert.ErrorIs(t, nil, err)
+	ctx.RunMust("init")
 	assert.DirExists(t, ctx.Path(".imbed"))
 	assert.NoFileExists(t, ctx.Path(".imbed", "db"))
 	assert.FileExists(t, ctx.Path("imbed.toml"))
@@ -89,9 +158,38 @@ func Test_Init(t *testing.T) {
 func Test_Add(t *testing.T) {
 	ctx := setup(t)
 	img1 := ctx.GenImage(1)
-	err := ctx.
+	var sha string
+	var revparsed string
+	ctx.
+		//
 		RunMust("init").
-		Run("add", img1.Path, "upload.local path =", ctx.Path())
-	assert.ErrorIs(t, nil, err)
+		//
+		RunMust("add", img1.Path, "upload.local path =", ctx.Path()).
+		Table().AssertLines(2).
+		//
+		RunMust("q").
+		Table().AssertLines(3).
+		Cell("SHA", 0, func(s string) {
+			assert.Len(t, s, 12)
+			sha = s
+		}).
+		Cell("URL", 1, func(s string) {
+			assert.Equal(t, "<none>", s)
+		}).
+		//
+		RunMust("rev", "sha@"+sha).
+		Then(func(r *runResult) {
+			revparsed = strings.TrimRight(r.Stdout, "\n")
+		}).
+		//
+		RunMust("add", revparsed).
+		//
+		RunMust("q").Table().AssertLines(3)
 	assert.FileExists(t, img1.UploadedPath())
+}
+
+func assertLines(t *testing.T, str string, expected int) {
+	stripped := strings.TrimRight(str, "\n")
+	lines := strings.Split(stripped, "\n")
+	assert.Equal(t, expected, len(lines), str)
 }

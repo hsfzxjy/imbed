@@ -21,7 +21,7 @@ type LoadSizer interface {
 }
 
 type Content interface {
-	GetHash() (ref.Murmur3Hash, error)
+	GetHash() (ref.Murmur3, error)
 	BytesReader() (*bytes.Reader, error)
 	Sizer
 }
@@ -29,12 +29,4 @@ type Content interface {
 type ImageContent interface {
 	Content
 	Image() (Image, error)
-}
-
-func BuildFID(content Content, basename string) (ref.FID, error) {
-	hash, err := content.GetHash()
-	if err != nil {
-		return ref.FID{}, err
-	}
-	return ref.FIDFromParts(basename, hash), nil
 }

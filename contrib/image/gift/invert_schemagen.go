@@ -4,13 +4,13 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var invertSchema = schema.StructFunc(func(prototype *invert) *schema.StructBuilder[invert] {
 	return schema.Struct(prototype).DebugName("invert")
 })
 
-func (x *invert) EncodeMsg(w *msgp.Writer) error {
-	return invertSchema.Build().EncodeMsg(w, x)
+func (x *invert) EncodeMsg(w *fastbuf.W) {
+	invertSchema.Build().EncodeMsg(w, x)
 }

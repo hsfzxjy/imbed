@@ -26,7 +26,7 @@ func main() {
 		case errors.Is(err, pflag.ErrHelp):
 
 		default:
-			fmt.Fprintf(os.Stderr, "fatal: %s\n", err)
+			fmt.Fprintf(app.Stderr, "fatal: %s\n", err)
 		}
 		os.Exit(2)
 	}

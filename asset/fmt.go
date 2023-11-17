@@ -9,21 +9,21 @@ import (
 
 var FmtFields = []*formatter.Field[StockAsset]{
 	{
-		Name:   "oid",
-		Header: "OID",
+		Name:   "sha",
+		Header: "SHA",
 		Show:   true,
 		Getter: func(a StockAsset) any {
-			return a.Model().OID
+			return a.Model().SHA
 		},
 	},
-	{
-		Name:   "originId",
-		Header: "ORIGIN",
-		Show:   true,
-		Getter: func(a StockAsset) any {
-			return a.Model().OriginOID
-		},
-	},
+	// {
+	// 	Name:   "origSHA",
+	// 	Header: "ORIG",
+	// 	Show:   true,
+	// 	Getter: func(a StockAsset) any {
+	// 		return a.Model().OriginOID
+	// 	},
+	// },
 	{
 		Name:   "name",
 		Header: "NAME",
@@ -49,7 +49,7 @@ var FmtFields = []*formatter.Field[StockAsset]{
 		Header: "FHASH",
 		Show:   true,
 		Getter: func(a StockAsset) any {
-			return a.Model().FID.Hash()
+			return a.Model().FHash
 		},
 	},
 	{

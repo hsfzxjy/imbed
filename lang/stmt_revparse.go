@@ -15,8 +15,8 @@ func (c *Context) ParseRun_RevParseBody() ([]string, error) {
 	if query == nil {
 		return nil, c.parser.ErrorString("expect asset query")
 	}
-	err = c.app.DB().RunR(func(ctx db.Context) error {
-		it, err := assetq.Chains(query, -1).RunR(ctx)
+	err = c.app.DB().RunR(func(tx *db.Tx) error {
+		it, err := assetq.Chains(query, -1).RunR(tx)
 		if err != nil {
 			return err
 		}
@@ -25,7 +25,7 @@ func (c *Context) ParseRun_RevParseBody() ([]string, error) {
 			if model.IsErr() {
 				return err
 			}
-			parsed, err := revparse.Solve(model.Unwrap(), c.registry)
+			parsed, err := revparse.Solve(tx, model.Unwrap(), c.registry)
 			if err != nil {
 				return err
 			}

@@ -4,7 +4,7 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type _Ptr[T any] struct {
@@ -12,7 +12,7 @@ type _Ptr[T any] struct {
 	elemSchema schema[T]
 }
 
-func (s *_Ptr[T]) decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError {
+func (s *_Ptr[T]) decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError {
 	{
 		head, err := r.ReadBool()
 		if err != nil {
@@ -45,17 +45,14 @@ func (s *_Ptr[T]) scanFrom(r Scanner, target unsafe.Pointer) *schemaError {
 	return nil
 }
 
-func (s *_Ptr[T]) encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError {
+func (s *_Ptr[T]) encodeMsg(w *fastbuf.W, source unsafe.Pointer) {
 	data := (**T)(source)
 	if *data == nil {
-		return newError(w.WriteBool(false))
-	} else {
-		err := w.WriteBool(true)
-		if err != nil {
-			return newError(err)
-		}
+		w.WriteBool(false)
+		return
 	}
-	return s.elemSchema.encodeMsg(w, unsafe.Pointer(*data))
+	w.WriteBool(true)
+	s.elemSchema.encodeMsg(w, unsafe.Pointer(*data))
 }
 
 func (s *_Ptr[T]) visit(v Visitor, source unsafe.Pointer) *schemaError {

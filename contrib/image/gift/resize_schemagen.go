@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var resizeSchema = schema.StructFunc(func(prototype *resize) *schema.StructBuilder[resize] {
@@ -17,6 +17,6 @@ var resizeSchema = schema.StructFunc(func(prototype *resize) *schema.StructBuild
 	).DebugName("resize")
 })
 
-func (x *resize) EncodeMsg(w *msgp.Writer) error {
-	return resizeSchema.Build().EncodeMsg(w, x)
+func (x *resize) EncodeMsg(w *fastbuf.W) {
+	resizeSchema.Build().EncodeMsg(w, x)
 }

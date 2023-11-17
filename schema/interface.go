@@ -4,14 +4,14 @@ import (
 	"io"
 	"unsafe"
 
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type Schema[T any] interface {
 	ScanFrom(r Scanner) (T, error)
 
-	DecodeMsg(r *msgp.Reader) (T, error)
-	EncodeMsg(w *msgp.Writer, source T) error
+	DecodeMsg(r *fastbuf.R) (T, error)
+	EncodeMsg(w *fastbuf.W, source T)
 	Visit(v Visitor, source T) error
 	New() T
 	GenericSchema
@@ -20,8 +20,8 @@ type Schema[T any] interface {
 type GenericSchema interface {
 	genericSchema
 	ScanFromAny(r Scanner) (any, error)
-	DecodeMsgAny(r *msgp.Reader) (any, error)
-	EncodeMsgAny(w *msgp.Writer, source any) error
+	DecodeMsgAny(r *fastbuf.R) (any, error)
+	EncodeMsgAny(w *fastbuf.W, source any)
 	VisitAny(v Visitor, source any) error
 	NewAny() any
 	WrapAny(data any) GenericValue
@@ -35,8 +35,8 @@ type schema[T any] interface {
 
 type genericSchema interface {
 	scanFrom(r Scanner, target unsafe.Pointer) *schemaError
-	decodeMsg(r *msgp.Reader, target unsafe.Pointer) *schemaError
-	encodeMsg(w *msgp.Writer, source unsafe.Pointer) *schemaError
+	decodeMsg(r *fastbuf.R, target unsafe.Pointer) *schemaError
+	encodeMsg(w *fastbuf.W, source unsafe.Pointer)
 	visit(v Visitor, source unsafe.Pointer) *schemaError
 	setDefault(target unsafe.Pointer) *schemaError
 	hasDefault() bool

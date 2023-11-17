@@ -231,15 +231,15 @@ func Test_Parser_Term(t *testing.T) {
 			fmt.Fprintln(&out, p.ErrorString("foo").Error())
 		}
 	}
-	test(" db.oid", "db.oid")
+	test(" oid", "oid")
 	test(" '", "'")
-	test(" db.oi", "db.oid'")
+	test(" oi", "oid'")
 	expected := `
 ===
 ===
 ===
-foo: expect "db.oid'"
-	|  db.oi
+foo: expect "oid'"
+	|  oi
 	|  ^
 `
 	assert.Equal(t, dedent(expected), out.String())

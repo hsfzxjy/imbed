@@ -4,7 +4,7 @@ package gift
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var colorizeSchema = schema.StructFunc(func(prototype *colorize) *schema.StructBuilder[colorize] {
@@ -15,6 +15,6 @@ var colorizeSchema = schema.StructFunc(func(prototype *colorize) *schema.StructB
 	).DebugName("colorize")
 })
 
-func (x *colorize) EncodeMsg(w *msgp.Writer) error {
-	return colorizeSchema.Build().EncodeMsg(w, x)
+func (x *colorize) EncodeMsg(w *fastbuf.W) {
+	colorizeSchema.Build().EncodeMsg(w, x)
 }

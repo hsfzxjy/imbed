@@ -35,11 +35,11 @@ func (c *Context) parseTransSeq(cp core.ConfigProvider) (*transform.Graph, error
 		}
 		scanner.Space()
 		scanner.Byte(':')
-		data, err := c.registry.ScanFrom(name, scanner)
+		view, err := c.registry.ScanFrom(name, scanner, copt)
 		if err != nil {
 			return nil, scanner.Error(err)
 		}
-		t, err := data.AsBuilder(data.ConfigFactory(copt)).Build(cp)
+		t, err := view.Build(cp)
 		if err != nil {
 			return nil, scanner.Error(err)
 		}

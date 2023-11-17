@@ -4,7 +4,7 @@ package tiff
 
 import (
 	"github.com/hsfzxjy/imbed/schema"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 var ConfigSchema = schema.StructFunc(func(prototype *Config) *schema.StructBuilder[Config] {
@@ -14,8 +14,8 @@ var ConfigSchema = schema.StructFunc(func(prototype *Config) *schema.StructBuild
 	).DebugName("Config")
 })
 
-func (x *Config) EncodeMsg(w *msgp.Writer) error {
-	return ConfigSchema.Build().EncodeMsg(w, x)
+func (x *Config) EncodeMsg(w *fastbuf.W) {
+	ConfigSchema.Build().EncodeMsg(w, x)
 }
 
 var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuilder[Params] {
@@ -25,6 +25,6 @@ var ParamsSchema = schema.StructFunc(func(prototype *Params) *schema.StructBuild
 	).DebugName("Params")
 })
 
-func (x *Params) EncodeMsg(w *msgp.Writer) error {
-	return ParamsSchema.Build().EncodeMsg(w, x)
+func (x *Params) EncodeMsg(w *fastbuf.W) {
+	ParamsSchema.Build().EncodeMsg(w, x)
 }

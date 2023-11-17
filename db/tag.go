@@ -1,4 +1,4 @@
-package tagq
+package db
 
 import (
 	"bytes"
@@ -8,15 +8,26 @@ import (
 
 	"github.com/hsfzxjy/imbed/asset/tag"
 	"github.com/hsfzxjy/imbed/core/ref"
-	"github.com/hsfzxjy/imbed/db/internal"
-	"github.com/hsfzxjy/imbed/db/internal/bucketnames"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
-func AddTags(oid ref.OID, specs []tag.Spec) internal.Runnable[[]string] {
-	return func(h internal.H) ([]string, error) {
+func TagByOid(oid ref.OID) Task[[]string] {
+	return func(tx *Tx) ([]string, error) {
+		var results []string
+		c := tx.T_FOID_TAG().Cursor()
+		prefix := oid.Raw()
+		for k, _ := c.Seek(prefix); k != nil && bytes.HasPrefix(k, prefix); k, _ = c.Next() {
+			results = append(results, string(k[oid.Sizeof():]))
+		}
+		return results, nil
+	}
+}
+
+func AddTags(oid ref.OID, specs []tag.Spec) Task[[]string] {
+	return func(tx *Tx) ([]string, error) {
 		results := make([]string, 0, len(specs))
 		for _, spec := range specs {
-			name, err := addTag(h, oid, spec)
+			name, err := addTag(tx, oid, spec)
 			if err != nil {
 				return nil, err
 			}
@@ -26,19 +37,19 @@ func AddTags(oid ref.OID, specs []tag.Spec) internal.Runnable[[]string] {
 	}
 }
 
-func addTag(h internal.H, oid ref.OID, spec tag.Spec) (string, error) {
-	name, err := makeName(h, oid, spec)
+func addTag(tx *Tx, oid ref.OID, spec tag.Spec) (string, error) {
+	name, err := makeName(tx, oid, spec)
 	if err != nil {
 		return "", err
 	}
-	leaf := h.Bucket(bucketnames.INDEX_TAG_OID).
-		Leaf([]byte(name))
-	if leaf.IsBad() {
-		return "", h.Err()
-	}
+
+	previousOid := tx.T_TAG__OID().Get([]byte(name))
 	var previous ref.OID
-	if !leaf.IsEmpty() {
-		previous = ref.FromRaw[ref.OID](leaf.Data())
+	if previousOid != nil {
+		previous, err = ref.FromRawExact[ref.OID](previousOid)
+		if err != nil {
+			return "", err
+		}
 		if previous == oid {
 			return name, nil
 		}
@@ -51,30 +62,35 @@ func addTag(h internal.H, oid ref.OID, spec tag.Spec) (string, error) {
 			)
 		}
 	}
-	leaf.SetData(ref.AsRaw(oid))
-	b2 := h.Bucket(bucketnames.INDEX_OID_TAG)
-	buf := make([]byte, ref.OID_LEN+len(name))
-	copy(buf[ref.OID_LEN:], name)
-	copy(buf[:ref.OID_LEN], ref.AsRaw(oid))
-	b2.UpdateLeaf(buf, []byte{1})
-	if !previous.IsZero() {
-		copy(buf[:ref.OID_LEN], ref.AsRaw(previous))
-		b2.DeleteLeaf(buf)
+	if err := tx.T_TAG__OID().Put([]byte(name), oid.Raw()); err != nil {
+		return "", err
 	}
-	return name, h.Err()
+	var sz fastbuf.Size
+	var b = sz.
+		Reserve(oid.Sizeof()).
+		Reserve(len(name)).
+		Build()
+	key := b.AppendRaw(oid.Raw()).AppendRaw([]byte(name)).Result()
+	if err := tx.T_FOID_TAG().Put(key, []byte{1}); err != nil {
+		return "", err
+	}
+	if !previous.IsZero() {
+		var b = sz.Build()
+		key := b.AppendRaw(previous.Raw()).AppendRaw([]byte(name)).Result()
+		if err := tx.T_FOID_TAG().Delete(key); err != nil {
+			return "", err
+		}
+	}
+	return name, nil
 }
 
-func makeName(h internal.H, oid ref.OID, spec tag.Spec) (string, error) {
+func makeName(tx *Tx, oid ref.OID, spec tag.Spec) (string, error) {
 	if spec.Kind < tag.Auto {
 		return spec.Name, nil
 	}
 	{
-		b := h.Bucket(bucketnames.INDEX_OID_TAG)
-		needle := ref.AsRaw(oid)
-		c, err := b.RawCursor()
-		if err != nil {
-			return "", err
-		}
+		c := tx.T_FOID_TAG().Cursor()
+		needle := oid.Raw()
 		k, _ := c.Seek(needle)
 		if bytes.HasPrefix(k, needle) {
 			return string(k[len(needle):]), nil
@@ -84,11 +100,7 @@ func makeName(h internal.H, oid ref.OID, spec tag.Spec) (string, error) {
 	needle := make([]byte, len(spec.Name)+1+20)
 	n := copy(needle, spec.Name)
 	copy(needle[n:], X)
-	b := h.Bucket(bucketnames.INDEX_TAG_OID)
-	c, err := b.RawCursor()
-	if err != nil {
-		return "", err
-	}
+	c := tx.T_TAG__OID().Cursor()
 	n++
 	upBound := 9999
 	c.Seek(needle[:n+4])

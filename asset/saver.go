@@ -3,13 +3,10 @@ package asset
 import (
 	"fmt"
 
-	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core"
 	ndl "github.com/hsfzxjy/imbed/core/needle"
-	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db"
 	"github.com/hsfzxjy/imbed/db/assetq"
-	"github.com/hsfzxjy/imbed/db/tagq"
 	"github.com/hsfzxjy/imbed/util"
 )
 
@@ -40,38 +37,6 @@ func SaveAll(ctx db.Context, app core.App, assets []Asset) ([]StockAsset, error)
 	return result, nil
 }
 
-func (a *asset) saveConfigs(ctx db.Context) ([]ref.Sha256Hash, error) {
-	if a.transform == nil {
-		return nil, nil
-	}
-	cfgs := a.transform.AssociatedConfigs()
-	var seen = make(map[ref.Sha256Hash]struct{}, len(cfgs))
-	var ret = make([]ref.Sha256Hash, 0, len(cfgs))
-	for _, cfg := range cfgs {
-		hash, err := cfg.GetSha256Hash()
-		if err != nil {
-			return nil, err
-		}
-		if _, ok := seen[hash]; ok {
-			continue
-		}
-		seen[hash] = struct{}{}
-		ret = append(ret, hash)
-		raw, err := cfg.GetRawEncoded()
-		if err != nil {
-			return nil, err
-		}
-		_, err = db.ConfigModel{
-			Raw:  raw,
-			Hash: hash,
-		}.Create().RunRW(ctx)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return ret, nil
-}
-
 func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 	var err error
 	a.mu.Lock()
@@ -80,7 +45,7 @@ func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 		if a.model == nil {
 			return
 		}
-		tags, err := tagq.AddTags(a.model.OID, a.tagSpecs).RunRW(ctx)
+		tags, err := db.AddTags(a.model.OID, a.tagSpecs).RunRW(ctx)
 		if err != nil {
 			stock, retErr = nil, err
 			return
@@ -100,28 +65,17 @@ func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 		return a, nil
 	}
 
-	fid, err := content.BuildFID(a.content, a.basename)
+	fhash, err := a.content.GetHash()
 	if err != nil {
 		return nil, err
 	}
 
-	var transSeq db.TransSeq
+	var transSeq db.StepListTpl
 	if a.transform != nil {
-		transSeq.ConfigHashes, err = a.saveConfigs(ctx)
-		if err != nil {
-			return nil, err
-		}
-		transSeq.Raw, err = a.transform.GetRawEncoded()
-		if err != nil {
-			return nil, err
-		}
-		transSeq.Hash, err = a.transform.GetSha256Hash()
-		if err != nil {
-			return nil, err
-		}
+		transSeq = a.transform.Model()
 	} else {
 		// this is an external asset, try not duplicate in DB
-		it, err := assetq.ByFID(ndl.RawFull(ref.AsRawString(fid))).RunR(ctx)
+		it, err := assetq.ByFHash(ndl.RawFull(fhash.RawString())).RunR(ctx)
 		if err == nil && it.HasNext() {
 			model := it.Next()
 			if model.IsErr() {
@@ -132,9 +86,10 @@ func (a *asset) save(ctx db.Context) (stock StockAsset, retErr error) {
 		}
 	}
 
-	model, err := db.AssetTemplate{
+	model, err := db.AssetTpl{
 		Origin:   originModel,
-		FID:      fid,
+		FHash:    fhash,
+		Basename: a.basename,
 		Url:      a.url,
 		ExtData:  a.ext,
 		TransSeq: transSeq,
@@ -166,7 +121,7 @@ func (a *asset) saveFile(app core.App) (revert util.RevertFunc, err error) {
 	}
 	revert2, err := util.SafeWriteFile(
 		r,
-		app.FilePath(a.model.FID.Humanize()),
+		app.FilePath(a.model.Filename()),
 	)
 	revert = revert.Then(revert2)
 	return revert, err

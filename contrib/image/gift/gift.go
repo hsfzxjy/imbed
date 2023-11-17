@@ -12,7 +12,7 @@ import (
 	"github.com/hsfzxjy/imbed/core"
 	"github.com/hsfzxjy/imbed/schema"
 	"github.com/hsfzxjy/imbed/transform"
-	"github.com/tinylib/msgp/msgp"
+	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type filterer interface {
@@ -131,7 +131,7 @@ type composedApplier struct {
 	*gift.GIFT
 }
 
-func (a *composedApplier) EncodeMsg(*msgp.Writer) error {
+func (a *composedApplier) EncodeMsg(*fastbuf.W) {
 	panic("unreachable")
 }
 
