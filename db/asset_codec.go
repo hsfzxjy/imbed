@@ -36,7 +36,7 @@ func encodeAsset(a *AssetModel) []byte {
 		WriteString(a.Url).
 		WriteBytes(a.ExtData)
 
-	a.SHA = ref.Sha256HashSum(b.Result())
+	a.SHA = ref.Sha256Sum(b.Result())
 	b.AppendRaw(a.SHA.Raw())
 
 	return b.Result()

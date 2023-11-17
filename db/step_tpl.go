@@ -27,7 +27,7 @@ func (t *stepListTpl) computeSHA() ref.Sha256 {
 			AppendRaw(t.Config.O.MustSHA().Raw()).
 			AppendRaw(t.Params.MustSHA().Raw())
 	}
-	return ref.Sha256HashSum(w.Result())
+	return ref.Sha256Sum(w.Result())
 }
 
 func (t *stepListTpl) create(tx *Tx) ([]*ConfigModel, []byte, error) {

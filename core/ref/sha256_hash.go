@@ -4,8 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"unsafe"
-
-	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
 type Sha256 struct {
@@ -51,27 +49,7 @@ func (h Sha256) FmtString() string {
 	return hex.EncodeToString(h.Raw())
 }
 
-func Sha256HashSum(p []byte) Sha256 {
+func Sha256Sum(p []byte) Sha256 {
 	s := sha256.Sum256(p)
 	return Sha256{raw: string(s[:])}
-}
-
-func HashEncodeFunc2[T any](encodeF func(w *fastbuf.W, source T), value T) (Sha256, []byte) {
-	var w fastbuf.W
-	encodeF(&w, value)
-	encoded := w.Result()
-	var h Sha256
-	var sum = sha256.Sum256(encoded)
-	h.raw = string(sum[:])
-	return h, encoded
-}
-
-func HashEncodeFunc(encodeF func(w *fastbuf.W)) (Sha256, []byte) {
-	var w fastbuf.W
-	encodeF(&w)
-	encoded := w.Result()
-	var h Sha256
-	var sum = sha256.Sum256(encoded)
-	h.raw = string(sum[:])
-	return h, encoded
 }

@@ -94,7 +94,7 @@ func (d *data) GetSHA() (ref.Sha256, error) {
 
 func (d *data) MustSHA() ref.Sha256 {
 	d.once.Do(func() {
-		d.sha = ref.Sha256HashSum(d.constData)
+		d.sha = ref.Sha256Sum(d.constData)
 	})
 	return d.sha
 }
@@ -147,7 +147,7 @@ func (d *dataFunc) MustSHA() ref.Sha256 {
 func (d *dataFunc) compute() {
 	d.once.Do(func() {
 		d.p = d.dataFunc()
-		d.sha = ref.Sha256HashSum(d.p)
+		d.sha = ref.Sha256Sum(d.p)
 	})
 }
 
@@ -205,7 +205,7 @@ func (d *dataFunc2) compute() {
 			return
 		}
 		d.p = p
-		d.sha = ref.Sha256HashSum(p)
+		d.sha = ref.Sha256Sum(p)
 	})
 }
 

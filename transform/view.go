@@ -58,7 +58,7 @@ func (r *view) Build(cp core.ConfigProvider) (*Transform, error) {
 				var w fastbuf.W
 				w.WriteString(r.md.name)
 				applier.EncodeMsg(&w)
-				return ref.Sha256HashSum(w.Result())
+				return ref.Sha256Sum(w.Result())
 			}),
 		},
 	}, nil

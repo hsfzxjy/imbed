@@ -43,7 +43,7 @@ func (p Pair[T1, T2]) RawString() string {
 }
 
 func (p Pair[T1, T2]) Sum() Sha256 {
-	return Sha256HashSum(p.Raw())
+	return Sha256Sum(p.Raw())
 }
 
 func NewPair[T1 fromRaw[T1], T2 fromRaw[T2]](v1 T1, v2 T2) Pair[T1, T2] {
