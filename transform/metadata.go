@@ -7,16 +7,6 @@ import (
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
-type _constraint[C any, P ParamFor[C]] struct{}
-
-func (_constraint[C, P]) buildApplier(params, config any) (Applier, error) {
-	return params.(P).BuildTransform(config.(C))
-}
-
-type constraint interface {
-	buildApplier(params, config any) (Applier, error)
-}
-
 type metadata[C any, P ParamFor[C]] struct {
 	*Registry
 	name    string
@@ -26,14 +16,6 @@ type metadata[C any, P ParamFor[C]] struct {
 	configSchema schema.Schema[C]
 
 	category Category
-}
-
-func (m *metadata[C, P]) Name() string {
-	return m.name
-}
-
-func (m *metadata[C, P]) Category() Category {
-	return m.category
 }
 
 func (m *metadata[C, P]) scanFrom(scanner schema.Scanner, copt cfgf.Opt) (View, error) {
