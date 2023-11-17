@@ -5,7 +5,7 @@ import (
 	"github.com/hsfzxjy/imbed/db"
 )
 
-type Transform struct {
+type stepAtom struct {
 	Name string
 	Applier
 	Category
@@ -15,6 +15,12 @@ type Transform struct {
 	model db.StepTpl
 }
 
-func (t *Transform) ForceTerminal() bool {
+func (t *stepAtom) ForceTerminal() bool {
 	return t.Tag.Kind != tag.None
+}
+
+type StepAtomList []*stepAtom
+
+func (l StepAtomList) Range(span span) StepAtomList {
+	return l[span.Start:span.End]
 }

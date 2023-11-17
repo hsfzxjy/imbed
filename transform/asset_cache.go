@@ -11,7 +11,7 @@ type assetCache struct {
 	app db.App
 }
 
-func (c *assetCache) Lookup(a asset.Asset, transform *transSeq) (asset.StockAsset, error) {
+func (c *assetCache) Lookup(a asset.Asset, transform *step) (asset.StockAsset, error) {
 	hash, err := a.Content().GetHash()
 	if err != nil {
 		return nil, err

@@ -38,5 +38,5 @@ type View interface {
 	Name() string
 	ConfigHash(ctx db.Context) ref.Sha256
 	VisitParams(v schema.Visitor) error
-	Build(cp ConfigProvider) (*Transform, error)
+	Build(cp ConfigProvider) (*stepAtom, error)
 }

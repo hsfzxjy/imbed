@@ -1,6 +1,5 @@
 package transform
 
-var Partition = partition
-var Assemble = assemble
-
+type Scheduler = scheduler
 type Span = span
+type StepAtom = stepAtom

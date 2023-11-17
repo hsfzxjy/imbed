@@ -10,7 +10,7 @@ import (
 )
 
 func (c *Context) parseTransSeq(cp *configProvider) (*transform.Graph, error) {
-	var transforms []*transform.Transform
+	var stepAtomList transform.StepAtomList
 	scanner := transScanner{Parser: c.parser}
 	for !scanner.EOF() {
 		scanner.Space()
@@ -42,7 +42,7 @@ func (c *Context) parseTransSeq(cp *configProvider) (*transform.Graph, error) {
 		if err != nil {
 			return nil, scanner.Error(err)
 		}
-		transforms = append(transforms, t)
+		stepAtomList = append(stepAtomList, t)
 		scanner.Space()
 		spec, err := c.parseTagSpec()
 		if err != nil {
@@ -56,7 +56,7 @@ func (c *Context) parseTransSeq(cp *configProvider) (*transform.Graph, error) {
 			}
 		}
 	}
-	return transform.Schedule(c.registry, transforms)
+	return transform.Schedule(c.registry, stepAtomList)
 }
 
 func (c *Context) parseTagSpec() (spec tag.Spec, err error) {

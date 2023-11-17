@@ -61,7 +61,7 @@ func (r *view[C, P]) buildConfig(cp ConfigProvider) (C, db.ConfigTpl, error) {
 	return cfg, tpl, nil
 }
 
-func (r *view[C, P]) Build(cp ConfigProvider) (*Transform, error) {
+func (r *view[C, P]) Build(cp ConfigProvider) (*stepAtom, error) {
 	cfg, cfgTpl, err := r.buildConfig(cp)
 	if err != nil {
 		return nil, err
@@ -70,7 +70,7 @@ func (r *view[C, P]) Build(cp ConfigProvider) (*Transform, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Transform{
+	return &stepAtom{
 		Name:     r.md.name,
 		Applier:  applier,
 		Category: r.md.category,

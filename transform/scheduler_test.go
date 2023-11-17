@@ -27,9 +27,9 @@ type TFListSeed struct {
 	Size, IsTerminal, ABCat, ForceTerminal uint64
 }
 
-func (s TFListSeed) Build() TFList {
+func (s TFListSeed) Build() StepAtomList {
 	size := s.Size % 65
-	tfs := make(TFList, size)
+	tfs := make(StepAtomList, size)
 	for i := uint64(0); i < size; i++ {
 		mask := uint64(1) << i
 		var cat transform.Category
@@ -44,7 +44,7 @@ func (s TFListSeed) Build() TFList {
 		if s.ForceTerminal&mask != 0 {
 			kind = tag.Normal
 		}
-		tfs[i] = &transform.Transform{
+		tfs[i] = &transform.StepAtom{
 			Category: cat,
 			Tag:      tag.Spec{Kind: kind},
 			Applier:  &Applier{cat, i},
@@ -53,9 +53,9 @@ func (s TFListSeed) Build() TFList {
 	return tfs
 }
 
-type TFList []*transform.Transform
+type StepAtomList transform.StepAtomList
 
-func (l TFList) String() string {
+func (l StepAtomList) String() string {
 	var b strings.Builder
 	for _, t := range l {
 		b.WriteString(string(t.Category))
@@ -68,12 +68,16 @@ func (l TFList) String() string {
 	return b.String()
 }
 
+func (l StepAtomList) As() transform.StepAtomList {
+	return transform.StepAtomList(l)
+}
+
 func FuzzPartition(f *testing.F) {
 	f.Add(uint64(0), uint64(0b1), uint64(0b01), uint64(0b01))
 	f.Fuzz(func(t *testing.T, size, ist, abcat, forcet uint64) {
 		tfs := TFListSeed{size, ist, abcat, forcet}.Build()
 		repr := tfs.String()
-		result := transform.Partition(tfs)
+		result := (&transform.Scheduler{Sal: tfs.As()}).Partition()
 		lasti := 0
 		for _, span := range result {
 			require.Equalf(t, lasti, span.Start, repr)
@@ -141,7 +145,7 @@ func (s ComposerMSeed) Build() ComposeM {
 	return m
 }
 
-func (s ComposerMSeed) HasError(tfs TFList) bool {
+func (s ComposerMSeed) HasError(tfs StepAtomList) bool {
 	AThrows := s&0b11 == 0b11
 	BThrows := s&0b1100 == 0b1100
 	var maxA, maxB, A, B int
@@ -184,7 +188,7 @@ func FuzzAssemble(f *testing.F) {
 		cmSeed := ComposerMSeed(composem)
 		cm := cmSeed.Build()
 		repr := tfs.String() + "\n" + cm.String()
-		rootSteps, err := transform.Assemble(cm, tfs)
+		rootSteps, err := transform.Scheduler{tfs.As(), cm}.Assemble()
 		if cmSeed.HasError(tfs) {
 			require.ErrorIsf(t, err, ErrCompose, repr)
 			return
@@ -199,8 +203,8 @@ func FuzzAssemble(f *testing.F) {
 				for _, a := range step.Appliers {
 					AX += a.(*Applier).X
 				}
-				require.Equalf(t, lasti, step.Start, repr)
-				lasti = step.End
+				require.Equalf(t, lasti, step.Start(), repr)
+				lasti = step.End()
 				if i < len(steps)-1 {
 					require.Truef(t, step.IsTerminal(), repr)
 					require.Emptyf(t, step.Next, repr)
