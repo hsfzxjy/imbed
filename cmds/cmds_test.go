@@ -13,6 +13,7 @@ import (
 	"github.com/hsfzxjy/imbed/app"
 	"github.com/hsfzxjy/imbed/cmds"
 	"github.com/hsfzxjy/imbed/contrib"
+	"github.com/hsfzxjy/imbed/core/pos"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/transform"
 	"github.com/hsfzxjy/imbed/util"
@@ -71,7 +72,11 @@ func newResultTable(result *runResult, output string) *resultTable {
 	for _, line := range lines[1:] {
 		fields := strings.Fields(line)
 		for i, header := range headers {
-			table[header] = append(table[header], fields[i])
+			var v string
+			if i < len(fields) {
+				v = fields[i]
+			}
+			table[header] = append(table[header], v)
 		}
 	}
 	return &resultTable{result, output, table}
@@ -115,7 +120,7 @@ func (c *context) Run(args ...string) (result *runResult, err error) {
 		}
 		if err != nil {
 			println("-- ERROR --")
-			println(err.Error())
+			println(pos.FmtError(err))
 		}
 		println("-- STDOUT --")
 		print(result.Stdout)
@@ -164,13 +169,13 @@ func Test_Add(t *testing.T) {
 		//
 		RunMust("init").
 		//
-		RunMust("add", img1.Path, "upload.local path =", ctx.Path()).
+		RunMust("add", "--raw", img1.Path, "upload.local path =", ctx.Path()).
 		Table().AssertLines(2).
 		//
-		RunMust("q").
+		RunMust("q", "--raw").
 		Table().AssertLines(3).
 		Cell("SHA", 0, func(s string) {
-			assert.Len(t, s, 12)
+			assert.Len(t, s, 64)
 			sha = s
 		}).
 		Cell("URL", 1, func(s string) {
@@ -186,6 +191,34 @@ func Test_Add(t *testing.T) {
 		//
 		RunMust("q").Table().AssertLines(3)
 	assert.FileExists(t, img1.UploadedPath())
+}
+
+func Test_AddTags(t *testing.T) {
+	ctx := setup(t)
+	img1 := ctx.GenImage(1)
+	var url string
+	ctx.
+		//
+		RunMust("init").
+		//
+		RunMust("add", "--raw", img1.Path, "jpeg 75+a, upload.local path =", ctx.Path(), "+++").
+		Table().AssertLines(2).
+		Cell("URL", 0, func(s string) {
+			url = s
+		}).
+		Cell("TAGS", 0, func(s string) {
+			assert.Equal(t, "1.jpg-0000", s)
+		}).
+		//
+		RunMust("q", "--raw").
+		Table().AssertLines(4).
+		Cell("TAGS", 0, func(s string) {
+			assert.Equal(t, "1.jpg-0000", s)
+		}).
+		Cell("TAGS", 1, func(s string) {
+			assert.Equal(t, "a", s)
+		})
+	assert.FileExists(t, url)
 }
 
 func assertLines(t *testing.T, str string, expected int) {
