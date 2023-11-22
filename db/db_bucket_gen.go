@@ -13,7 +13,7 @@ var bucketNames = [...][]byte{
 	[]byte("F_FHASH_TSSHA__OID"),
 	[]byte("F_TIME_OID"),
 	[]byte("T_FOID_TAG"),
-	[]byte("T_TAG__OID"),
+	[]byte("T_TAG__FOID"),
 	[]byte("T_COID_FOID"),
 	[]byte("CONFIGS"),
 	[]byte("C_SHA__OID"),
@@ -124,12 +124,12 @@ func (tx *Tx) T_FOID_TAG() *bbolt.Bucket {
 	return slot.Bucket
 }
 
-func (tx *Tx) T_TAG__OID() *bbolt.Bucket {
+func (tx *Tx) T_TAG__FOID() *bbolt.Bucket {
 	slot := &tx.buckets[8]
 	slot.Do(func() {
 		b := tx.Bucket(bucketNames[8])
 		if b == nil {
-			panic("fatal: bucket T_TAG__OID not found, database corrupted")
+			panic("fatal: bucket T_TAG__FOID not found, database corrupted")
 		}
 		slot.Bucket = b
 	})

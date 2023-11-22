@@ -221,6 +221,17 @@ func Test_AddTags(t *testing.T) {
 	assert.FileExists(t, url)
 }
 
+func Test_RotWebp(t *testing.T) {
+	ctx := setup(t)
+	img1 := ctx.GenImage(1)
+	ctx.
+		//
+		RunMust("init").
+		//
+		RunMust("add", "--raw", img1.Path, "rot 0, webp q=101, upload.local path =", ctx.Path()).
+		RunMust("add", "--raw", img1.Path, "rot 1, webp q=101, upload.local path =", ctx.Path())
+}
+
 func assertLines(t *testing.T, str string, expected int) {
 	stripped := strings.TrimRight(str, "\n")
 	lines := strings.Split(stripped, "\n")

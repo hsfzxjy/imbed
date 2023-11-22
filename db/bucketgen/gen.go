@@ -9,6 +9,9 @@ import (
 )
 
 var buckets = [...]string{
+	// Notations:
+	// _ means concat or hash
+	// __ separates the key and value
 	"FILES",
 	"F_SHA__OID",
 	"F_FHASH_OID",
@@ -17,7 +20,7 @@ var buckets = [...]string{
 	"F_FHASH_TSSHA__OID",
 	"F_TIME_OID",
 	"T_FOID_TAG",
-	"T_TAG__OID",
+	"T_TAG__FOID",
 	"T_COID_FOID",
 	"CONFIGS",
 	"C_SHA__OID",

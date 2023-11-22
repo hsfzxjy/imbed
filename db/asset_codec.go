@@ -42,12 +42,20 @@ func encodeAsset(a *AssetModel) []byte {
 	return b.Result()
 }
 
-func DecodeAsset(b []byte) (*AssetModel, error) {
+type AssetModelInfo struct {
+	Flag      Flag
+	OriginOID ref.OID
+}
+
+func DecodeAssetFast(b []byte) (AssetModelInfo, error) {
+	return decodeAssetFast(&fastbuf.R{Buf: b})
+}
+
+func decodeAssetFast(r *fastbuf.R) (AssetModelInfo, error) {
 	var (
 		stage string
 		err   error
-		a     = new(AssetModel)
-		r     = fastbuf.R{Buf: b}
+		a     = AssetModelInfo{}
 	)
 	stage = "Flag"
 	flag, err := r.ReadByte()
@@ -58,11 +66,31 @@ func DecodeAsset(b []byte) (*AssetModel, error) {
 
 	if a.Flag&HasOrigin != 0 {
 		stage = "OriginOID"
-		a.OriginOID, err = ref.FromFastbuf[ref.OID](&r)
+		a.OriginOID, err = ref.FromFastbuf[ref.OID](r)
 		if err != nil {
 			goto ERROR
 		}
 	}
+
+	return a, nil
+
+ERROR:
+	return AssetModelInfo{}, fmt.Errorf("DecodeAsset: corrupted asset model: %s: %w", stage, err)
+}
+
+func DecodeAsset(b []byte) (*AssetModel, error) {
+	var (
+		stage string
+		err   error
+		a     = new(AssetModel)
+		r     = fastbuf.R{Buf: b}
+	)
+	info, err := decodeAssetFast(&r)
+	if err != nil {
+		return nil, err
+	}
+	a.Flag = info.Flag
+	a.OriginOID = info.OriginOID
 
 	stage = "Created"
 	a.Created, err = ref.FromFastbuf[ref.Time](&r)

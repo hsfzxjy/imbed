@@ -1,6 +1,9 @@
 package db
 
 import (
+	"encoding/binary"
+	"errors"
+
 	"github.com/hsfzxjy/imbed/core/ref"
 )
 
@@ -83,4 +86,16 @@ func NewFromKV(tx *Tx, k, v []byte, opts ...AssetOpt) (*AssetModel, error) {
 		return nil, err
 	}
 	return applyOptions(tx, opts, a)
+}
+
+func ParseAssetRefcnt(b []byte) (uint64, error) {
+	var cnt uint64
+	if b == nil {
+		cnt = 0
+	} else if len(b) != 8 {
+		return 0, errors.New("db: corrupted ref count")
+	} else {
+		cnt = binary.BigEndian.Uint64(b)
+	}
+	return cnt, nil
 }

@@ -29,7 +29,9 @@ func simpleQuery(indexFunc func(*db.Tx) *bbolt.Bucket, needle ndl.Needle, option
 			if !needle.Match(kv.K[:splitAt]) {
 				return r.FillErr(iter.Stop)
 			}
-			return tipe.MakeR(db.NewFromKV(tx, kv.K, kv.V, options...))
+			oid := kv.K[splitAt:]
+			data := tx.FILES().Get(oid)
+			return tipe.MakeR(db.NewFromKV(tx, oid, data, options...))
 		})
 		return it, nil
 	}

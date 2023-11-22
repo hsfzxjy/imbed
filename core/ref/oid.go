@@ -11,6 +11,10 @@ type OID struct {
 	num  uint64
 }
 
+func (id OID) Uint64() uint64 {
+	return id.num
+}
+
 func (id OID) IsZero() bool {
 	return id.num == 0
 }

@@ -43,7 +43,7 @@ func addTag(tx *Tx, oid ref.OID, spec tag.Spec) (string, error) {
 		return "", err
 	}
 
-	previousOid := tx.T_TAG__OID().Get([]byte(name))
+	previousOid := tx.T_TAG__FOID().Get([]byte(name))
 	var previous ref.OID
 	if previousOid != nil {
 		previous, err = ref.FromRawExact[ref.OID](previousOid)
@@ -62,7 +62,7 @@ func addTag(tx *Tx, oid ref.OID, spec tag.Spec) (string, error) {
 			)
 		}
 	}
-	if err := tx.T_TAG__OID().Put([]byte(name), oid.Raw()); err != nil {
+	if err := tx.T_TAG__FOID().Put([]byte(name), oid.Raw()); err != nil {
 		return "", err
 	}
 	var sz fastbuf.Size
@@ -100,7 +100,7 @@ func makeName(tx *Tx, oid ref.OID, spec tag.Spec) (string, error) {
 	needle := make([]byte, len(spec.Name)+1+20)
 	n := copy(needle, spec.Name)
 	copy(needle[n:], X)
-	c := tx.T_TAG__OID().Cursor()
+	c := tx.T_TAG__FOID().Cursor()
 	n++
 	upBound := 9999
 	c.Seek(needle[:n+4])
