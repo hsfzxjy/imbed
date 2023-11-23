@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/hsfzxjy/imbed/core/ref"
+	"github.com/hsfzxjy/imbed/db/internal"
 	"go.etcd.io/bbolt"
 )
 
@@ -49,11 +50,18 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 		Url:          t.Url,
 		ExtData:      t.ExtData,
 	}
+	if t.Origin != nil {
+		model.DepSHA = ref.NewPair(t.getOriginFHash(), ts.MustSHA()).Sum()
+	}
 	encoded := encodeAsset(model)
 
-	oid, err := findAvailOID(tx.FILES())
-	if err != nil {
-		return nil, err
+	var oid ref.OID
+	{
+		x, err := internal.AssetMetaNextOID(&tx.assetMeta)
+		if err != nil {
+			return nil, err
+		}
+		oid = ref.NewOID(x)
 	}
 
 	if err = tx.FILES().Put(oid.Raw(), encoded); err != nil {
@@ -76,7 +84,7 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 	if !model.OriginOID.IsZero() {
 		updateIndex(
 			tx.F_FHASH_TSSHA__OID(),
-			ref.NewPair(t.getOriginFHash(), ts.MustSHA()).Sum().Raw(),
+			model.DepSHA.Raw(),
 			nil,
 			oid.Raw(),
 		)
@@ -92,8 +100,6 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 		}
 
 	}
-
-	updateIndex(tx.F_TIME_OID(), model.Created.Raw(), oid.Raw(), oneBytes)
 
 	if !model.FHash.IsZero() {
 		updateIndex(tx.F_FHASH_OID(), model.FHash.Raw(), oid.Raw(), oneBytes)

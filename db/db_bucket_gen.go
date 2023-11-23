@@ -6,12 +6,12 @@ import "go.etcd.io/bbolt"
 
 var bucketNames = [...][]byte{
 	[]byte("FILES"),
+	[]byte("f_meta"),
 	[]byte("F_SHA__OID"),
 	[]byte("F_FHASH_OID"),
 	[]byte("F_BASENAME_OID"),
 	[]byte("F_URL_OID"),
 	[]byte("F_FHASH_TSSHA__OID"),
-	[]byte("F_TIME_OID"),
 	[]byte("T_FOID_TAG"),
 	[]byte("T_TAG__FOID"),
 	[]byte("T_COID_FOID"),
@@ -40,10 +40,22 @@ func (tx *Tx) FILES() *bbolt.Bucket {
 	return slot.Bucket
 }
 
-func (tx *Tx) F_SHA__OID() *bbolt.Bucket {
+func (tx *Tx) f_meta() *bbolt.Bucket {
 	slot := &tx.buckets[1]
 	slot.Do(func() {
 		b := tx.Bucket(bucketNames[1])
+		if b == nil {
+			panic("fatal: bucket f_meta not found, database corrupted")
+		}
+		slot.Bucket = b
+	})
+	return slot.Bucket
+}
+
+func (tx *Tx) F_SHA__OID() *bbolt.Bucket {
+	slot := &tx.buckets[2]
+	slot.Do(func() {
+		b := tx.Bucket(bucketNames[2])
 		if b == nil {
 			panic("fatal: bucket F_SHA__OID not found, database corrupted")
 		}
@@ -53,9 +65,9 @@ func (tx *Tx) F_SHA__OID() *bbolt.Bucket {
 }
 
 func (tx *Tx) F_FHASH_OID() *bbolt.Bucket {
-	slot := &tx.buckets[2]
+	slot := &tx.buckets[3]
 	slot.Do(func() {
-		b := tx.Bucket(bucketNames[2])
+		b := tx.Bucket(bucketNames[3])
 		if b == nil {
 			panic("fatal: bucket F_FHASH_OID not found, database corrupted")
 		}
@@ -65,9 +77,9 @@ func (tx *Tx) F_FHASH_OID() *bbolt.Bucket {
 }
 
 func (tx *Tx) F_BASENAME_OID() *bbolt.Bucket {
-	slot := &tx.buckets[3]
+	slot := &tx.buckets[4]
 	slot.Do(func() {
-		b := tx.Bucket(bucketNames[3])
+		b := tx.Bucket(bucketNames[4])
 		if b == nil {
 			panic("fatal: bucket F_BASENAME_OID not found, database corrupted")
 		}
@@ -77,9 +89,9 @@ func (tx *Tx) F_BASENAME_OID() *bbolt.Bucket {
 }
 
 func (tx *Tx) F_URL_OID() *bbolt.Bucket {
-	slot := &tx.buckets[4]
+	slot := &tx.buckets[5]
 	slot.Do(func() {
-		b := tx.Bucket(bucketNames[4])
+		b := tx.Bucket(bucketNames[5])
 		if b == nil {
 			panic("fatal: bucket F_URL_OID not found, database corrupted")
 		}
@@ -89,23 +101,11 @@ func (tx *Tx) F_URL_OID() *bbolt.Bucket {
 }
 
 func (tx *Tx) F_FHASH_TSSHA__OID() *bbolt.Bucket {
-	slot := &tx.buckets[5]
-	slot.Do(func() {
-		b := tx.Bucket(bucketNames[5])
-		if b == nil {
-			panic("fatal: bucket F_FHASH_TSSHA__OID not found, database corrupted")
-		}
-		slot.Bucket = b
-	})
-	return slot.Bucket
-}
-
-func (tx *Tx) F_TIME_OID() *bbolt.Bucket {
 	slot := &tx.buckets[6]
 	slot.Do(func() {
 		b := tx.Bucket(bucketNames[6])
 		if b == nil {
-			panic("fatal: bucket F_TIME_OID not found, database corrupted")
+			panic("fatal: bucket F_FHASH_TSSHA__OID not found, database corrupted")
 		}
 		slot.Bucket = b
 	})

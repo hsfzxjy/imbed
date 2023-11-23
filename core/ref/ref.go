@@ -81,3 +81,7 @@ func FromFastbuf[T fromRaw[T]](r *fastbuf.R) (T, error) {
 	}
 	return v.fromRaw(buf)
 }
+
+func AppendRaw[T Ref](b []byte, v T) []byte {
+	return append(b, v.Raw()...)
+}

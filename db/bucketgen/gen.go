@@ -13,12 +13,12 @@ var buckets = [...]string{
 	// _ means concat or hash
 	// __ separates the key and value
 	"FILES",
+	"f_meta",
 	"F_SHA__OID",
 	"F_FHASH_OID",
 	"F_BASENAME_OID",
 	"F_URL_OID",
 	"F_FHASH_TSSHA__OID",
-	"F_TIME_OID",
 	"T_FOID_TAG",
 	"T_TAG__FOID",
 	"T_COID_FOID",

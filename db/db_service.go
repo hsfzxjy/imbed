@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/hsfzxjy/imbed/core"
+	"github.com/hsfzxjy/imbed/db/internal"
 	bolt "go.etcd.io/bbolt"
 )
 
@@ -51,14 +52,25 @@ func (s Service) RunRW(f func(h *Tx) error) error {
 func (s Service) DB() Service { return s }
 
 func (s Service) runR(f func(*Tx) error) error {
-	return s.db.View(func(tx *bolt.Tx) error {
-		return f(newTx(tx))
+	return s.db.View(func(bbtx *bolt.Tx) error {
+		tx := newTx(bbtx)
+		if err := internal.DecodeAssetMeta(&tx.assetMeta, tx.f_meta()); err != nil {
+			return err
+		}
+		return f(tx)
 	})
 }
 
 func (s Service) runRW(f func(*Tx) error) error {
-	return s.db.Update(func(tx *bolt.Tx) error {
-		return f(newTx(tx))
+	return s.db.Update(func(bbtx *bolt.Tx) error {
+		tx := newTx(bbtx)
+		if err := internal.DecodeAssetMeta(&tx.assetMeta, tx.f_meta()); err != nil {
+			return err
+		}
+		if err := f(tx); err != nil {
+			return err
+		}
+		return internal.WriteAssetMeta(&tx.assetMeta, tx.f_meta())
 	})
 }
 

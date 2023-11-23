@@ -22,11 +22,13 @@ func encodeAsset(a *AssetModel) []byte {
 		ReserveString(a.Url).
 		ReserveBytes(a.ExtData).
 		Reserve(ref.Sha256{}.Sizeof()).
+		Reserve(ref.Sha256{}.Sizeof()).
 		Build()
 
 	b.WriteUint8(byte(a.Flag))
 	if a.Flag&HasOrigin != 0 {
 		b.AppendRaw(a.OriginOID.Raw())
+		b.AppendRaw(a.DepSHA.Raw())
 	}
 	b.
 		AppendRaw(a.Created.Raw()).
@@ -45,6 +47,7 @@ func encodeAsset(a *AssetModel) []byte {
 type AssetModelInfo struct {
 	Flag      Flag
 	OriginOID ref.OID
+	DepSHA    ref.Sha256
 }
 
 func DecodeAssetFast(b []byte) (AssetModelInfo, error) {
@@ -70,6 +73,11 @@ func decodeAssetFast(r *fastbuf.R) (AssetModelInfo, error) {
 		if err != nil {
 			goto ERROR
 		}
+		stage = "DepSHA"
+		a.DepSHA, err = ref.FromFastbuf[ref.Sha256](r)
+		if err != nil {
+			goto ERROR
+		}
 	}
 
 	return a, nil
@@ -78,19 +86,20 @@ ERROR:
 	return AssetModelInfo{}, fmt.Errorf("DecodeAsset: corrupted asset model: %s: %w", stage, err)
 }
 
-func DecodeAsset(b []byte) (*AssetModel, error) {
+func DecodeAsset(a *AssetModel, b []byte) error {
 	var (
 		stage string
 		err   error
-		a     = new(AssetModel)
 		r     = fastbuf.R{Buf: b}
 	)
+	*a = AssetModel{}
 	info, err := decodeAssetFast(&r)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	a.Flag = info.Flag
 	a.OriginOID = info.OriginOID
+	a.DepSHA = info.DepSHA
 
 	stage = "Created"
 	a.Created, err = ref.FromFastbuf[ref.Time](&r)
@@ -134,8 +143,8 @@ func DecodeAsset(b []byte) (*AssetModel, error) {
 		goto ERROR
 	}
 
-	return a, nil
+	return nil
 
 ERROR:
-	return nil, fmt.Errorf("DecodeAsset: corrupted asset model: %s: %w", stage, err)
+	return fmt.Errorf("DecodeAsset: corrupted asset model: %s: %w", stage, err)
 }

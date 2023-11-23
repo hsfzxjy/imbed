@@ -1,13 +1,14 @@
 package db
 
 import (
-	"encoding/binary"
-	"errors"
-
 	"github.com/hsfzxjy/imbed/core/ref"
 )
 
 type Flag uint8
+
+func (f Flag) HasOrigin() bool {
+	return f&HasOrigin != 0
+}
 
 const (
 	HasOrigin Flag = 1 << iota
@@ -19,6 +20,7 @@ type AssetModel struct {
 	OID       ref.OID
 	OriginOID ref.OID
 	SHA       ref.Sha256
+	DepSHA    ref.Sha256
 
 	Created      ref.Time
 	StepListData StepListData
@@ -65,37 +67,27 @@ func WithTags() AssetOpt {
 
 func New(tx *Tx, oid []byte, opts ...AssetOpt) (*AssetModel, error) {
 	data := tx.FILES().Get(oid)
-	a, err := DecodeAsset(data)
+	model := new(AssetModel)
+	err := DecodeAsset(model, data)
 	if err != nil {
 		return nil, err
 	}
-	a.OID, err = ref.FromRawExact[ref.OID](oid)
+	model.OID, err = ref.FromRawExact[ref.OID](oid)
 	if err != nil {
 		return nil, err
 	}
-	return applyOptions(tx, opts, a)
+	return applyOptions(tx, opts, model)
 }
 
 func NewFromKV(tx *Tx, k, v []byte, opts ...AssetOpt) (*AssetModel, error) {
-	a, err := DecodeAsset(v)
+	model := new(AssetModel)
+	err := DecodeAsset(model, v)
 	if err != nil {
 		return nil, err
 	}
-	a.OID, err = ref.FromRawExact[ref.OID](k)
+	model.OID, err = ref.FromRawExact[ref.OID](k)
 	if err != nil {
 		return nil, err
 	}
-	return applyOptions(tx, opts, a)
-}
-
-func ParseAssetRefcnt(b []byte) (uint64, error) {
-	var cnt uint64
-	if b == nil {
-		cnt = 0
-	} else if len(b) != 8 {
-		return 0, errors.New("db: corrupted ref count")
-	} else {
-		cnt = binary.BigEndian.Uint64(b)
-	}
-	return cnt, nil
+	return applyOptions(tx, opts, model)
 }

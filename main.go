@@ -20,7 +20,8 @@ func main() {
 		Register(cmds.InitCommand{}.Spec()).
 		Register(cmds.AddCommand{}.Spec()).
 		Register(cmds.QCommand{}.Spec()).
-		Register(cmds.RevCommand{}.Spec())
+		Register(cmds.RevCommand{}.Spec()).
+		Register(cmds.GcCommand{}.Spec())
 	err := app.ParseAndRun(os.Args, commands, registry)
 	if err != nil {
 		switch {
