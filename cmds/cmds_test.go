@@ -103,7 +103,8 @@ func (c *context) Run(args ...string) (result *runResult, err error) {
 		Register(cmds.InitCommand{}.Spec()).
 		Register(cmds.AddCommand{}.Spec()).
 		Register(cmds.QCommand{}.Spec()).
-		Register(cmds.RevCommand{}.Spec())
+		Register(cmds.RevCommand{}.Spec()).
+		Register(cmds.GcCommand{}.Spec())
 	args = append(args, "-d", c.WorkDir)
 	args = append([]string{"imbed"}, args...)
 
@@ -189,7 +190,13 @@ func Test_Add(t *testing.T) {
 		//
 		RunMust("add", revparsed).
 		//
-		RunMust("q").Table().AssertLines(3)
+		RunMust("q").Table().AssertLines(3).
+		//
+		RunMust("gc").
+		//
+		RunMust("q", "--raw").
+		Table().AssertLines(1)
+
 	assert.FileExists(t, img1.UploadedPath())
 }
 
@@ -217,7 +224,12 @@ func Test_AddTags(t *testing.T) {
 		}).
 		Cell("TAGS", 1, func(s string) {
 			assert.Equal(t, "a", s)
-		})
+		}).
+		//
+		RunMust("gc").
+		//
+		RunMust("q", "--raw").
+		Table().AssertLines(4)
 	assert.FileExists(t, url)
 }
 
