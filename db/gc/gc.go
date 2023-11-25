@@ -78,6 +78,7 @@ func GC(tx *db.Tx, remover Remover) error {
 				rc := refc[model.OriginOID]
 				refc[model.OriginOID] = rc + 1
 			}
+			delete(refc, oid)
 			if !latestFound {
 				latestFound = true
 				latestOID = oid

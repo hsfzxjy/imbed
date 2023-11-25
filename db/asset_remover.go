@@ -60,6 +60,14 @@ func (r AssetRemover) RemoveObject(tx *Tx, model *AssetModel) error {
 				return err
 			}
 		}
+		buf = buf[:model.FHash.Sizeof()]
+		k, _ = cur.Seek(buf)
+		if !bytes.HasPrefix(k, buf) {
+			err := tx.DB().storage.RemoveFile(model.FHash)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	if model.Basename != "" {

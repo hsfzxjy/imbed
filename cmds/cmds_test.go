@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"path"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
@@ -82,6 +83,12 @@ func newResultTable(result *runResult, output string) *resultTable {
 	return &resultTable{result, output, table}
 }
 
+func check(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
+
 type runResult struct {
 	*context
 	Stdout, Stderr string
@@ -89,6 +96,19 @@ type runResult struct {
 
 func (r *runResult) Then(f func(r *runResult)) *runResult {
 	f(r)
+	return r
+}
+
+func (r *runResult) AssertFileNum(n int) *runResult {
+	var cnt int
+	check(filepath.Walk(path.Join(r.WorkDir, ".imbed", "files"), func(path string, info os.FileInfo, err error) error {
+		check(err)
+		if !info.IsDir() {
+			cnt++
+		}
+		return nil
+	}))
+	assert.Equal(r.t, n, cnt)
 	return r
 }
 
@@ -171,7 +191,7 @@ func Test_Add(t *testing.T) {
 		RunMust("init").
 		//
 		RunMust("add", "--raw", img1.Path, "upload.local path =", ctx.Path()).
-		Table().AssertLines(2).
+		Table().AssertLines(2).AssertFileNum(1).
 		//
 		RunMust("q", "--raw").
 		Table().AssertLines(3).
@@ -192,7 +212,7 @@ func Test_Add(t *testing.T) {
 		//
 		RunMust("q").Table().AssertLines(3).
 		//
-		RunMust("gc").
+		RunMust("gc").AssertFileNum(0).
 		//
 		RunMust("q", "--raw").
 		Table().AssertLines(1)
@@ -208,7 +228,7 @@ func Test_AddTags(t *testing.T) {
 		//
 		RunMust("init").
 		//
-		RunMust("add", "--raw", img1.Path, "jpeg 75+a, upload.local path =", ctx.Path(), "+++").
+		RunMust("add", "--raw", img1.Path, "jpeg 75+a, upload.local path =", ctx.Path(), "+++").AssertFileNum(2).
 		Table().AssertLines(2).
 		Cell("URL", 0, func(s string) {
 			url = s
@@ -229,7 +249,7 @@ func Test_AddTags(t *testing.T) {
 		RunMust("gc").
 		//
 		RunMust("q", "--raw").
-		Table().AssertLines(4)
+		Table().AssertLines(4).AssertFileNum(2)
 	assert.FileExists(t, url)
 }
 
@@ -240,8 +260,9 @@ func Test_RotWebp(t *testing.T) {
 		//
 		RunMust("init").
 		//
-		RunMust("add", "--raw", img1.Path, "rot 0, webp q=101, upload.local path =", ctx.Path()).
-		RunMust("add", "--raw", img1.Path, "rot 1, webp q=101, upload.local path =", ctx.Path())
+		RunMust("add", "--raw", img1.Path, "rot 0, webp q=101+a, upload.local path =", ctx.Path()).AssertFileNum(2).
+		RunMust("add", "--raw", img1.Path, "rot 1, webp q=101++a, upload.local path =", ctx.Path()).AssertFileNum(3).
+		RunMust("gc").AssertFileNum(2)
 }
 
 func assertLines(t *testing.T, str string, expected int) {
