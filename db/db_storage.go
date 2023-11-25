@@ -10,7 +10,7 @@ import (
 	"github.com/hsfzxjy/imbed/util"
 )
 
-func AssetPathFor(app core.App, fhash ref.Murmur3) string {
+func AssetPathFor(app core.App, fhash ref.FileHash) string {
 	return storage{app}.AssetPathFor(fhash)
 }
 
@@ -18,7 +18,7 @@ type storage struct {
 	app core.App
 }
 
-func (s storage) AssetPathFor(fhash ref.Murmur3) string {
+func (s storage) AssetPathFor(fhash ref.FileHash) string {
 	if fhash.IsZero() {
 		panic("storage: file hash with zero value")
 	}
@@ -27,7 +27,7 @@ func (s storage) AssetPathFor(fhash ref.Murmur3) string {
 	return s.app.FilePath(pretty)
 }
 
-func (s *storage) CreateFile(tx *Tx, fhash ref.Murmur3, r io.Reader) error {
+func (s *storage) CreateFile(tx *Tx, fhash ref.FileHash, r io.Reader) error {
 	fpath := s.AssetPathFor(fhash)
 	fdir := path.Dir(fpath)
 	for {
@@ -49,7 +49,7 @@ func (s *storage) CreateFile(tx *Tx, fhash ref.Murmur3, r io.Reader) error {
 	return err
 }
 
-func (s *storage) RemoveFile(fhash ref.Murmur3) error {
+func (s *storage) RemoveFile(fhash ref.FileHash) error {
 	fpath := s.AssetPathFor(fhash)
 	err := os.Remove(fpath)
 	if os.IsNotExist(err) {

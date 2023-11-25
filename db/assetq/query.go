@@ -57,7 +57,7 @@ func BySHA(needle ndl.Needle, options ...Option) Query {
 	}
 }
 
-func ByDependency(fhash ref.Murmur3, transSeq db.StepListTpl, options ...Option) Query {
+func ByDependency(fhash ref.FileHash, transSeq db.StepListTpl, options ...Option) Query {
 	return func(tx *db.Tx) (Iterator, error) {
 		key := ref.NewPair(fhash, transSeq.MustSHA()).Sum().Raw()
 		cursor := db.NewCursor(tx.F_FHASH_TSSHA__OID().Cursor(), key)

@@ -53,7 +53,7 @@ func WithLoadFunc(f loadFunc) ContentOption {
 	return WithLoader(f)
 }
 
-func WithHash(hash ref.Murmur3) ContentOption {
+func WithHash(hash ref.FileHash) ContentOption {
 	return func(c *content) {
 		c.hash = hash
 	}

@@ -10,7 +10,6 @@ require (
 	github.com/kolesa-team/go-webp v1.0.4
 	github.com/pelletier/go-toml/v2 v2.0.8
 	github.com/qiniu/open v0.9.0
-	github.com/spaolacci/murmur3 v1.1.0
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	github.com/tinylib/msgp v1.1.8

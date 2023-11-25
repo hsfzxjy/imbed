@@ -24,7 +24,7 @@ import (
 
 type file struct {
 	Path string
-	Hash ref.Murmur3
+	Hash ref.FileHash
 }
 
 func (f file) UploadedPath() string {
@@ -46,7 +46,7 @@ func (c *context) GenImage(seed int64) file {
 	defer f.Close()
 	util.Check(jpeg.Encode(f, im, &jpeg.Options{Quality: 100}))
 	util.Check2(f.Seek(0, 0))
-	hash := util.Unwrap(ref.Murmur3FromReader(f))
+	hash := util.Unwrap(ref.FileHashFromReader(f))
 	return file{filename, hash}
 }
 

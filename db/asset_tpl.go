@@ -13,7 +13,7 @@ import (
 type AssetTpl struct {
 	Origin   *AssetModel
 	TransSeq StepListTpl
-	fhash    ref.Murmur3
+	fhash    ref.FileHash
 	Basename string
 	Url      string
 	ExtData  []byte
@@ -170,7 +170,7 @@ func (t *AssetTpl) getOriginOID() (ret ref.OID) {
 	return
 }
 
-func (t *AssetTpl) getOriginFHash() (ret ref.Murmur3) {
+func (t *AssetTpl) getOriginFHash() (ret ref.FileHash) {
 	if t.Origin != nil {
 		ret = t.Origin.FHash
 	}

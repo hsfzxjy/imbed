@@ -24,7 +24,7 @@ type AssetModel struct {
 
 	Created      ref.Time
 	StepListData StepListData
-	FHash        ref.Murmur3
+	FHash        ref.FileHash
 	Basename     string
 	Url          string
 	ExtData      []byte

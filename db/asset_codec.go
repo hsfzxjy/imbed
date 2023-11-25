@@ -114,7 +114,7 @@ func DecodeAsset(a *AssetModel, b []byte) error {
 	}
 
 	stage = "FHash"
-	a.FHash, err = ref.FromFastbuf[ref.Murmur3](&r)
+	a.FHash, err = ref.FromFastbuf[ref.FileHash](&r)
 	if err != nil {
 		goto ERROR
 	}

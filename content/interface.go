@@ -21,7 +21,7 @@ type LoadSizer interface {
 }
 
 type Content interface {
-	GetHash() (ref.Murmur3, error)
+	GetHash() (ref.FileHash, error)
 	BytesReader() (*bytes.Reader, error)
 	Sizer
 }

@@ -17,18 +17,18 @@ type content struct {
 	loader Loader
 	sizer  Sizer
 	buf    []byte
-	hash   ref.Murmur3
+	hash   ref.FileHash
 	pos    pos.P
 
 	computed      atomic.Bool
 	computedBuf   []byte
-	computedHash  ref.Murmur3
+	computedHash  ref.FileHash
 	computedError error
 
 	once sync.Once
 }
 
-func (c *content) GetHash() (ref.Murmur3, error) {
+func (c *content) GetHash() (ref.FileHash, error) {
 	if !c.hash.IsZero() {
 		return c.hash, nil
 	}
@@ -66,7 +66,7 @@ func (c *content) load() {
 		var (
 			buffer bytes.Buffer
 			buf    []byte
-			hash   ref.Murmur3
+			hash   ref.FileHash
 			err    error
 		)
 		defer func() {
@@ -82,7 +82,7 @@ func (c *content) load() {
 			return
 		}
 		buf = buffer.Bytes()
-		hash, err = ref.Murmur3FromReader(bytes.NewReader(buf))
+		hash, err = ref.FileHashFromReader(bytes.NewReader(buf))
 		if err != nil {
 			return
 		}

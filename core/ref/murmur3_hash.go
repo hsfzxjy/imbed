@@ -1,63 +1,62 @@
 package ref
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
 	"io"
 	"strconv"
 	"unsafe"
-
-	"github.com/spaolacci/murmur3"
 )
 
-type Murmur3 struct {
-	_murmur3 struct{}
-	raw      string
+type FileHash struct {
+	_filehash struct{}
+	raw       string
 }
 
-func (h Murmur3) IsZero() bool { return h.raw == "" }
+func (h FileHash) IsZero() bool { return h.raw == "" }
 
-func (h Murmur3) FmtHumanize() string {
+func (h FileHash) FmtHumanize() string {
 	return hex.EncodeToString(h.Raw())[:HUMANIZED_WIDTH]
 }
 
-func (h Murmur3) FmtString() string {
+func (h FileHash) FmtString() string {
 	return hex.EncodeToString(h.Raw())
 }
 
-func (h Murmur3) Sizeof() int {
-	return 128 / 8
+func (h FileHash) Sizeof() int {
+	return sha256.Size
 }
 
-func (h Murmur3) WithName(name string) string {
+func (h FileHash) WithName(name string) string {
 	return h.FmtString() + "-" + name
 }
 
-func (h Murmur3) Raw() []byte {
+func (h FileHash) Raw() []byte {
 	return unsafe.Slice(unsafe.StringData(h.raw), len(h.raw))
 }
 
-func (h Murmur3) RawString() string {
+func (h FileHash) RawString() string {
 	return h.raw
 }
 
-func (h Murmur3) fromRaw(p []byte) (Murmur3, error) {
+func (h FileHash) fromRaw(p []byte) (FileHash, error) {
 	sz := h.Sizeof()
 	if sz != len(p) {
-		panic("murmur3 hash too short")
+		panic("file hash too short")
 	}
-	return Murmur3{raw: unsafe.String(unsafe.SliceData(p), len(p))}, nil
+	return FileHash{raw: unsafe.String(unsafe.SliceData(p), len(p))}, nil
 }
 
-func Murmur3FromReader(r io.Reader) (Murmur3, error) {
-	hasher := murmur3.New128()
+func FileHashFromReader(r io.Reader) (FileHash, error) {
+	hasher := sha256.New()
 	_, err := io.Copy(hasher, r)
 	if err != nil {
-		return Murmur3{}, err
+		return FileHash{}, err
 	}
-	hashVal := make([]byte, 0, Murmur3{}.Sizeof())
+	hashVal := make([]byte, 0, FileHash{}.Sizeof())
 	hashVal = hasher.Sum(hashVal)
-	if len(hashVal) != (Murmur3{}).Sizeof() {
+	if len(hashVal) != (FileHash{}).Sizeof() {
 		panic("bad hash result, len=" + strconv.Itoa(len(hashVal)))
 	}
-	return Murmur3{raw: string(hashVal)}, nil
+	return FileHash{raw: string(hashVal)}, nil
 }
