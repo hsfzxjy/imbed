@@ -32,7 +32,7 @@ func fromDBModel(app core.App, model *db.AssetModel, upstream Asset) (*asset, er
 	if upstream != nil {
 		a.origin = upstream.(*asset)
 	}
-	filepath := app.FilePath(model.Filename())
+	filepath := db.AssetPathFor(app, model.FHash)
 	a.primaryInfo = primaryInfo{
 		basename: model.Filename(),
 		content:  content.New(content.WithFilePath(filepath)),

@@ -11,49 +11,53 @@ import (
 
 type App interface {
 	core.App
-	DB() Service
+	DB() *Service
 }
 
 type Service struct {
 	db *bolt.DB
+	storage
 }
 
 const _DB_FILENAME = "db"
 
-func Open(app core.App) (Service, error) {
+func Open(app core.App) (*Service, error) {
 	dbPath := path.Join(app.DBDir(), _DB_FILENAME)
 	db, err := bolt.Open(dbPath, 0o600, &bolt.Options{
 		Timeout:  1 * time.Second,
 		ReadOnly: app.Mode() == core.ModeReadonly,
 	})
 	if err != nil {
-		return Service{}, err
+		return nil, err
 	}
+
+	service := &Service{db, storage{app}}
 
 	if app.Mode() == core.ModeReadWrite {
 		err = db.Update(func(tx *bolt.Tx) error {
-			return newTx(tx).createAllBuckets()
+			return newTx(service, tx).createAllBuckets()
 		})
 
 		if err != nil {
-			return Service{}, err
+			return nil, err
 		}
 	}
 
-	return Service{db}, nil
+	return service, nil
 }
 
-func (s Service) RunR(f func(*Tx) error) error {
+func (s *Service) RunR(f func(*Tx) error) error {
 	return s.runR(f)
 }
-func (s Service) RunRW(f func(h *Tx) error) error {
+func (s *Service) RunRW(f func(h *Tx) error) error {
 	return s.runRW(f)
 }
-func (s Service) DB() Service { return s }
+func (s *Service) DB() *Service { return s }
 
-func (s Service) runR(f func(*Tx) error) error {
+func (s *Service) runR(f func(*Tx) error) error {
 	return s.db.View(func(bbtx *bolt.Tx) error {
-		tx := newTx(bbtx)
+		tx := newTx(s, bbtx)
+		defer tx.invokeOnRollback()
 		if err := internal.DecodeAssetMeta(&tx.assetMeta, tx.f_meta()); err != nil {
 			return err
 		}
@@ -61,21 +65,31 @@ func (s Service) runR(f func(*Tx) error) error {
 	})
 }
 
-func (s Service) runRW(f func(*Tx) error) error {
+func (s *Service) runRW(f func(*Tx) error) error {
 	return s.db.Update(func(bbtx *bolt.Tx) error {
-		tx := newTx(bbtx)
+		var success bool
+		tx := newTx(s, bbtx)
+		defer func() {
+			if !success {
+				tx.invokeOnRollback()
+			}
+		}()
 		if err := internal.DecodeAssetMeta(&tx.assetMeta, tx.f_meta()); err != nil {
 			return err
 		}
 		if err := f(tx); err != nil {
 			return err
 		}
-		return internal.WriteAssetMeta(&tx.assetMeta, tx.f_meta())
+		err := internal.WriteAssetMeta(&tx.assetMeta, tx.f_meta())
+		if err == nil {
+			success = true
+		}
+		return err
 	})
 }
 
-func (s Service) Close() error {
-	if s.db == nil {
+func (s *Service) Close() error {
+	if s == nil || s.db == nil {
 		return nil
 	}
 	return s.db.Close()

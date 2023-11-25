@@ -31,7 +31,7 @@ type App struct {
 	tmpDir  string
 	cfgTree map[string]any
 
-	dbs    db.Service
+	dbs    *db.Service
 	dbOnce sync.Once
 
 	proxyConfig *httpproxy.Config
@@ -149,7 +149,7 @@ func (s *App) BuildMode() core.BuildMode {
 	panic("TODO")
 }
 
-func (s *App) DB() db.Service {
+func (s *App) DB() *db.Service {
 	s.dbOnce.Do(func() {
 		dbs, err := db.Open(s)
 		if err != nil {

@@ -1,8 +1,10 @@
 package db
 
 import (
+	"bytes"
 	"time"
 
+	"github.com/hsfzxjy/imbed/content"
 	"github.com/hsfzxjy/imbed/core/ref"
 	"github.com/hsfzxjy/imbed/db/internal"
 	"go.etcd.io/bbolt"
@@ -11,10 +13,12 @@ import (
 type AssetTpl struct {
 	Origin   *AssetModel
 	TransSeq StepListTpl
-	FHash    ref.Murmur3
+	fhash    ref.Murmur3
 	Basename string
 	Url      string
 	ExtData  []byte
+
+	Content content.Content
 }
 
 func (t *AssetTpl) computeStepList(tx *Tx) ([]*ConfigModel, []byte, error) {
@@ -24,7 +28,22 @@ func (t *AssetTpl) computeStepList(tx *Tx) ([]*ConfigModel, []byte, error) {
 	return t.TransSeq.create(tx)
 }
 
+func (t *AssetTpl) dedupRoot(tx *Tx) (*AssetModel, error) {
+	if t.TransSeq != nil {
+		return nil, nil
+	}
+	cursor := tx.F_FHASH_OID().Cursor()
+	key, _ := cursor.Seek(t.fhash.Raw())
+	if !bytes.HasPrefix(key, t.fhash.Raw()) {
+		return nil, nil
+	}
+	return New(tx, key[t.fhash.Sizeof():], WithTags())
+}
+
 func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
+	if model, err := t.dedupRoot(tx); err != nil || model != nil {
+		return model, err
+	}
 	var flag Flag
 	if t.Origin != nil {
 		flag |= HasOrigin
@@ -45,7 +64,7 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 		OriginOID:    t.getOriginOID(),
 		Created:      ref.NewTime(time.Now()),
 		StepListData: transSeqRaw,
-		FHash:        t.FHash,
+		FHash:        t.fhash,
 		Basename:     t.Basename,
 		Url:          t.Url,
 		ExtData:      t.ExtData,
@@ -98,7 +117,6 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 				return nil, err
 			}
 		}
-
 	}
 
 	if !model.FHash.IsZero() {
@@ -122,7 +140,26 @@ func (t *AssetTpl) doCreate(tx *Tx) (*AssetModel, error) {
 
 func (template AssetTpl) Create() Task[*AssetModel] {
 	return func(tx *Tx) (*AssetModel, error) {
-		return template.doCreate(tx)
+		fhash, err := template.Content.GetHash()
+		if err != nil {
+			return nil, err
+		}
+		template.fhash = fhash
+
+		model, err := template.doCreate(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		reader, err := template.Content.BytesReader()
+		if err != nil {
+			return nil, err
+		}
+		err = tx.DB().storage.CreateFile(tx, fhash, reader)
+		if err != nil {
+			return nil, err
+		}
+		return model, nil
 	}
 }
 
