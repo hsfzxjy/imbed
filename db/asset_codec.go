@@ -61,7 +61,7 @@ func decodeAssetFast(r *fastbuf.R) (AssetModelInfo, error) {
 		a     = AssetModelInfo{}
 	)
 	stage = "Flag"
-	flag, err := r.ReadByte()
+	flag, err := r.ReadUint8()
 	if err != nil {
 		goto ERROR
 	}
