@@ -13,6 +13,7 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.8.4
 	github.com/tinylib/msgp v1.1.8
+	github.com/yuin/gopher-lua v1.1.0
 	go.etcd.io/bbolt v1.3.7
 	golang.org/x/image v0.13.0
 	golang.org/x/net v0.3.0
