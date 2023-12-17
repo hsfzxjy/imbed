@@ -55,3 +55,32 @@ func Test_Serde_SameByteCode(t *testing.T) {
 	s2 := lualib.Serialize(compile(code2), nil).Code
 	assert.Equal(t, s1, s2)
 }
+
+func Test_LookupLocalFunction(t *testing.T) {
+	const code = `
+	xxx = 0
+	local yyy = 1
+	local function add(a)
+		if d == nil then
+			d = 1
+		end
+		return a + d
+	end
+	`
+	fn := compile(code)
+	assert.Equal(t, fn.FunctionPrototypes[0], lualib.LookupLocalFunction(fn, "add"))
+	assert.Nil(t, lualib.LookupLocalFunction(fn, "add2"))
+
+	state := lua.NewState()
+	f := state.NewFunctionFromProto(lualib.LookupLocalFunction(fn, "add"))
+	state.Push(f)
+	state.Push(lua.LNumber(1))
+	state.PCall(1, 1, nil)
+	assert.Equal(t, lua.LNumber(2), state.Get(-1))
+	state.Pop(1)
+	assert.Equal(t, lua.LNil, state.Get(-1))
+	state.Push(f)
+	state.Push(lua.LNumber(1))
+	state.PCall(1, 1, nil)
+	assert.Equal(t, lua.LNumber(2), state.Get(-1))
+}
