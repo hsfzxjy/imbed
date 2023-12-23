@@ -2,8 +2,10 @@ package lualib
 
 import (
 	"slices"
+	"strings"
 
 	lua "github.com/yuin/gopher-lua"
+	"github.com/yuin/gopher-lua/parse"
 )
 
 func opGetCode(code uint32) int {
@@ -31,4 +33,13 @@ func LookupLocalFunction(p *lua.FunctionProto, name string) *lua.FunctionProto {
 		}
 	}
 	return nil
+}
+
+func Compile(code string, filename string) (*lua.FunctionProto, error) {
+	reader := strings.NewReader(code)
+	chunk, err := parse.Parse(reader, filename)
+	if err != nil {
+		return nil, err
+	}
+	return lua.Compile(chunk, filename)
 }

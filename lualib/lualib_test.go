@@ -64,6 +64,7 @@ func Test_LookupLocalFunction(t *testing.T) {
 		if d == nil then
 			d = 1
 		end
+		print(d)
 		return a + d
 	end
 	`
@@ -73,6 +74,7 @@ func Test_LookupLocalFunction(t *testing.T) {
 
 	state := lua.NewState()
 	f := state.NewFunctionFromProto(lualib.LookupLocalFunction(fn, "add"))
+	f.Env = autoG
 	state.Push(f)
 	state.Push(lua.LNumber(1))
 	state.PCall(1, 1, nil)
@@ -83,4 +85,24 @@ func Test_LookupLocalFunction(t *testing.T) {
 	state.Push(lua.LNumber(1))
 	state.PCall(1, 1, nil)
 	assert.Equal(t, lua.LNumber(2), state.Get(-1))
+}
+
+var autoG = func() *lua.LTable {
+	T := new(lua.LTable)
+	mt := new(lua.LTable)
+	mt.RawSetString("__index", &lua.LFunction{
+		IsG:       true,
+		Env:       T,
+		Proto:     nil,
+		GFunction: autoG__index,
+		Upvalues:  nil,
+	})
+	T.Metatable = mt
+	return T
+}()
+
+func autoG__index(L *lua.LState) int {
+	key := L.CheckString(2)
+	L.Push(L.GetField(L.Env, key))
+	return 1
 }
