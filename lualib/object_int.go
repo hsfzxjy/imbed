@@ -2,6 +2,7 @@ package lualib
 
 import (
 	"errors"
+	"unsafe"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -18,6 +19,10 @@ func (i Int) IsIntegral() error {
 	return nil
 }
 
+func (i Int) asPtr() unsafe.Pointer {
+	return unsafe.Pointer(i.v)
+}
+
 type IntChecker struct{}
 
 func (IntChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
@@ -25,4 +30,8 @@ func (IntChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
 		return i, nil
 	}
 	return nil, errors.New("not a number")
+}
+
+func (IntChecker) ptrAsObject(ptr unsafe.Pointer) Object {
+	return Int{(*lua.LNumber)(ptr)}
 }

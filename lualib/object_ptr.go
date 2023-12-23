@@ -1,6 +1,10 @@
 package lualib
 
-import lua "github.com/yuin/gopher-lua"
+import (
+	"unsafe"
+
+	lua "github.com/yuin/gopher-lua"
+)
 
 type Ptr struct {
 	object Object
@@ -20,11 +24,15 @@ func (p *Ptr) IsIntegral() error {
 	return p.object.IsIntegral()
 }
 
+func (p *Ptr) asPtr() unsafe.Pointer {
+	return unsafe.Pointer(p)
+}
+
 type PtrChecker struct {
 	C objectChecker
 }
 
-func (c PtrChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
+func (c *PtrChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
 	if v == lua.LNil {
 		return &Ptr{}, nil
 	}
@@ -33,4 +41,8 @@ func (c PtrChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
 	} else {
 		return &Ptr{object: o}, nil
 	}
+}
+
+func (c *PtrChecker) ptrAsObject(ptr unsafe.Pointer) Object {
+	return (*Ptr)(ptr)
 }

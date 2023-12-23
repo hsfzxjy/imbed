@@ -12,10 +12,10 @@ func TestObject(t *testing.T) {
 	L := lua.NewState()
 	var checker = NewStructChecker([]FieldChecker{
 		{"int", IntChecker{}},
-		{"oint", PtrChecker{IntChecker{}}},
+		{"oint", &PtrChecker{IntChecker{}}},
 		{"bool", BoolChecker{}},
 		{"string", StringChecker{}},
-		{"intMap", MapChecker{IntChecker{}}},
+		{"intMap", &MapChecker{IntChecker{}}},
 	})
 	for _, tc := range []struct {
 		Code     string

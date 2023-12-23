@@ -9,10 +9,12 @@ import (
 type Object interface {
 	IsIntegral() error
 	AsLValue(L *lua.LState, readonly bool) lua.LValue
+	asPtr() unsafe.Pointer
 }
 
 type objectChecker interface {
 	check(L *lua.LState, v lua.LValue) (Object, error)
+	ptrAsObject(unsafe.Pointer) Object
 }
 
 func packLNumber[T ~float64](x *T) lua.LValue {

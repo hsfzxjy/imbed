@@ -3,6 +3,7 @@ package lualib
 import (
 	"errors"
 	"sync"
+	"unsafe"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -11,52 +12,6 @@ var (
 	structMT   = sync.OnceValue(structMTBuilder{ReadOnly: false}.get)
 	structMTRO = sync.OnceValue(structMTBuilder{ReadOnly: true}.get)
 )
-
-type Struct struct {
-	checker *structChecker
-	objects []Object
-
-	cacheOnce sync.Once
-	ud, udro  *lua.LUserData
-}
-
-func NewStruct(checker *structChecker) *Struct {
-	s := new(Struct)
-	s.checker = checker
-	s.objects = make([]Object, len(checker.fieldCheckers))
-	return s
-}
-
-func (s *Struct) AsLValue(L *lua.LState, readonly bool) lua.LValue {
-	s.cacheOnce.Do(func() {
-		s.ud = newUserData(s)
-		s.ud.Metatable = structMT()
-		s.udro = newUserData(s)
-		s.udro.Metatable = structMTRO()
-	})
-	if readonly {
-		return s.udro
-	} else {
-		return s.ud
-	}
-}
-
-func (s *Struct) IsIntegral() error {
-	for idx, v := range s.objects {
-		checker := s.checker.fieldCheckers[idx]
-		if v == nil {
-			if _, ok := checker.(PtrChecker); !ok {
-				return errors.New("nil field")
-			} else {
-				continue
-			}
-		}
-		if err := v.IsIntegral(); err != nil {
-			return err
-		}
-	}
-	return nil
-}
 
 type structMTBuilder struct {
 	ReadOnly bool
@@ -92,7 +47,7 @@ func (b structMTBuilder) __index(L *lua.LState) int {
 	}
 	o := m.objects[idx]
 	if o == nil {
-		if _, ok := m.checker.fieldCheckers[idx].(PtrChecker); ok {
+		if _, ok := m.checker.fieldCheckers[idx].(*PtrChecker); ok {
 			L.Push(lua.LNil)
 			return 1
 		} else {
@@ -100,7 +55,8 @@ func (b structMTBuilder) __index(L *lua.LState) int {
 			return 0
 		}
 	} else {
-		L.Push(o.AsLValue(L, b.ReadOnly))
+		lv := m.checker.fieldCheckers[idx].ptrAsObject(o).AsLValue(L, b.ReadOnly)
+		L.Push(lv)
 	}
 	return 1
 }
@@ -123,8 +79,59 @@ func (s structMTBuilder) __newindex(L *lua.LState) int {
 		L.RaiseError(err.Error())
 		return 0
 	}
-	m.objects[idx] = val
+	m.objects[idx] = val.asPtr()
 	return 0
+}
+
+type Struct struct {
+	checker *structChecker
+	objects []unsafe.Pointer
+
+	cacheOnce sync.Once
+	ud, udro  *lua.LUserData
+}
+
+func NewStruct(checker *structChecker) *Struct {
+	s := new(Struct)
+	s.checker = checker
+	s.objects = make([]unsafe.Pointer, len(checker.fieldCheckers))
+	return s
+}
+
+func (s *Struct) AsLValue(L *lua.LState, readonly bool) lua.LValue {
+	s.cacheOnce.Do(func() {
+		s.ud = newUserData(s)
+		s.ud.Metatable = structMT()
+		s.udro = newUserData(s)
+		s.udro.Metatable = structMTRO()
+	})
+	if readonly {
+		return s.udro
+	} else {
+		return s.ud
+	}
+}
+
+func (s *Struct) IsIntegral() error {
+	for idx, p := range s.objects {
+		checker := s.checker.fieldCheckers[idx]
+		if p == nil {
+			if _, ok := checker.(*PtrChecker); !ok {
+				return errors.New("nil field")
+			} else {
+				continue
+			}
+		}
+		o := checker.ptrAsObject(p)
+		if err := o.IsIntegral(); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *Struct) asPtr() unsafe.Pointer {
+	return unsafe.Pointer(s)
 }
 
 type FieldChecker struct {
@@ -148,17 +155,17 @@ func NewStructChecker(checkers []FieldChecker) *structChecker {
 	return c
 }
 
-func (c *structChecker) checkNewObjects(L *lua.LState, v lua.LValue) ([]Object, error) {
+func (c *structChecker) checkNewObjects(L *lua.LState, v lua.LValue) ([]unsafe.Pointer, error) {
 	switch t := v.(type) {
 	case *lua.LTable:
-		objects := make([]Object, len(c.fieldCheckers))
+		objects := make([]unsafe.Pointer, len(c.fieldCheckers))
 		for k, idx := range c.key2i {
 			val := t.RawGetString(k)
 			o, err := c.fieldCheckers[idx].check(L, val)
 			if err != nil {
 				return nil, err
 			}
-			objects[idx] = o
+			objects[idx] = o.asPtr()
 		}
 		return objects, nil
 	case *lua.LUserData:

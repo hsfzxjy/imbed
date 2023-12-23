@@ -3,6 +3,7 @@ package lualib
 import (
 	"errors"
 	"sync"
+	"unsafe"
 
 	lua "github.com/yuin/gopher-lua"
 )
@@ -85,11 +86,15 @@ func (m *Map) IsIntegral() error {
 	return nil
 }
 
+func (m *Map) asPtr() unsafe.Pointer {
+	return unsafe.Pointer(m)
+}
+
 type MapChecker struct {
 	ValueChecker objectChecker
 }
 
-func (mc MapChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
+func (mc *MapChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
 	switch t := v.(type) {
 	case *lua.LTable:
 		m := &Map{
@@ -125,4 +130,8 @@ func (mc MapChecker) check(L *lua.LState, v lua.LValue) (Object, error) {
 	default:
 		return nil, errors.New("not a table")
 	}
+}
+
+func (mc *MapChecker) ptrAsObject(ptr unsafe.Pointer) Object {
+	return (*Map)(ptr)
 }
