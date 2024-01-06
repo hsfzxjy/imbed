@@ -5,8 +5,6 @@ github.com/disintegration/gift v1.2.1 h1:Y005a1X4Z7Uc+0gLpSAsKhWi4qLtsdEcMIbbdvd
 github.com/disintegration/gift v1.2.1/go.mod h1:Jh2i7f7Q2BM7Ezno3PhfezbR1xpUg9dUg3/RlKGr4HI=
 github.com/docker/go-units v0.5.0 h1:69rxXcBk27SvSaaxTtLh/8llcHD8vYHT7WSdRZ/jvr4=
 github.com/docker/go-units v0.5.0/go.mod h1:fgPhTUdO+D/Jk86RDLlptpiXQzgHJF7gydDDbaIK4Dk=
-github.com/hsfzxjy/gopher-lua v1.1.1-patch5 h1:zkwX52LVzb9hM6d+X97QAZaptc/KdCTZMNVMVLehYZE=
-github.com/hsfzxjy/gopher-lua v1.1.1-patch5/go.mod h1:2146M8zhrJPtQlUBIa6Q8MLhTZnOBogcW9HsLW1Lt+E=
 github.com/hsfzxjy/gopher-lua v1.1.1-patch6 h1:QpIY9Ts/mSHAoQjQw0AN88e8+WqM+taubvswUIWICgI=
 github.com/hsfzxjy/gopher-lua v1.1.1-patch6/go.mod h1:2146M8zhrJPtQlUBIa6Q8MLhTZnOBogcW9HsLW1Lt+E=
 github.com/hsfzxjy/tipe v0.2.1 h1:auCtNux3Gtkf3gqY4KtSCCEeHBojs0om3FDlw8MfE7w=
@@ -35,8 +33,6 @@ github.com/stretchr/testify v1.8.4/go.mod h1:sz/lmYIOXD/1dqDmKjjqLyZ2RngseejIcXl
 github.com/tinylib/msgp v1.1.8 h1:FCXC1xanKO4I8plpHGH2P7koL/RzZs12l/+r7vakfm0=
 github.com/tinylib/msgp v1.1.8/go.mod h1:qkpG+2ldGg4xRFmx+jfTvZPxfGFhi64BcnL9vkCm/Tw=
 github.com/yuin/goldmark v1.4.13/go.mod h1:6yULJ656Px+3vBD8DxQVa3kxgyrAnzto9xy5taEt/CY=
-github.com/yuin/gopher-lua v1.1.0 h1:BojcDhfyDWgU2f2TOzYK/g5p2gxMrku8oupLDqlnSqE=
-github.com/yuin/gopher-lua v1.1.0/go.mod h1:GBR0iDaNXjAgGg9zfCvksxSRnQx76gclCIb7kdAd1Pw=
 go.etcd.io/bbolt v1.3.7 h1:j+zJOnnEjF/kyHlDDgGnVL/AIqIJPq8UoB2GSNfkUfQ=
 go.etcd.io/bbolt v1.3.7/go.mod h1:N9Mkw9X8x5fupy0IKsmuqVtoGDyxsaDlbk4Rd05IAQw=
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
