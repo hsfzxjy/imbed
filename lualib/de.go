@@ -22,13 +22,13 @@ func (e *deError) Unwrap() error {
 }
 
 type deserializer struct {
-	protos []*luaFunctionProto
+	protos []*lua.FunctionProto
 	r      fastbuf.R
 	dbgR   fastbuf.R
 }
 
 func (d *deserializer) doFunctionProto() error {
-	proto := &luaFunctionProto{}
+	proto := &lua.FunctionProto{}
 	d.protos = append(d.protos, proto)
 	index := len(d.protos) - 1
 	var err error
@@ -61,7 +61,7 @@ func (d *deserializer) doFunctionProto() error {
 		if idx >= uint32(index) {
 			return &deError{index: index, detail: "protoIndices", err: fmt.Errorf("invalid index")}
 		}
-		proto.FunctionPrototypes[i] = d.protos[idx].asLua()
+		proto.FunctionPrototypes[i] = d.protos[idx]
 	}
 	constantsLen, err := d.r.ReadArrayHeader()
 	if err != nil {
@@ -154,14 +154,6 @@ func (d *deserializer) doFunctionProto() error {
 			return &deError{index: index, detail: "DbgUpvalues", err: err}
 		}
 	}
-	proto.stringConstants = make([]string, len(proto.Constants))
-	for i, c := range proto.Constants {
-		sv := ""
-		if slv, ok := c.AsLString(); ok {
-			sv = string(slv)
-		}
-		proto.stringConstants[i] = sv
-	}
 	return nil
 }
 
@@ -188,5 +180,5 @@ func Deserialize(full []byte) (*lua.FunctionProto, error) {
 	if !de.r.EOF() || !de.dbgR.EOF() {
 		return nil, fmt.Errorf("lualib.Deserialize: unexpected EOF")
 	}
-	return de.protos[len(de.protos)-1].asLua(), nil
+	return de.protos[len(de.protos)-1], nil
 }
