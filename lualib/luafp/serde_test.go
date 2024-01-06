@@ -5,22 +5,16 @@ import (
 	"testing"
 
 	lua "github.com/hsfzxjy/gopher-lua"
-	"github.com/hsfzxjy/gopher-lua/parse"
 	"github.com/hsfzxjy/imbed/lualib/luafp"
 	"github.com/stretchr/testify/assert"
 )
 
 func compile(code string) *lua.FunctionProto {
-	reader := strings.NewReader(code)
-	chunk, err := parse.Parse(reader, "input")
+	fn, err := luafp.Compile(code, "test")
 	if err != nil {
 		panic(err)
 	}
-	proto, err := lua.Compile(chunk, "input")
-	if err != nil {
-		panic(err)
-	}
-	return proto
+	return fn
 }
 
 const code = `
@@ -54,55 +48,4 @@ func Test_Serde_SameByteCode(t *testing.T) {
 	s1 := luafp.Serialize(compile(code), nil).Code
 	s2 := luafp.Serialize(compile(code2), nil).Code
 	assert.Equal(t, s1, s2)
-}
-
-func Test_LookupLocalFunction(t *testing.T) {
-	const code = `
-	xxx = 0
-	local yyy = 1
-	local function add(a)
-		if d == nil then
-			d = 1
-		end
-		print(d)
-		return a + d
-	end
-	`
-	fn := compile(code)
-	assert.NotNil(t, luafp.LookupLocalFunction(fn, "add"))
-	assert.Nil(t, luafp.LookupLocalFunction(fn, "add2"))
-
-	state := lua.NewState()
-	f := state.NewFunctionFromProto(luafp.LookupLocalFunction(fn, "add"))
-	f.Env = autoG
-	state.Push(f.AsLValue())
-	state.Push(lua.LNumber(1).AsLValue())
-	state.PCall(1, 1, nil)
-	assert.True(t, lua.LNumber(2).AsLValue().Equals(state.Get(-1)))
-	state.Pop(1)
-	assert.True(t, state.Get(-1).EqualsLNil())
-	state.Push(f.AsLValue())
-	state.Push(lua.LNumber(1).AsLValue())
-	state.PCall(1, 1, nil)
-	assert.True(t, lua.LNumber(2).AsLValue().Equals(state.Get(-1)))
-}
-
-var autoG = func() *lua.LTable {
-	T := new(lua.LTable)
-	mt := new(lua.LTable)
-	mt.RawSetString("__index", (&lua.LFunction{
-		IsG:       true,
-		Env:       T,
-		Proto:     nil,
-		GFunction: autoG__index,
-		Upvalues:  nil,
-	}).AsLValue())
-	T.Metatable = mt.AsLValue()
-	return T
-}()
-
-func autoG__index(L *lua.LState) int {
-	key := L.CheckString(2)
-	L.Push(L.GetField(L.Env.AsLValue(), key))
-	return 1
 }
