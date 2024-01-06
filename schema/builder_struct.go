@@ -47,12 +47,12 @@ func (s *StructBuilder[S]) buildStruct() *_Struct[S] {
 	for i, f := range s.fieldBuilders {
 		field := &_StructField{
 			name:       f.name,
-			offset:     uintptr(f.ptr) - uintptr(s.basePtr),
+			proto:      goStructFieldProto{uintptr(f.ptr) - uintptr(s.basePtr)},
 			elemSchema: f.subBuilder.buildGenericSchema(),
 		}
 		fields[i] = field
 	}
-	return new_Struct[S](s.name, fields)
+	return new_Struct[S](s.name, fields, goStructProto[S]{})
 }
 
 func (s *StructBuilder[T]) buildGenericSchema() genericSchema { return s.buildStruct() }

@@ -34,7 +34,7 @@ func ExampleNew() {
 	x, _, err := sch.ScanFrom(schemascanner.Any(map[string]any{
 		"int":   int64(1),
 		"bool":  true,
-		"m":     map[string]any{"a": int64(1)},
+		"m":     map[string]any{"a": int64(1), "b": int64(2)},
 		"float": "3.14",
 		"str":   "test",
 	}))
@@ -46,6 +46,14 @@ func ExampleNew() {
 	var w fastbuf.W
 	sch.EncodeMsg(&w, x)
 	r := fastbuf.R{Buf: w.Result()}
+	encoded := w.Result()
+	for i := 0; i < 10; i++ {
+		var w fastbuf.W
+		sch.EncodeMsg(&w, x)
+		if string(w.Result()) != string(encoded) {
+			panic("encode not idempotent")
+		}
+	}
 	x, err = sch.DecodeMsg(&r)
 	if err != nil {
 		panic(err)
@@ -53,6 +61,6 @@ func ExampleNew() {
 	fmt.Printf("%#v\n", x)
 
 	// Output:
-	// 1 true 157/50 test map[string]int64{"a":1}
-	// 1 true 157/50 test map[string]int64{"a":1}
+	// 1 true 157/50 test map[string]int64{"a":1, "b":2}
+	// 1 true 157/50 test map[string]int64{"a":1, "b":2}
 }

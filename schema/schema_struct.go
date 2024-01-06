@@ -12,6 +12,20 @@ import (
 	"github.com/hsfzxjy/imbed/util/fastbuf"
 )
 
+type goStructProto[T any] struct{}
+
+func (p goStructProto[T]) StructNewTopLevel(s *_Struct[T]) Schema[*T] {
+	return new_Toplevel[T](s)
+}
+
+func (p goStructProto[T]) StructValidate(target unsafe.Pointer) error {
+	va, ok := any((*T)(target)).(Validator)
+	if !ok {
+		return nil
+	}
+	return va.Validate()
+}
+
 type _Struct[T any] struct {
 	name      string
 	fields    []*_StructField
@@ -20,10 +34,11 @@ type _Struct[T any] struct {
 	hasDef    bool
 
 	buildOnce sync.Once
-	toplevel  *_TopLevel[T]
+	toplevel  Schema[*T]
+	proto     structProto[T]
 }
 
-func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
+func new_Struct[T any](name string, fields []*_StructField, proto structProto[T]) *_Struct[T] {
 	slices.SortFunc(fields, func(a, b *_StructField) int {
 		return cmp.Compare(a.name, b.name)
 	})
@@ -49,6 +64,7 @@ func new_Struct[T any](name string, fields []*_StructField) *_Struct[T] {
 		m:         m,
 		mainField: mainField,
 		hasDef:    noDefCount == 0,
+		proto:     proto,
 	}
 }
 
@@ -63,7 +79,7 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaE
 			structPos, err = s.mainField.scanFrom(mainScanner, target)
 			if err == nil {
 				normalScan = false
-				seen[s.mainField.Name()] = struct{}{}
+				seen[s.mainField.name] = struct{}{}
 			}
 		}
 	}
@@ -90,7 +106,7 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaE
 		}
 	}
 	for _, f := range s.fields {
-		if _, ok := seen[f.Name()]; !ok {
+		if _, ok := seen[f.name]; !ok {
 			err := f.setDefault(target)
 			if err != nil {
 				return structPos, err.AppendPath(s.name)
@@ -98,12 +114,9 @@ func (s *_Struct[T]) scanFrom(r Scanner, target unsafe.Pointer) (pos.P, *schemaE
 		}
 	}
 	{
-		validator, ok := any((*T)(target)).(Validator)
-		if ok {
-			err := validator.Validate()
-			if err != nil {
-				return structPos, newError(validation(err)).AppendPath(s.name)
-			}
+		err := s.proto.StructValidate(target)
+		if err != nil {
+			return structPos, newError(validation(err)).AppendPath(s.name)
 		}
 	}
 	return structPos, nil
@@ -188,9 +201,9 @@ func (s *_Struct[T]) buildSchema() schema[T] {
 	return s
 }
 
-func (s *_Struct[T]) Build() *_TopLevel[T] {
+func (s *_Struct[T]) Build() Schema[*T] {
 	s.buildOnce.Do(func() {
-		s.toplevel = new_Toplevel(s)
+		s.toplevel = s.proto.StructNewTopLevel(s)
 	})
 	return s.toplevel
 }

@@ -11,10 +11,12 @@ func (b mapBuilder[V]) Default(defFunc func() map[string]V) mapBuilder[V] {
 }
 
 func (b mapBuilder[V]) buildSchema() schema[map[string]V] {
-	return &_Map[V]{b.defFunc, b.valueBuilder.buildSchema()}
+	return nil
 }
 
-func (b mapBuilder[V]) buildGenericSchema() genericSchema { return b.buildSchema() }
+func (b mapBuilder[V]) buildGenericSchema() genericSchema {
+	return &_Map{b.valueBuilder.buildSchema(), goMapProto[V]{}, goMapDefaulter[V]{b.defFunc}}
+}
 
 func Map[V any](valueBuilder builder[V]) mapBuilder[V] {
 	return mapBuilder[V]{valueBuilder: valueBuilder}
