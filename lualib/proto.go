@@ -4,8 +4,8 @@ import (
 	"slices"
 	"strings"
 
-	lua "github.com/yuin/gopher-lua"
-	"github.com/yuin/gopher-lua/parse"
+	lua "github.com/hsfzxjy/gopher-lua"
+	"github.com/hsfzxjy/gopher-lua/parse"
 )
 
 func opGetCode(code uint32) int {

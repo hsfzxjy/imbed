@@ -3,8 +3,8 @@ package lualib
 import (
 	"fmt"
 
+	lua "github.com/hsfzxjy/gopher-lua"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
-	lua "github.com/yuin/gopher-lua"
 )
 
 type deError struct {
@@ -79,13 +79,13 @@ func (d *deserializer) doFunctionProto() error {
 			if err != nil {
 				return &deError{index: index, detail: "constant number", err: err}
 			}
-			proto.Constants[i] = lua.LNumber(f)
+			proto.Constants[i] = lua.LNumber(f).AsLValue()
 		case lconstString:
 			s, err := d.r.ReadString()
 			if err != nil {
 				return &deError{index: index, detail: "constant string", err: err}
 			}
-			proto.Constants[i] = lua.LString(s)
+			proto.Constants[i] = lua.LString(s).AsLValue()
 		default:
 			return &deError{index: index, detail: "constant kind", err: fmt.Errorf("unknown kind %d", kind)}
 		}
@@ -157,7 +157,7 @@ func (d *deserializer) doFunctionProto() error {
 	proto.stringConstants = make([]string, len(proto.Constants))
 	for i, c := range proto.Constants {
 		sv := ""
-		if slv, ok := c.(lua.LString); ok {
+		if slv, ok := c.AsLString(); ok {
 			sv = string(slv)
 		}
 		proto.stringConstants[i] = sv

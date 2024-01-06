@@ -3,7 +3,7 @@ package lualib
 import (
 	"unsafe"
 
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/hsfzxjy/gopher-lua"
 )
 
 const (

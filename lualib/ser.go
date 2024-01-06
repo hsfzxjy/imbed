@@ -1,8 +1,8 @@
 package lualib
 
 import (
+	lua "github.com/hsfzxjy/gopher-lua"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
-	lua "github.com/yuin/gopher-lua"
 )
 
 type serializer struct {
@@ -25,13 +25,12 @@ func (s *serializer) doFunctionProto(proto *lua.FunctionProto) uint32 {
 		WriteUint32Array(protoIndices)
 	s.codes.WriteArrayHeader(uint32(len(proto.Constants)))
 	for _, c := range proto.Constants {
-		switch v := c.(type) {
-		case lua.LString:
-			s.codes.WriteUint8(lconstString).WriteString(string(v))
-		case lua.LNumber:
-			s.codes.WriteUint8(lconstNumber).WriteFloat64(float64(v))
-		default:
-			panic("lualib: unknown constant type " + v.Type().String())
+		if str, ok := c.AsLString(); ok {
+			s.codes.WriteUint8(lconstString).WriteString(string(str))
+		} else if num, ok := c.AsLNumber(); ok {
+			s.codes.WriteUint8(lconstNumber).WriteFloat64(float64(num))
+		} else {
+			panic("lualib: unknown constant type " + c.Type().String())
 		}
 	}
 
