@@ -1,4 +1,4 @@
-package lualib
+package luafp
 
 import (
 	"slices"

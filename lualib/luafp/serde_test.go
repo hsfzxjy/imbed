@@ -1,4 +1,4 @@
-package lualib_test
+package luafp_test
 
 import (
 	"strings"
@@ -6,7 +6,7 @@ import (
 
 	lua "github.com/hsfzxjy/gopher-lua"
 	"github.com/hsfzxjy/gopher-lua/parse"
-	"github.com/hsfzxjy/imbed/lualib"
+	"github.com/hsfzxjy/imbed/lualib/luafp"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -44,15 +44,15 @@ var code2 = strings.Replace(code, "\n", "\n\n\t", 0)
 
 func Test_Serde(t *testing.T) {
 	fn := compile(code)
-	s := lualib.Serialize(fn, nil).Full
-	fn2, err := lualib.Deserialize(s)
+	s := luafp.Serialize(fn, nil).Full
+	fn2, err := luafp.Deserialize(s)
 	assert.ErrorIs(t, err, nil)
 	assert.NotNil(t, fn2)
 }
 
 func Test_Serde_SameByteCode(t *testing.T) {
-	s1 := lualib.Serialize(compile(code), nil).Code
-	s2 := lualib.Serialize(compile(code2), nil).Code
+	s1 := luafp.Serialize(compile(code), nil).Code
+	s2 := luafp.Serialize(compile(code2), nil).Code
 	assert.Equal(t, s1, s2)
 }
 
@@ -69,11 +69,11 @@ func Test_LookupLocalFunction(t *testing.T) {
 	end
 	`
 	fn := compile(code)
-	assert.NotNil(t, lualib.LookupLocalFunction(fn, "add"))
-	assert.Nil(t, lualib.LookupLocalFunction(fn, "add2"))
+	assert.NotNil(t, luafp.LookupLocalFunction(fn, "add"))
+	assert.Nil(t, luafp.LookupLocalFunction(fn, "add2"))
 
 	state := lua.NewState()
-	f := state.NewFunctionFromProto(lualib.LookupLocalFunction(fn, "add"))
+	f := state.NewFunctionFromProto(luafp.LookupLocalFunction(fn, "add"))
 	f.Env = autoG
 	state.Push(f.AsLValue())
 	state.Push(lua.LNumber(1).AsLValue())

@@ -1,10 +1,15 @@
-package lualib
+package luafp
 
 import (
 	"fmt"
 
 	lua "github.com/hsfzxjy/gopher-lua"
 	"github.com/hsfzxjy/imbed/util/fastbuf"
+)
+
+const (
+	lconstNumber = iota
+	lconstString
 )
 
 type deError struct {

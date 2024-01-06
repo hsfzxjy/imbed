@@ -1,4 +1,4 @@
-package lualib
+package luafp
 
 import (
 	lua "github.com/hsfzxjy/gopher-lua"
