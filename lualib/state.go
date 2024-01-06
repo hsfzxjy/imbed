@@ -3,73 +3,49 @@ package lualib
 import (
 	"sync"
 
-	lua "github.com/yuin/gopher-lua"
+	lua "github.com/hsfzxjy/gopher-lua"
 )
 
-type lstate = lua.LState
-
-type LState struct {
-	*lstate
-	// mapMT, mapMTRO       *mapMetaTable
-	// structMT, structMTRO *structMetaTable
-}
-
-func newLState(options lua.Options) *LState {
-	ls := &LState{lstate: lua.NewState(options)}
-	// ls.mapMT = &mapMetaTable{LState: ls, ReadOnly: false}
-	// ls.mapMTRO = &mapMetaTable{LState: ls, ReadOnly: true}
-	// ls.structMT = &structMetaTable{LState: ls}
-	// ls.structMTRO = &structMetaTable{LState: ls, ReadOnly: true}
-	return ls
-}
-
 type LStatePool struct {
-	mu    sync.Mutex
-	saved map[lua.Options]*[]*LState
+	options lua.Options
+	mu      sync.Mutex
+	saved   []*lua.LState
 }
 
-func NewLStatePool() *LStatePool {
-	return &LStatePool{saved: make(map[lua.Options]*[]*LState)}
+func NewLStatePool(options lua.Options) *LStatePool {
+	return &LStatePool{options: options}
 }
 
-func (p *LStatePool) New(options lua.Options) *LState {
-	return newLState(options)
+func (p *LStatePool) New() *lua.LState {
+	return lua.NewState(p.options)
 }
 
-func (p *LStatePool) NewDefault() *LState {
-	return newLState(lua.Options{})
-}
-
-func (p *LStatePool) Get(options lua.Options) *LState {
+func (p *LStatePool) Get() *lua.LState {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if Ls, ok := p.saved[options]; ok {
-		if len(*Ls) > 0 {
-			L := (*Ls)[len(*Ls)-1]
-			(*Ls)[len(*Ls)-1] = nil
-			*Ls = (*Ls)[:len(*Ls)-1]
-			return L
-		}
+
+	saved := p.saved
+	if len(saved) > 0 {
+		L := saved[len(saved)-1]
+		(saved)[len(saved)-1] = nil
+		saved = saved[:len(saved)-1]
+		p.saved = saved
+		return L
 	}
-	return newLState(options)
+	return p.New()
 }
 
-func (p *LStatePool) Put(L *LState) {
+func (p *LStatePool) Put(L *lua.LState) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-	if Ls, ok := p.saved[L.Options]; ok {
-		*Ls = append(*Ls, L)
-	} else {
-		Ls := make([]*LState, 0, 4)
-		Ls = append(Ls, L)
-		p.saved[L.Options] = &Ls
+	if L.Options != p.options {
+		panic("LStatePool: L.Options != p.options")
 	}
+	p.saved = append(p.saved, L)
 }
 
 func (p *LStatePool) Shutdown() {
-	for _, Ls := range p.saved {
-		for _, L := range *Ls {
-			L.Close()
-		}
+	for _, L := range p.saved {
+		L.Close()
 	}
 }
