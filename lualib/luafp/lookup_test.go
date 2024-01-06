@@ -21,7 +21,7 @@ func Test_LookupLocalFunction(t *testing.T) {
 	end
 	`
 	fn := compile(code)
-	assert.NotNil(t, luafp.LookupLocalFunction(fn, "add"))
+	AssertFunctionProtoEquals(t, fn.FunctionPrototypes[0], luafp.LookupLocalFunction(fn, "add"))
 	assert.Nil(t, luafp.LookupLocalFunction(fn, "add2"))
 
 	state := lua.NewState()

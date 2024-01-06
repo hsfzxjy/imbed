@@ -41,7 +41,7 @@ func Test_Serde(t *testing.T) {
 	s := luafp.Serialize(fn, nil).Full
 	fn2, err := luafp.Deserialize(s)
 	assert.ErrorIs(t, err, nil)
-	assert.NotNil(t, fn2)
+	AssertFunctionProtoEquals(t, fn, fn2)
 }
 
 func Test_Serde_SameByteCode(t *testing.T) {
